@@ -22,6 +22,9 @@ Przed pierwsza automatyczna publikacja musisz recznie:
 4. zarejestrowac aplikacje Entra ID do API
 5. nadac tej aplikacji role `Manager` w Partner Center
 
+Pelna checklista pierwszej publikacji:
+- [Pierwsza publikacja w Partner Center](store-partner-center-checklist.md)
+
 ## Konfiguracja GitHub
 W repo trzeba ustawic:
 
@@ -101,5 +104,6 @@ To oznacza, ze przy publikacji masz od razu paczke symboli do diagnostyki crashy
 - do Store idzie build `Release`
 
 ## Powiazane dokumenty
+- [Pierwsza publikacja w Partner Center](store-partner-center-checklist.md)
 - [Pakowanie MSIX i Microsoft Store](release-msix-store.md)
 - [Setup deweloperski](developer-setup.md)

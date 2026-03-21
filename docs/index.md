@@ -26,6 +26,7 @@ Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Win
 
 ## Release
 - [Pakowanie MSIX i Microsoft Store](release-msix-store.md)
+- [Pierwsza publikacja w Partner Center](store-partner-center-checklist.md)
 - [Microsoft Store przez GitHub Actions](store-publishing-github-actions.md)
 
 ## Decyzje architektoniczne

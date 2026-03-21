@@ -46,6 +46,7 @@ Do weryfikacji przed implementacja:
 - pierwsza konfiguracja aplikacji i pierwsza submission nadal musza byc wykonane recznie w Partner Center
 
 Szczegoly:
+- [Pierwsza publikacja w Partner Center](store-partner-center-checklist.md)
 - [Microsoft Store przez GitHub Actions](store-publishing-github-actions.md)
 
 ## Submission checklist
