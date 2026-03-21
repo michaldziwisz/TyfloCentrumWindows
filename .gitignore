@@ -1,0 +1,32 @@
+# Build outputs
+bin/
+obj/
+artifacts/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Test and coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Packages
+packages/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local scratch files
+.tmp-*.ps1

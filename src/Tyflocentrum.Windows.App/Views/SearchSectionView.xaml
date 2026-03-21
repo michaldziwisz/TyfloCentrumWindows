@@ -1,0 +1,154 @@
+<UserControl
+    x:Class="Tyflocentrum.Windows.App.Views.SearchSectionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="SearchItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.AutomationId="search.item"
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding ItemTypeLabel}" />
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{Binding Title}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding PublishedDate}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding Excerpt}"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            FontWeight="SemiBold"
+            Text="Wyszukaj treści z Tyflopodcast i TyfloŚwiat."
+            TextWrapping="WrapWholeWords" />
+
+        <Grid Grid.Row="1" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox
+                x:Name="ScopeComboBox"
+                Grid.Column="0"
+                AutomationProperties.AutomationId="search.scope"
+                AutomationProperties.Name="Zakres wyszukiwania"
+                DisplayMemberPath="Title"
+                Header="Szukaj w"
+                ItemsSource="{Binding ScopeOptions}"
+                SelectedItem="{Binding SelectedScope, Mode=TwoWay}" />
+
+            <TextBox
+                x:Name="SearchTextBox"
+                Grid.Column="1"
+                AutomationProperties.AutomationId="search.field"
+                AutomationProperties.Name="Fraza wyszukiwania"
+                Header="Fraza"
+                KeyDown="OnSearchTextBoxKeyDown"
+                PlaceholderText="Podaj frazę do wyszukania"
+                Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </Grid>
+
+        <StackPanel
+            Grid.Row="2"
+            Orientation="Horizontal"
+            Spacing="8">
+            <Button
+                AutomationProperties.AutomationId="search.button"
+                AutomationProperties.Name="Szukaj"
+                Click="OnSearchClick"
+                Content="Szukaj"
+                IsEnabled="{Binding CanSearch}" />
+            <Button
+                AutomationProperties.AutomationId="search.refresh"
+                AutomationProperties.Name="Odśwież wyniki"
+                Click="OnRefreshClick"
+                Content="Odśwież wyniki"
+                IsEnabled="{Binding CanRefresh}" />
+        </StackPanel>
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="3"
+            AutomationProperties.LiveSetting="Polite"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{Binding StatusMessage}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <ProgressRing
+            x:Name="LoadingIndicator"
+            Grid.Row="4"
+            IsActive="False"
+            Visibility="Collapsed" />
+
+        <StackPanel
+            x:Name="ErrorPanel"
+            Grid.Row="4"
+            Spacing="8"
+            Visibility="Collapsed">
+            <InfoBar
+                x:Name="ErrorBar"
+                AutomationProperties.AutomationId="search.error"
+                IsClosable="False"
+                IsOpen="False"
+                Severity="Error" />
+            <Button
+                AutomationProperties.AutomationId="search.retry"
+                Click="OnRetryClick"
+                Content="Spróbuj ponownie" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="5"
+            Spacing="8">
+            <TextBlock
+                x:Name="EmptyStateText"
+                Visibility="Collapsed"
+                Text="{Binding EmptyStateMessage}" />
+            <ListView
+                x:Name="ResultsList"
+                AutomationProperties.AutomationId="search.list"
+                AutomationProperties.Name="Lista wyników wyszukiwania"
+                ContextRequested="OnResultsListContextRequested"
+                IsItemClickEnabled="True"
+                ItemClick="OnResultsListItemClick"
+                ItemTemplate="{StaticResource SearchItemTemplate}"
+                ItemsSource="{Binding Results}"
+                KeyDown="OnResultsListKeyDown"
+                SelectionMode="Single" />
+        </StackPanel>
+    </Grid>
+</UserControl>

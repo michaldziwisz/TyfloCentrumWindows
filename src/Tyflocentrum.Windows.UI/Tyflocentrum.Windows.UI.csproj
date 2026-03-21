@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Tyflocentrum.Windows.UI</RootNamespace>
+    <AssemblyName>Tyflocentrum.Windows.UI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <ProjectReference Include="..\Tyflocentrum.Windows.Domain\Tyflocentrum.Windows.Domain.csproj" />
+  </ItemGroup>
+</Project>
