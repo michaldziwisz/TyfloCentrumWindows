@@ -1,0 +1,171 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.ArticleSectionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="OnLoaded"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="CategoryItemTemplate">
+            <StackPanel
+                AutomationProperties.AutomationId="Articles.CategoryItem"
+                AutomationProperties.Name="{Binding AccessibleLabel}"
+                Orientation="Horizontal"
+                Spacing="8">
+                <TextBlock Text="{Binding Name}" TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{Binding CountLabel}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="PostItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.AutomationId="Articles.Item"
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding ItemTypeLabel}" />
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{Binding Title}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding PublishedDate}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding Excerpt}"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="12" ColumnSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            FontWeight="SemiBold"
+            Text="{Binding LeadText}"
+            TextWrapping="WrapWholeWords" />
+
+        <ProgressRing
+            x:Name="LoadingIndicator"
+            Grid.Row="1"
+            IsActive="False"
+            Visibility="Collapsed" />
+
+        <StackPanel
+            x:Name="ErrorPanel"
+            Grid.Row="2"
+            Spacing="8"
+            Visibility="Collapsed">
+            <InfoBar
+                x:Name="ErrorBar"
+                AutomationProperties.AutomationId="Articles.Error"
+                IsClosable="False"
+                IsOpen="False"
+                Severity="Error" />
+            <Button
+                AutomationProperties.AutomationId="Articles.Retry"
+                Click="OnRetryClick"
+                Content="Spróbuj ponownie" />
+        </StackPanel>
+
+        <Grid Grid.Row="3" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Spacing="8">
+                <TextBlock FontWeight="SemiBold" Text="Kategorie" />
+                <ListView
+                    x:Name="CategoriesList"
+                    AutomationProperties.AutomationId="Articles.Categories"
+                    AutomationProperties.Name="Lista kategorii artykułów i TyfloŚwiata"
+                    ItemTemplate="{StaticResource CategoryItemTemplate}"
+                    KeyDown="OnCategoriesListKeyDown"
+                    PreviewKeyDown="OnCategoriesListPreviewKeyDown"
+                    SelectionChanged="OnCategoriesSelectionChanged"
+                    SelectionMode="Single" />
+            </StackPanel>
+
+            <Grid
+                x:Name="ArticleItemsPanel"
+                Grid.Column="1"
+                RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    FontWeight="SemiBold"
+                    Text="{Binding CurrentItemsHeading}"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    x:Name="EmptyStateText"
+                    Grid.Row="1"
+                    Visibility="Collapsed"
+                    Text="{Binding EmptyStateText}" />
+                <ListView
+                    x:Name="ItemsList"
+                    Grid.Row="2"
+                    AutomationProperties.AutomationId="Articles.List"
+                    AutomationProperties.Name="{Binding ListAutomationName}"
+                    ContainerContentChanging="OnItemsListContainerContentChanging"
+                    ContextRequested="OnItemsListContextRequested"
+                    IsItemClickEnabled="True"
+                    ItemClick="OnItemsListItemClick"
+                    ItemTemplate="{StaticResource PostItemTemplate}"
+                    ItemsSource="{Binding Items}"
+                    KeyDown="OnItemsListKeyDown"
+                    SelectionMode="Single" />
+                <ProgressRing
+                    x:Name="LoadMoreIndicator"
+                    Grid.Row="3"
+                    HorizontalAlignment="Left"
+                    IsActive="False"
+                    Visibility="Collapsed" />
+            </Grid>
+
+            <Border
+                x:Name="MagazineContentPanel"
+                Grid.Column="1"
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        AutomationProperties.HeadingLevel="Level2"
+                        FontWeight="SemiBold"
+                        Text="TyfloŚwiat" />
+                    <ContentPresenter x:Name="MagazineContentHost" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

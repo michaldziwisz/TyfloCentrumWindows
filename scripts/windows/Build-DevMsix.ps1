@@ -10,25 +10,26 @@ $ErrorActionPreference = 'Stop'
 
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptRoot '..\..')).Path
-$projectPath = Join-Path $repoRoot 'src\Tyflocentrum.Windows.App\Tyflocentrum.Windows.App.csproj'
+$projectPath = Join-Path $repoRoot 'src\TyfloCentrum.Windows.App\TyfloCentrum.Windows.App.csproj'
 $packageRoot = Join-Path $repoRoot 'artifacts\SignedAppPackages'
 $certificateRoot = Join-Path $repoRoot 'artifacts\DevCertificate'
-$publisher = 'CN=Tyflocentrum'
-$certificateName = 'Tyflocentrum.Dev.Package'
+$publisher = 'CN=TyfloCentrum'
+$certificateName = 'TyfloCentrum.Dev.Package'
 $certificatePassword = 'Tyflo1234'
 $codeSigningEku = '1.3.6.1.5.5.7.3.3'
+$packageSigningEku = '1.3.6.1.4.1.311.84.3.1'
 
 New-Item -ItemType Directory -Force -Path $packageRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $certificateRoot | Out-Null
 
-$pfxPath = Join-Path $certificateRoot "$certificateName.pfx"
 $cerPath = Join-Path $certificateRoot "$certificateName.cer"
 
 $certificate = Get-ChildItem Cert:\CurrentUser\My |
     Where-Object {
         $_.Subject -eq $publisher -and
         $_.HasPrivateKey -and
-        ($_.EnhancedKeyUsageList | Where-Object { $_.ObjectId -eq $codeSigningEku })
+        ($_.EnhancedKeyUsageList | Where-Object { $_.ObjectId -eq $codeSigningEku }) -and
+        ($_.EnhancedKeyUsageList | Where-Object { $_.ObjectId -eq $packageSigningEku })
     } |
     Sort-Object NotAfter -Descending |
     Select-Object -First 1
@@ -46,21 +47,17 @@ if (-not $certificate) {
         -KeyUsage DigitalSignature `
         -NotAfter (Get-Date).AddYears(5) `
         -TextExtension @(
-            "2.5.29.37={text}$codeSigningEku",
+            "2.5.29.37={text}$codeSigningEku,$packageSigningEku",
             '2.5.29.19={text}'
         )
 }
 
-$securePassword = ConvertTo-SecureString -String $certificatePassword -Force -AsPlainText
-
-Remove-Item -Path $pfxPath -Force -ErrorAction SilentlyContinue
 Remove-Item -Path $cerPath -Force -ErrorAction SilentlyContinue
 
-Export-PfxCertificate -Cert $certificate -FilePath $pfxPath -Password $securePassword -Force | Out-Null
 Export-Certificate -Cert $certificate -FilePath $cerPath -Type CERT -Force | Out-Null
 
-if (-not (Test-Path $pfxPath)) {
-    throw "Nie udalo sie wyeksportowac pliku PFX: $pfxPath"
+if (-not (Test-Path $cerPath)) {
+    throw "Nie udalo sie wyeksportowac pliku CER: $cerPath"
 }
 
 & 'C:\Program Files\dotnet\dotnet.exe' msbuild `
@@ -74,8 +71,7 @@ if (-not (Test-Path $pfxPath)) {
     /p:UapAppxPackageBuildMode=SideloadOnly `
     /p:AppxBundle=Never `
     /p:AppxPackageSigningEnabled=true `
-    /p:PackageCertificateKeyFile=$pfxPath `
-    /p:PackageCertificatePassword=$certificatePassword
+    /p:PackageCertificateThumbprint=$($certificate.Thumbprint)
 
 if ($LASTEXITCODE -ne 0) {
     throw "MSBuild zakonczyl sie bledem: $LASTEXITCODE"
@@ -87,6 +83,23 @@ $latestPackage = Get-ChildItem $packageRoot -Directory |
 
 if (-not $latestPackage) {
     throw 'Nie znaleziono wygenerowanego katalogu AppPackages.'
+}
+
+$latestCer = Get-ChildItem $latestPackage.FullName -Filter '*.cer' -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+if (-not $latestCer) {
+    $latestMsix = Get-ChildItem $latestPackage.FullName -Filter '*.msix' |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+
+    if (-not $latestMsix) {
+        throw "Nie znaleziono pliku MSIX w katalogu: $($latestPackage.FullName)"
+    }
+
+    $targetCerPath = Join-Path $latestPackage.FullName ("{0}.cer" -f [System.IO.Path]::GetFileNameWithoutExtension($latestMsix.Name))
+    Copy-Item -Path $cerPath -Destination $targetCerPath -Force
 }
 
 Write-Host ''

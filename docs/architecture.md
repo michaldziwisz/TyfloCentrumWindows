@@ -19,7 +19,7 @@
 
 ## Planowany uklad solution
 
-### `src/Tyflocentrum.Windows.App`
+### `src/TyfloCentrum.Windows.App`
 Odpowiada za:
 - punkt startowy aplikacji
 - bootstrap DI
@@ -27,7 +27,7 @@ Odpowiada za:
 - shell
 - integracje systemowe zwiazane z pakowaniem
 
-### `src/Tyflocentrum.Windows.UI`
+### `src/TyfloCentrum.Windows.UI`
 Odpowiada za:
 - widoki
 - ViewModel'e
@@ -36,14 +36,14 @@ Odpowiada za:
 - focus management
 - zachowania dostepnosci i automatyzacji
 
-### `src/Tyflocentrum.Windows.Domain`
+### `src/TyfloCentrum.Windows.Domain`
 Odpowiada za:
 - modele domenowe
 - use case'y
 - polityki odtwarzania i wyszukiwania
 - kontrakty serwisow
 
-### `src/Tyflocentrum.Windows.Infrastructure`
+### `src/TyfloCentrum.Windows.Infrastructure`
 Odpowiada za:
 - klientow HTTP
 - storage lokalny

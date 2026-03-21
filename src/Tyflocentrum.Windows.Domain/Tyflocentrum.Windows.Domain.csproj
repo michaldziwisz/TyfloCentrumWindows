@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>Tyflocentrum.Windows.Domain</RootNamespace>
-    <AssemblyName>Tyflocentrum.Windows.Domain</AssemblyName>
-  </PropertyGroup>
-</Project>

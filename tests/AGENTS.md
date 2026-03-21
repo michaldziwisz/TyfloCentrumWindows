@@ -13,11 +13,11 @@
   - or a linked manual verification checklist in docs
 
 ## Test strategy
-- `Tyflocentrum.Windows.Tests/`
+- `TyfloCentrum.Windows.Tests/`
   - domain
   - infrastructure
   - parser and policy tests
-- `Tyflocentrum.Windows.UITests/`
+- `TyfloCentrum.Windows.UITests/`
   - shell smoke
   - navigation smoke
   - future accessibility automation helpers

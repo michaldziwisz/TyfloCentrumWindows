@@ -1,6 +1,6 @@
 # Dokumentacja projektu
 
-Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Windows aplikacji Tyflocentrum.
+Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Windows aplikacji TyfloCentrum.
 
 ## Start tutaj
 - [README repo](../README.md)

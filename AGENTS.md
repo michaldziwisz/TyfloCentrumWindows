@@ -10,10 +10,10 @@
 | Module | Type | Path | What it owns | How to run | Tests | Docs | AGENTS |
 |--------|------|------|--------------|------------|-------|------|--------|
 | docs | docs | `docs/` | product scope, architecture, a11y, release, ADRs, backlog | n/a | manual review | `docs/index.md` | `docs/AGENTS.md` |
-| app | app | `src/Tyflocentrum.Windows.App/` | app bootstrap, shell, packaged entrypoint, app assets | open in Visual Studio on Windows | future solution build | `docs/architecture.md` | `src/AGENTS.md` |
-| ui | library | `src/Tyflocentrum.Windows.UI/` | viewmodels, UI registrations, future shared controls and feature views | open in Visual Studio on Windows | future solution build | `docs/accessibility-requirements.md` | `src/AGENTS.md` |
-| domain | library | `src/Tyflocentrum.Windows.Domain/` | domain models, contracts, app section catalog, future policies | open in Visual Studio on Windows | future solution build | `docs/product-requirements.md` | `src/AGENTS.md` |
-| infrastructure | library | `src/Tyflocentrum.Windows.Infrastructure/` | endpoints, storage adapters, service registration, future HTTP/audio integrations | open in Visual Studio on Windows | future solution build | `docs/api-integrations.md` | `src/AGENTS.md` |
+| app | app | `src/TyfloCentrum.Windows.App/` | app bootstrap, shell, packaged entrypoint, app assets | open in Visual Studio on Windows | future solution build | `docs/architecture.md` | `src/AGENTS.md` |
+| ui | library | `src/TyfloCentrum.Windows.UI/` | viewmodels, UI registrations, future shared controls and feature views | open in Visual Studio on Windows | future solution build | `docs/accessibility-requirements.md` | `src/AGENTS.md` |
+| domain | library | `src/TyfloCentrum.Windows.Domain/` | domain models, contracts, app section catalog, future policies | open in Visual Studio on Windows | future solution build | `docs/product-requirements.md` | `src/AGENTS.md` |
+| infrastructure | library | `src/TyfloCentrum.Windows.Infrastructure/` | endpoints, storage adapters, service registration, future HTTP/audio integrations | open in Visual Studio on Windows | future solution build | `docs/api-integrations.md` | `src/AGENTS.md` |
 | tests | tests | `tests/` | unit tests and future UI automation scaffolding | open in Visual Studio on Windows | future solution build | `docs/testing-strategy.md` | `tests/AGENTS.md` |
 
 ## Cross-domain workflows

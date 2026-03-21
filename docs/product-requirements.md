@@ -1,7 +1,7 @@
 # Wymagania produktowe
 
 ## Cel produktu
-Zbudowac aplikacje desktopowa dla systemu Windows, ktora zapewnia funkcjonalnosc rownowazna obecnej aplikacji iOS `Tyflocentrum`, z naciskiem na:
+Zbudowac aplikacje desktopowa dla systemu Windows, ktora zapewnia funkcjonalnosc rownowazna obecnej aplikacji iOS `TyfloCentrum`, z naciskiem na:
 - dostepnosc dla czytnikow ekranu
 - wygodna obsluge klawiatura
 - odtwarzanie audio i live streamu
@@ -80,4 +80,3 @@ Zbudowac aplikacje desktopowa dla systemu Windows, ktora zapewnia funkcjonalnosc
   - odczytac artykul
   - wyslac wiadomosc do radia
 - aplikacja przechodzi publikacje w Microsoft Store bez zmiany modelu pakowania
-

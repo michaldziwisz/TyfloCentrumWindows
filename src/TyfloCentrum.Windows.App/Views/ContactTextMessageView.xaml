@@ -1,0 +1,75 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.ContactTextMessageView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="OnLoaded"
+    mc:Ignorable="d">
+    <Grid RowSpacing="12" MaxWidth="640">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            Text="Wiadomość tekstowa zostanie wysłana do redakcji tylko podczas aktywnej audycji interaktywnej."
+            TextWrapping="WrapWholeWords" />
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="1"
+            AutomationProperties.LiveSetting="Polite"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <InfoBar
+            x:Name="ErrorBar"
+            Grid.Row="2"
+            IsClosable="False"
+            IsOpen="False"
+            Severity="Error"
+            Visibility="Collapsed" />
+
+        <StackPanel
+            Grid.Row="3"
+            Spacing="12">
+            <TextBox
+                x:Name="NameTextBox"
+                AutomationProperties.AutomationId="contact.name"
+                Header="Imię"
+                PlaceholderText="Wpisz imię"
+                Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox
+                x:Name="MessageTextBox"
+                AutomationProperties.AutomationId="contact.message"
+                AcceptsReturn="True"
+                Header="Wiadomość"
+                Height="220"
+                PlaceholderText="Wpisz treść wiadomości"
+                Text="{Binding Message, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="4"
+            HorizontalAlignment="Left"
+            Orientation="Horizontal"
+            Spacing="12">
+            <Button
+                x:Name="SendButton"
+                AutomationProperties.AutomationId="contact.send"
+                Click="OnSendClick"
+                Content="Wyślij wiadomość" />
+            <ProgressRing
+                x:Name="SendingIndicator"
+                IsActive="False"
+                Visibility="Collapsed" />
+        </StackPanel>
+    </Grid>
+</UserControl>

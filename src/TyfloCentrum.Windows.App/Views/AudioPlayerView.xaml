@@ -1,0 +1,207 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.AudioPlayerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Language="pl-PL"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <UserControl.KeyboardAccelerators>
+        <KeyboardAccelerator
+            Key="Space"
+            Modifiers="Control"
+            Invoked="OnTogglePlaybackAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="D"
+            Modifiers="Control"
+            Invoked="OnToggleFavoriteAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Left"
+            Modifiers="Control"
+            Invoked="OnSkipBackwardAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Right"
+            Modifiers="Control"
+            Invoked="OnSkipForwardAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Up"
+            Modifiers="Control"
+            Invoked="OnIncreasePlaybackRateAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Down"
+            Modifiers="Control"
+            Invoked="OnDecreasePlaybackRateAcceleratorInvoked" />
+    </UserControl.KeyboardAccelerators>
+    <UserControl.Resources>
+        <DataTemplate x:Key="ChapterMarkerItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding TimeLabel}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RelatedLinkItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding HostLabel}"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid RowSpacing="12" MaxWidth="760">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock
+                x:Name="SourceTypeTextBlock"
+                FontWeight="SemiBold" />
+            <TextBlock
+                x:Name="TitleTextBlock"
+                AutomationProperties.HeadingLevel="Level2"
+                Style="{ThemeResource TitleTextBlockStyle}"
+                TextWrapping="WrapWholeWords" />
+            <TextBlock
+                x:Name="SubtitleTextBlock"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords"
+                Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="1"
+            Spacing="8">
+            <StackPanel
+                x:Name="PodcastControlsPanel"
+                Orientation="Horizontal"
+                Spacing="8"
+                Visibility="Collapsed">
+                <ComboBox
+                    x:Name="PlaybackRateComboBox"
+                    AutomationProperties.HelpText="Skróty: Ctrl+strzałka w górę i Ctrl+strzałka w dół"
+                    AutomationProperties.Name="Prędkość odtwarzania"
+                    Header="Prędkość odtwarzania"
+                    MinWidth="180"
+                    SelectionChanged="OnPlaybackRateSelectionChanged" />
+            </StackPanel>
+
+            <StackPanel
+                x:Name="VolumeControlsPanel"
+                Spacing="4">
+                <TextBlock
+                    AutomationProperties.HeadingLevel="Level3"
+                    FontWeight="SemiBold"
+                    Text="Głośność" />
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Slider
+                        x:Name="VolumeSlider"
+                        AutomationProperties.Name="Głośność odtwarzacza"
+                        LargeChange="10"
+                        Maximum="100"
+                        Minimum="0"
+                        SmallChange="5"
+                        StepFrequency="5"
+                        ValueChanged="OnVolumeSliderValueChanged" />
+                    <TextBlock
+                        x:Name="VolumeValueTextBlock"
+                        Grid.Column="1"
+                        VerticalAlignment="Center" />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="2"
+            AutomationProperties.LiveSetting="Polite"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <TextBlock
+            x:Name="OutputDeviceTextBlock"
+            Grid.Row="3"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <StackPanel
+            x:Name="ShortcutHelpPanel"
+            Grid.Row="4"
+            Spacing="4"
+            Visibility="Collapsed">
+                <TextBlock
+                    x:Name="ShortcutHelpTextBlock"
+                    AutomationProperties.AutomationId="AudioPlayer.Shortcuts"
+                    AutomationProperties.Name="Skróty klawiaturowe odtwarzacza"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Ctrl+strzałka w górę i dół zmieniają prędkość, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka."
+                    TextWrapping="WrapWholeWords" />
+        </StackPanel>
+
+        <StackPanel
+            x:Name="ShowNotesPanel"
+            Grid.Row="5"
+            Spacing="8"
+            Visibility="Collapsed" />
+        
+        <InfoBar
+            x:Name="ErrorBar"
+            Grid.Row="6"
+            IsClosable="False"
+            IsOpen="False"
+            Severity="Error"
+            Visibility="Collapsed" />
+
+        <MediaPlayerElement
+            x:Name="PlayerElement"
+            AutomationProperties.HelpText="Skrót: Ctrl+spacja"
+            Grid.Row="7"
+            AreTransportControlsEnabled="True"
+            AutoPlay="False"
+            Language="pl-PL"
+            MinHeight="320" />
+    </Grid>
+</UserControl>

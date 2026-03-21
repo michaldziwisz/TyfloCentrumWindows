@@ -1,0 +1,156 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.FavoritesSectionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:TyfloCentrum.Windows.App.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="OnLoaded"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <DataTemplate x:Key="FavoriteItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.AutomationId="favorites.item"
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding ItemTypeLabel}" />
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{Binding Title}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding SecondaryText}"
+                        TextWrapping="WrapWholeWords"
+                        Visibility="{Binding HasSecondaryText, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding PublishedDate}"
+                        Visibility="{Binding HasPublishedDate, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding ContextLabel}"
+                        TextWrapping="WrapWholeWords"
+                        Visibility="{Binding HasContextLabel, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding SavedAtLabel}" />
+                    <Button
+                        HorizontalAlignment="Left"
+                        AutomationProperties.Name="{Binding OpenLinkLabel}"
+                        Click="OnOpenItemClick"
+                        Content="Otwórz w przeglądarce"
+                        Visibility="{Binding HasExternalOpenAction, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <Button
+                        HorizontalAlignment="Left"
+                        AutomationProperties.Name="{Binding CopyLinkLabel}"
+                        Click="OnCopyLinkClick"
+                        Content="Kopiuj odnośnik"
+                        Visibility="{Binding HasCopyLinkAction, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <Button
+                        HorizontalAlignment="Left"
+                        AutomationProperties.Name="{Binding ShareLinkLabel}"
+                        Click="OnShareLinkClick"
+                        Content="Udostępnij"
+                        Visibility="{Binding HasShareLinkAction, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <Button
+                        HorizontalAlignment="Left"
+                        AutomationProperties.Name="{Binding RemoveLabel}"
+                        Click="OnRemoveClick"
+                        Content="Usuń z ulubionych" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            FontWeight="SemiBold"
+            Text="Lokalna lista ulubionych pozycji zapisanych na tym komputerze."
+            TextWrapping="WrapWholeWords" />
+
+        <ComboBox
+            x:Name="FilterComboBox"
+            Grid.Row="1"
+            Width="240"
+            AutomationProperties.AutomationId="favorites.filter"
+            AutomationProperties.Name="Filtr ulubionych"
+            DisplayMemberPath="Label"
+            Header="Pokaż"
+            ItemsSource="{Binding Filters}"
+            KeyDown="OnFilterComboBoxKeyDown"
+            SelectedItem="{Binding SelectedFilter, Mode=TwoWay}"
+            SelectionChanged="OnFilterSelectionChanged" />
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="2"
+            AutomationProperties.LiveSetting="Polite"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{Binding StatusMessage}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <ProgressRing
+            x:Name="LoadingIndicator"
+            Grid.Row="3"
+            IsActive="False"
+            Visibility="Collapsed" />
+
+        <StackPanel
+            Grid.Row="4"
+            Spacing="8">
+            <StackPanel
+                x:Name="ErrorPanel"
+                Spacing="8"
+                Visibility="Collapsed">
+                <InfoBar
+                    x:Name="ErrorBar"
+                    AutomationProperties.AutomationId="favorites.error"
+                    IsClosable="False"
+                    IsOpen="False"
+                    Severity="Error" />
+                <Button
+                    AutomationProperties.AutomationId="favorites.retry"
+                    Click="OnRetryClick"
+                    Content="Spróbuj ponownie" />
+            </StackPanel>
+
+            <TextBlock
+                x:Name="EmptyStateText"
+                Visibility="Collapsed"
+                Text="{Binding EmptyStateText}" />
+
+            <ListView
+                x:Name="ItemsList"
+                AutomationProperties.AutomationId="favorites.list"
+                AutomationProperties.Name="Lista ulubionych pozycji"
+                IsItemClickEnabled="True"
+                ItemClick="OnItemsListItemClick"
+                ItemTemplate="{StaticResource FavoriteItemTemplate}"
+                ItemsSource="{Binding Items}"
+                KeyDown="OnItemsListKeyDown"
+                SelectionMode="Single" />
+        </StackPanel>
+    </Grid>
+</UserControl>

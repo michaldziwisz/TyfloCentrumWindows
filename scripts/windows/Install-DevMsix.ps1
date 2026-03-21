@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Get-PackageIdentityName([string]$repoRoot) {
-    $manifestPath = Join-Path $repoRoot 'src\Tyflocentrum.Windows.App\Package.appxmanifest'
+    $manifestPath = Join-Path $repoRoot 'src\TyfloCentrum.Windows.App\Package.appxmanifest'
     [xml]$manifest = Get-Content $manifestPath
     return $manifest.Package.Identity.Name
 }
@@ -42,7 +42,10 @@ if (-not (Test-Path $installScript)) {
 }
 
 function Remove-ExistingPackage([string[]]$packageNames) {
-    Get-Process -Name 'Tyflocentrum.Windows.App' -ErrorAction SilentlyContinue | Stop-Process -Force
+    @('TyfloCentrum.Windows.App', 'Tyflocentrum.Windows.App') |
+        ForEach-Object {
+            Get-Process -Name $_ -ErrorAction SilentlyContinue | Stop-Process -Force
+        }
 
     foreach ($packageName in $packageNames | Select-Object -Unique) {
         $installedPackages = Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue
@@ -67,7 +70,7 @@ if (-not (Test-IsAdministrator)) {
     exit 0
 }
 
-Remove-ExistingPackage -packageNames @($packageIdentityName, 'Tyflocentrum.Windows')
+Remove-ExistingPackage -packageNames @($packageIdentityName, 'TyfloCentrum.Windows', 'Tyflocentrum.Windows')
 
 Write-Host 'Instaluje najnowszy pakiet testowy...' -ForegroundColor Green
 & $installScript -Force

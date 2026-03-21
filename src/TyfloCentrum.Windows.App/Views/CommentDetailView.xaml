@@ -1,0 +1,35 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.CommentDetailView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Grid RowSpacing="12" MaxWidth="720">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel
+            Grid.Row="0"
+            AutomationProperties.Name="{Binding AccessibleLabel}"
+            Spacing="4">
+            <TextBlock
+                FontWeight="SemiBold"
+                Text="Komentarz" />
+            <TextBlock
+                AutomationProperties.HeadingLevel="Level2"
+                Style="{ThemeResource TitleTextBlockStyle}"
+                Text="{Binding AuthorName}"
+                TextWrapping="WrapWholeWords" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <TextBlock
+                AutomationProperties.AutomationId="CommentDetail.Body"
+                Text="{Binding BodyDisplayText}"
+                TextWrapping="WrapWholeWords" />
+        </ScrollViewer>
+    </Grid>
+</UserControl>

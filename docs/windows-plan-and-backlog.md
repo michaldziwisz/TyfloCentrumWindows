@@ -1,7 +1,7 @@
 # TyfloCentrum Windows
 
 ## Cel
-- Zbudować aplikację desktopową dla Windows o funkcjonalności równoważnej obecnemu Tyflocentrum na iOS.
+- Zbudować aplikację desktopową dla Windows o funkcjonalności równoważnej obecnemu TyfloCentrum na iOS.
 - Priorytetem jest dostępność dla czytników ekranu, obsługa klawiaturą i zgodność z dystrybucją przez Microsoft Store.
 - Docelowy artefakt wdrożeniowy: `MSIX`, publikowany w Microsoft Store.
 
@@ -33,12 +33,12 @@
 - CI: GitHub Actions z buildem `MSIX`
 
 ## Proponowana struktura solution
-- `src/Tyflocentrum.Windows.App`
-- `src/Tyflocentrum.Windows.UI`
-- `src/Tyflocentrum.Windows.Domain`
-- `src/Tyflocentrum.Windows.Infrastructure`
-- `tests/Tyflocentrum.Windows.Tests`
-- `tests/Tyflocentrum.Windows.UITests`
+- `src/TyfloCentrum.Windows.App`
+- `src/TyfloCentrum.Windows.UI`
+- `src/TyfloCentrum.Windows.Domain`
+- `src/TyfloCentrum.Windows.Infrastructure`
+- `tests/TyfloCentrum.Windows.Tests`
+- `tests/TyfloCentrum.Windows.UITests`
 - `docs/`
 
 ## Zakres funkcjonalny `1.0`

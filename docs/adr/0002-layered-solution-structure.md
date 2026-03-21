@@ -15,14 +15,14 @@ Projekt ma byc rozwijany iteracyjnie przez agenta i czlowieka, z duzym naciskiem
 
 ## Decyzja
 Solution dzielimy na cztery glowne projekty:
-- `Tyflocentrum.Windows.App`
-- `Tyflocentrum.Windows.UI`
-- `Tyflocentrum.Windows.Domain`
-- `Tyflocentrum.Windows.Infrastructure`
+- `TyfloCentrum.Windows.App`
+- `TyfloCentrum.Windows.UI`
+- `TyfloCentrum.Windows.Domain`
+- `TyfloCentrum.Windows.Infrastructure`
 
 Osobno utrzymujemy projekty testowe:
-- `Tyflocentrum.Windows.Tests`
-- `Tyflocentrum.Windows.UITests`
+- `TyfloCentrum.Windows.Tests`
+- `TyfloCentrum.Windows.UITests`
 
 ## Uzasadnienie
 - `App` powinno zostac cienka warstwa bootstrap i hostingu.

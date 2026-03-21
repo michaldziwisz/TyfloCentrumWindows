@@ -55,7 +55,7 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
 - publikacja i finalna walidacja Microsoft Store
 
 ## Minimalna procedura startu na Windows
-1. Otworzyc `Tyflocentrum.Windows.sln` w Visual Studio 2022.
+1. Otworzyc `TyfloCentrum.Windows.sln` w Visual Studio 2022.
 2. Pozwolic Visual Studio przywrocic pakiety NuGet.
 3. Zweryfikowac, czy workloadi i SDK sa kompletne.
 4. Wybrac `x64` jako pierwsza platforme uruchomieniowa.
@@ -64,12 +64,12 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
 ## Zweryfikowane komendy z WSL
 - build:
   ```bash
-  WIN_SOLUTION=$(wslpath -w /mnt/d/projekty/tyflocentrum_pc/Tyflocentrum.Windows.sln)
+  WIN_SOLUTION=$(wslpath -w /mnt/d/projekty/tyflocentrum_pc/TyfloCentrum.Windows.sln)
   '/mnt/c/Program Files/dotnet/dotnet.exe' build "$WIN_SOLUTION" -c Debug -p:Platform=x64
   ```
 - test:
   ```bash
-  WIN_SOLUTION=$(wslpath -w /mnt/d/projekty/tyflocentrum_pc/Tyflocentrum.Windows.sln)
+  WIN_SOLUTION=$(wslpath -w /mnt/d/projekty/tyflocentrum_pc/TyfloCentrum.Windows.sln)
   '/mnt/c/Program Files/dotnet/dotnet.exe' test "$WIN_SOLUTION" -c Debug -p:Platform=x64
   ```
 
@@ -87,10 +87,10 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
 
 ## Jak uruchamiac artefakt testowy
 - nie uruchamiaj bezposrednio:
-  - `src/Tyflocentrum.Windows.App/bin/x64/Debug/net8.0-windows10.0.19041.0/Tyflocentrum.Windows.App.exe`
+  - `src/TyfloCentrum.Windows.App/bin/x64/Debug/net8.0-windows10.0.19041.0/TyfloCentrum.Windows.App.exe`
 - ten plik nie jest poprawnym artefaktem testowym dla packaged app i konczy sie bledem startu Windows App SDK bez tozsamosci pakietu
 - poprawny test lokalny powinien isc przez katalog `AppPackages`, na przyklad:
-  - `artifacts/SignedAppPackagesV3/Tyflocentrum.Windows.App_0.1.0.0_x64_Debug_Test/Install.ps1`
+  - `artifacts/SignedAppPackagesV3/TyfloCentrum.Windows.App_0.1.0.0_x64_Debug_Test/Install.ps1`
 - `Install.ps1` nalezy uruchomic w Windows PowerShell
 - jesli skrypt poprosi o podniesione uprawnienia do instalacji certyfikatu, uruchom go w podniesionym PowerShell albo przez `Run with PowerShell`
 - repo ma tez skrypty pomocnicze:
@@ -100,7 +100,7 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
   - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DevMsix.ps1 -Install`
 - ten workflow:
   - buduje nowy pakiet
-  - usuwa zainstalowany pakiet testowy `Tyflocentrum.Windows` oraz pozostalosci po poprzednich wariantach, jesli sa obecne
+  - usuwa zainstalowany pakiet testowy `TyfloCentrum.Windows` oraz pozostalosci po poprzednich wariantach, jesli sa obecne
   - instaluje nowy build
 
 ## Powiazane dokumenty

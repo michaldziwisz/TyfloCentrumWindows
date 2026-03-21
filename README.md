@@ -21,7 +21,7 @@ Status repo:
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
 ## Cele produktu
-- odtworzyc funkcjonalnosc obecnej aplikacji iOS `Tyflocentrum`
+- odtworzyc funkcjonalnosc obecnej aplikacji iOS `TyfloCentrum`
 - zapewnic wysoka jakosc obslugi `Narrator` i `NVDA`
 - dostarczyc pakiet `MSIX` gotowy do publikacji w Microsoft Store
 
@@ -45,12 +45,12 @@ Wnioski z analizy tej aplikacji sa zebrane w:
 - [Macierz parytetu funkcji](docs/feature-parity-matrix.md)
 
 ## Planowany uklad solution
-- `src/Tyflocentrum.Windows.App`
-- `src/Tyflocentrum.Windows.UI`
-- `src/Tyflocentrum.Windows.Domain`
-- `src/Tyflocentrum.Windows.Infrastructure`
-- `tests/Tyflocentrum.Windows.Tests`
-- `tests/Tyflocentrum.Windows.UITests`
+- `src/TyfloCentrum.Windows.App`
+- `src/TyfloCentrum.Windows.UI`
+- `src/TyfloCentrum.Windows.Domain`
+- `src/TyfloCentrum.Windows.Infrastructure`
+- `tests/TyfloCentrum.Windows.Tests`
+- `tests/TyfloCentrum.Windows.UITests`
 - `docs/`
 
 ## Zasady pracy
@@ -59,7 +59,7 @@ Wnioski z analizy tej aplikacji sa zebrane w:
 - zmiany w architekturze, dostepnosci lub procesie release aktualizuja tez dokumentacje
 
 ## Testowanie lokalne
-- nie uruchamiaj bezposrednio `src/Tyflocentrum.Windows.App/bin/.../Tyflocentrum.Windows.App.exe`
+- nie uruchamiaj bezposrednio `src/TyfloCentrum.Windows.App/bin/.../TyfloCentrum.Windows.App.exe`
 - ten projekt jest obecnie budowany jako packaged desktop app i testowym artefaktem jest pakiet z katalogu `artifacts/AppPackages/` albo `artifacts/SignedAppPackages*/`
 - do recznego testu na Windows uzywaj wygenerowanego `Install.ps1` lub `Add-AppDevPackage.ps1`
 - najprostsza sciezka developerska:

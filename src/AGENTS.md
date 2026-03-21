@@ -5,19 +5,19 @@
 - This directory owns implementation code for the Windows application.
 
 ## Modules
-- `Tyflocentrum.Windows.App/`
+- `TyfloCentrum.Windows.App/`
   - bootstrap
   - packaged app entrypoint
   - shell host
-- `Tyflocentrum.Windows.UI/`
+- `TyfloCentrum.Windows.UI/`
   - viewmodels
   - UI-specific registrations
   - future shared controls and feature views
-- `Tyflocentrum.Windows.Domain/`
+- `TyfloCentrum.Windows.Domain/`
   - domain models
   - contracts
   - policies
-- `Tyflocentrum.Windows.Infrastructure/`
+- `TyfloCentrum.Windows.Infrastructure/`
   - HTTP
   - storage
   - Windows-specific adapters

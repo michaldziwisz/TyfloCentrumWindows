@@ -1,0 +1,125 @@
+<Page
+    x:Class="TyfloCentrum.Windows.App.Views.ShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="OnLoaded"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <DataTemplate x:Key="SectionItemTemplate">
+            <StackPanel
+                AutomationProperties.AutomationId="Shell.SectionItem"
+                AutomationProperties.Name="{Binding Title}"
+                Spacing="2">
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Text="{Binding Title}"
+                    TextWrapping="WrapWholeWords" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{Binding ShortcutLabel}" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator
+            Key="Number1"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number2"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number3"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number4"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number5"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number6"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number7"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
+    </Page.KeyboardAccelerators>
+    <Grid Padding="24" ColumnSpacing="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Spacing="12">
+            <TextBlock
+                Style="{ThemeResource TitleTextBlockStyle}"
+                Text="TyfloCentrum" />
+
+            <ListView
+                x:Name="SectionList"
+                AutomationProperties.AutomationId="Shell.Navigation"
+                AutomationProperties.Name="Lista sekcji głównych"
+                ItemTemplate="{StaticResource SectionItemTemplate}"
+                ItemsSource="{Binding Sections}"
+                KeyDown="OnSectionListKeyDown"
+                SelectionChanged="OnSectionListSelectionChanged"
+                SelectionMode="Single" />
+        </StackPanel>
+
+        <Grid
+            Grid.Column="1"
+            RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                Grid.Row="0"
+                AutomationProperties.HeadingLevel="Level1"
+                Style="{ThemeResource TitleTextBlockStyle}"
+                Text="{Binding SelectedSectionTitle}" />
+
+            <TextBlock
+                Grid.Row="1"
+                AutomationProperties.AutomationId="Shell.SectionDescription"
+                Text="{Binding SelectedSectionDescription}"
+                TextWrapping="WrapWholeWords" />
+
+            <TextBlock
+                Grid.Row="2"
+                AutomationProperties.AutomationId="Shell.Shortcuts"
+                AutomationProperties.Name="Skróty klawiaturowe sekcji"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{Binding KeyboardShortcutsDescription}"
+                TextWrapping="WrapWholeWords" />
+
+            <InfoBar
+                Grid.Row="3"
+                AutomationProperties.AutomationId="Shell.BootstrapInfo"
+                AutomationProperties.LiveSetting="Polite"
+                IsClosable="False"
+                IsOpen="True"
+                Message="{Binding BootstrapStatusMessage}"
+                Severity="Informational" />
+
+            <ContentPresenter
+                x:Name="SectionContentHost"
+                Grid.Row="4"
+                AutomationProperties.AutomationId="Shell.SectionContent" />
+        </Grid>
+    </Grid>
+</Page>
