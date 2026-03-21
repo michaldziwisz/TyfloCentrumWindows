@@ -1,0 +1,67 @@
+name: Store Get Base Metadata
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: microsoft-store-submission
+  cancel-in-progress: false
+
+jobs:
+  export-metadata:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+      SELLER_ID: ${{ secrets.SELLER_ID }}
+      AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+      AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Store configuration
+        shell: pwsh
+        run: |
+          foreach ($required in @(
+            'STORE_PRODUCT_ID',
+            'AZURE_AD_TENANT_ID',
+            'SELLER_ID',
+            'AZURE_AD_APPLICATION_CLIENT_ID',
+            'AZURE_AD_APPLICATION_SECRET'
+          )) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "env:$required").Value)) {
+              throw "Brakuje konfiguracji GitHub Actions: $required"
+            }
+          }
+
+      - name: Install Microsoft Store CLI
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      - name: Reconfigure Microsoft Store CLI
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId $env:AZURE_AD_TENANT_ID `
+            --sellerId $env:SELLER_ID `
+            --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID `
+            --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+
+      - name: Export base submission metadata
+        shell: pwsh
+        run: |
+          $metadataDir = Join-Path $env:RUNNER_TEMP 'store-metadata'
+          New-Item -ItemType Directory -Force -Path $metadataDir | Out-Null
+          $metadataPath = Join-Path $metadataDir 'base-submission.json'
+          msstore submission get $env:STORE_PRODUCT_ID | Set-Content -Path $metadataPath -Encoding utf8
+          "metadata_path=$metadataPath" >> $env:GITHUB_ENV
+
+      - name: Upload base metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-base-metadata
+          path: ${{ env.metadata_path }}
+          if-no-files-found: error

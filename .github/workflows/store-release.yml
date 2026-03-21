@@ -1,0 +1,141 @@
+name: Store Release Submission
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Architektura pakietu MSIX
+        required: true
+        default: x64
+        type: choice
+        options:
+          - x64
+          - ARM64
+      rollout_percentage:
+        description: Procent rolloutu pakietu (puste = pelne wydanie)
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: microsoft-store-submission
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+      SELLER_ID: ${{ secrets.SELLER_ID }}
+      AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+      AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+      ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Validate Store configuration
+        shell: pwsh
+        run: |
+          foreach ($required in @(
+            'STORE_PRODUCT_ID',
+            'AZURE_AD_TENANT_ID',
+            'SELLER_ID',
+            'AZURE_AD_APPLICATION_CLIENT_ID',
+            'AZURE_AD_APPLICATION_SECRET'
+          )) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "env:$required").Value)) {
+              throw "Brakuje konfiguracji GitHub Actions: $required"
+            }
+          }
+
+          if (-not [string]::IsNullOrWhiteSpace($env:ROLLOUT_PERCENTAGE)) {
+            $value = [int]$env:ROLLOUT_PERCENTAGE
+            if ($value -lt 0 -or $value -gt 100) {
+              throw 'rollout_percentage musi byc liczba od 0 do 100.'
+            }
+          }
+
+      - name: Install Microsoft Store CLI
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      - name: Reconfigure Microsoft Store CLI
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId $env:AZURE_AD_TENANT_ID `
+            --sellerId $env:SELLER_ID `
+            --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID `
+            --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+
+      - name: Build release MSIX
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DevMsix.ps1 -Configuration Release -Platform ${{ inputs.platform }}
+
+      - name: Resolve package artifacts
+        id: artifacts
+        shell: pwsh
+        run: |
+          $packageDir = Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts\SignedAppPackages" -Directory |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $packageDir) {
+            throw 'Nie znaleziono katalogu pakietu MSIX.'
+          }
+
+          $msix = Get-ChildItem $packageDir.FullName -Filter *.msix |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $msix) {
+            throw 'Nie znaleziono pliku MSIX.'
+          }
+
+          $appxsym = Get-ChildItem $packageDir.FullName -Filter *.appxsym -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+
+          "package_dir=$($packageDir.FullName)" >> $env:GITHUB_OUTPUT
+          "msix_path=$($msix.FullName)" >> $env:GITHUB_OUTPUT
+          if ($appxsym) {
+            "appxsym_path=$($appxsym.FullName)" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-release-${{ inputs.platform }}
+          path: |
+            ${{ steps.artifacts.outputs.msix_path }}
+            ${{ steps.artifacts.outputs.appxsym_path }}
+          if-no-files-found: error
+
+      - name: Publish submission to Microsoft Store
+        shell: pwsh
+        run: |
+          $arguments = @(
+            'publish',
+            "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App",
+            '--inputFile', '${{ steps.artifacts.outputs.msix_path }}',
+            '-id', $env:STORE_PRODUCT_ID
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace($env:ROLLOUT_PERCENTAGE)) {
+            $arguments += @('--packageRolloutPercentage', $env:ROLLOUT_PERCENTAGE)
+          }
+
+          & msstore @arguments
+
+      - name: Poll submission status
+        shell: pwsh
+        run: |
+          msstore submission poll $env:STORE_PRODUCT_ID

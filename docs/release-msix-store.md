@@ -32,10 +32,21 @@ Do weryfikacji przed implementacja:
 - build
 - test
 - package `MSIX`
+- package symbols `.appxsym`
 - artefakt gotowy do submission
 - dla lokalnych testow developerskich:
   - nie uzywac luznego `exe` z `bin/`
   - uzywac `Install.ps1` lub `Add-AppDevPackage.ps1` z wygenerowanego katalogu `AppPackages`
+
+## Automatyzacja przez GitHub Actions
+- repo ma przygotowane workflow do draft submission, release submission oraz metadata submission
+- workflow opieraja sie o `Microsoft Store Developer CLI (preview)` i `microsoft/microsoft-store-apppublisher@v1.1`
+- workflow sa uruchamiane recznie przez `workflow_dispatch`
+- do automatycznej publikacji wymagane sa sekrety GitHub i `STORE_PRODUCT_ID`
+- pierwsza konfiguracja aplikacji i pierwsza submission nadal musza byc wykonane recznie w Partner Center
+
+Szczegoly:
+- [Microsoft Store przez GitHub Actions](store-publishing-github-actions.md)
 
 ## Submission checklist
 - opis aplikacji

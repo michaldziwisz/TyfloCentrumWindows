@@ -26,6 +26,7 @@ Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Win
 
 ## Release
 - [Pakowanie MSIX i Microsoft Store](release-msix-store.md)
+- [Microsoft Store przez GitHub Actions](store-publishing-github-actions.md)
 
 ## Decyzje architektoniczne
 - [ADR 0001 - WinUI 3 + Windows App SDK + MSIX](adr/0001-winui3-windowsappsdk-msix.md)

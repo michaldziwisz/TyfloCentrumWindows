@@ -1,0 +1,82 @@
+name: Store Update Metadata
+
+on:
+  workflow_dispatch:
+    inputs:
+      metadata_path:
+        description: Sciezka do JSON metadata submission
+        required: true
+        default: store/metadata/submission.json
+        type: string
+      commit_submission:
+        description: Czy po aktualizacji metadata od razu zlozyc submission do Store
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: microsoft-store-submission
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+      SELLER_ID: ${{ secrets.SELLER_ID }}
+      AZURE_AD_APPLICATION_CLIENT_ID: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+      AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+      METADATA_PATH: ${{ inputs.metadata_path }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Store configuration and metadata file
+        shell: pwsh
+        run: |
+          foreach ($required in @(
+            'STORE_PRODUCT_ID',
+            'AZURE_AD_TENANT_ID',
+            'SELLER_ID',
+            'AZURE_AD_APPLICATION_CLIENT_ID',
+            'AZURE_AD_APPLICATION_SECRET'
+          )) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "env:$required").Value)) {
+              throw "Brakuje konfiguracji GitHub Actions: $required"
+            }
+          }
+
+          $absoluteMetadataPath = Join-Path $env:GITHUB_WORKSPACE $env:METADATA_PATH
+          if (-not (Test-Path $absoluteMetadataPath)) {
+            throw "Nie znaleziono pliku metadata: $absoluteMetadataPath"
+          }
+
+          "ABSOLUTE_METADATA_PATH=$absoluteMetadataPath" >> $env:GITHUB_ENV
+
+      - name: Install Microsoft Store CLI
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      - name: Reconfigure Microsoft Store CLI
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId $env:AZURE_AD_TENANT_ID `
+            --sellerId $env:SELLER_ID `
+            --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID `
+            --clientSecret $env:AZURE_AD_APPLICATION_SECRET
+
+      - name: Update metadata draft
+        shell: pwsh
+        run: |
+          msstore submission updateMetadata $env:STORE_PRODUCT_ID $env:ABSOLUTE_METADATA_PATH
+
+      - name: Publish metadata submission
+        if: ${{ inputs.commit_submission }}
+        shell: pwsh
+        run: |
+          msstore submission publish $env:STORE_PRODUCT_ID
+          msstore submission poll $env:STORE_PRODUCT_ID
