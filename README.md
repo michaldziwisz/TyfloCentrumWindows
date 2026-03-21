@@ -66,6 +66,7 @@ Wnioski z analizy tej aplikacji sa zebrane w:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DevMsix.ps1 -Install`
 - ta sciezka:
   - buduje nowy `MSIX`
+  - generuje odpowiadajaca mu paczke symboli `.appxsym`
   - usuwa poprzednia wersje pakietu testowego
   - instaluje nowy pakiet
 - szczegoly sa opisane w [Setup deweloperski](docs/developer-setup.md) i [Pakowanie MSIX i Microsoft Store](docs/release-msix-store.md)

@@ -100,6 +100,7 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
   - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DevMsix.ps1 -Install`
 - ten workflow:
   - buduje nowy pakiet
+  - generuje paczke aplikacji `.msix` i paczke symboli `.appxsym`
   - usuwa zainstalowany pakiet testowy `TyfloCentrum.Windows` oraz pozostalosci po poprzednich wariantach, jesli sa obecne
   - instaluje nowy build
 
