@@ -13,9 +13,8 @@ $repoRoot = (Resolve-Path (Join-Path $scriptRoot '..\..')).Path
 $projectPath = Join-Path $repoRoot 'src\TyfloCentrum.Windows.App\TyfloCentrum.Windows.App.csproj'
 $packageRoot = Join-Path $repoRoot 'artifacts\SignedAppPackages'
 $certificateRoot = Join-Path $repoRoot 'artifacts\DevCertificate'
-$publisher = 'CN=TyfloCentrum'
+$publisher = 'CN=1066245B-0EAF-4A43-9A3E-A1AF4E57687B'
 $certificateName = 'TyfloCentrum.Dev.Package'
-$certificatePassword = 'Tyflo1234'
 $codeSigningEku = '1.3.6.1.5.5.7.3.3'
 $packageSigningEku = '1.3.6.1.4.1.311.84.3.1'
 
