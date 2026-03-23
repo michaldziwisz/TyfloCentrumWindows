@@ -1,0 +1,24 @@
+[Unit]
+Description=TyfloCentrum Push Service for Windows WNS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tyfloce
+Group=tyfloce
+WorkingDirectory=/opt/tyflocentrum-push-windows
+ExecStart=/usr/bin/dotnet /opt/tyflocentrum-push-windows/TyfloCentrum.PushService.dll
+Restart=always
+RestartSec=5
+Environment=ASPNETCORE_URLS=http://127.0.0.1:9080
+Environment=PushService__DataDirectory=/var/lib/tyflocentrum-push-windows
+Environment=PushService__WebhookSecret=REPLACE_ME
+Environment=PushService__AzureTenantId=REPLACE_ME
+Environment=PushService__AzureClientId=REPLACE_ME
+Environment=PushService__AzureClientSecret=REPLACE_ME
+Environment=PushService__TyflopodcastWordPressBaseUrl=https://tyflopodcast.net/wp-json/
+Environment=PushService__TyfloswiatWordPressBaseUrl=https://tyfloswiat.pl/wp-json/
+
+[Install]
+WantedBy=multi-user.target

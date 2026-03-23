@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TyfloCentrum.PushService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:11574;http://localhost:11575"
+    }
+  }
+}
