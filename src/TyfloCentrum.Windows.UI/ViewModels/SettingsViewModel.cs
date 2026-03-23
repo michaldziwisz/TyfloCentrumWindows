@@ -9,16 +9,19 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
+    private readonly IDownloadDirectoryService _downloadDirectoryService;
     private bool _hasLoaded;
     private double? _lastPlaybackRate;
 
     public SettingsViewModel(
         IAppSettingsService appSettingsService,
-        IAudioDeviceCatalogService audioDeviceCatalogService
+        IAudioDeviceCatalogService audioDeviceCatalogService,
+        IDownloadDirectoryService downloadDirectoryService
     )
     {
         _appSettingsService = appSettingsService;
         _audioDeviceCatalogService = audioDeviceCatalogService;
+        _downloadDirectoryService = downloadDirectoryService;
 
         foreach (var value in PlaybackRateCatalog.SupportedValues)
         {
@@ -57,7 +60,16 @@ public partial class SettingsViewModel : ObservableObject
     private PlaybackRateOptionViewModel? selectedDefaultPlaybackRate;
 
     [ObservableProperty]
+    private string? downloadDirectoryPath;
+
+    [ObservableProperty]
     private bool rememberLastPlaybackRate;
+
+    [ObservableProperty]
+    private bool notifyAboutNewPodcasts;
+
+    [ObservableProperty]
+    private bool notifyAboutNewArticles;
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
@@ -72,6 +84,8 @@ public partial class SettingsViewModel : ObservableObject
 
     public bool CanResetAudioSettings => !IsLoading && !IsSaving;
 
+    public bool CanChooseDownloadDirectory => !IsLoading && !IsSaving;
+
     public bool HasRememberedPlaybackRate => _lastPlaybackRate.HasValue;
 
     public bool CanClearRememberedPlaybackRate => !IsLoading && !IsSaving && HasRememberedPlaybackRate;
@@ -79,6 +93,22 @@ public partial class SettingsViewModel : ObservableObject
     public string RememberedPlaybackRateDescription => _lastPlaybackRate is double value
         ? $"Ostatnio zapamiętana prędkość: {PlaybackRateCatalog.FormatLabel(value)}."
         : "Brak zapamiętanej prędkości odtwarzania.";
+
+    public string EffectiveDownloadDirectoryDescription
+    {
+        get
+        {
+            var effectivePath = _downloadDirectoryService.GetEffectiveDownloadDirectoryPath(
+                DownloadDirectoryPath
+            );
+            return string.IsNullOrWhiteSpace(DownloadDirectoryPath)
+                ? $"Domyślny folder pobierania systemu Windows: {effectivePath}."
+                : $"Pobrane pliki będą zapisywane w folderze: {effectivePath}.";
+        }
+    }
+
+    public string NotificationsDescription =>
+        "Powiadomienia o nowych artykułach i podcastach pojawiają się, gdy aplikacja jest uruchomiona na tym komputerze.";
 
     public async Task LoadIfNeededAsync(CancellationToken cancellationToken = default)
     {
@@ -121,7 +151,10 @@ public partial class SettingsViewModel : ObservableObject
             SelectedInputDevice = SelectDeviceOption(InputDevices, settings.PreferredInputDeviceId);
             SelectedOutputDevice = SelectDeviceOption(OutputDevices, settings.PreferredOutputDeviceId);
             SelectedDefaultPlaybackRate = SelectPlaybackRate(settings.DefaultPlaybackRate);
+            DownloadDirectoryPath = settings.DownloadDirectoryPath;
             RememberLastPlaybackRate = settings.RememberLastPlaybackRate;
+            NotifyAboutNewPodcasts = settings.NotifyAboutNewPodcasts;
+            NotifyAboutNewArticles = settings.NotifyAboutNewArticles;
             _lastPlaybackRate = settings.LastPlaybackRate is null
                 ? null
                 : PlaybackRateCatalog.Coerce(settings.LastPlaybackRate.Value);
@@ -241,7 +274,23 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSave));
     }
 
+    partial void OnDownloadDirectoryPathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(EffectiveDownloadDirectoryDescription));
+    }
+
     partial void OnRememberLastPlaybackRateChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSave));
+    }
+
+    partial void OnNotifyAboutNewPodcastsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSave));
+    }
+
+    partial void OnNotifyAboutNewArticlesChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSave));
     }
@@ -251,9 +300,12 @@ public partial class SettingsViewModel : ObservableObject
         return new AppSettingsSnapshot(
             SelectedInputDevice?.DeviceId,
             SelectedOutputDevice?.DeviceId,
+            NormalizeDownloadDirectoryPath(DownloadDirectoryPath),
             SelectedDefaultPlaybackRate?.Value ?? PlaybackRateCatalog.DefaultValue,
             RememberLastPlaybackRate,
-            _lastPlaybackRate
+            _lastPlaybackRate,
+            NotifyAboutNewPodcasts,
+            NotifyAboutNewArticles
         ).Normalize();
     }
 
@@ -263,9 +315,16 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSave));
         OnPropertyChanged(nameof(CanRefreshDevices));
         OnPropertyChanged(nameof(CanResetAudioSettings));
+        OnPropertyChanged(nameof(CanChooseDownloadDirectory));
         OnPropertyChanged(nameof(HasRememberedPlaybackRate));
         OnPropertyChanged(nameof(CanClearRememberedPlaybackRate));
         OnPropertyChanged(nameof(RememberedPlaybackRateDescription));
+        OnPropertyChanged(nameof(EffectiveDownloadDirectoryDescription));
+    }
+
+    private static string? NormalizeDownloadDirectoryPath(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static void ReplaceItems<T>(ObservableCollection<T> collection, IReadOnlyList<T> items)

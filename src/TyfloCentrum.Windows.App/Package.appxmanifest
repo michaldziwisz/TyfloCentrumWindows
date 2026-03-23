@@ -2,16 +2,19 @@
 <Package
     xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
     xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+    xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+    xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
     xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-    IgnorableNamespaces="uap rescap">
+    IgnorableNamespaces="uap com desktop desktop4 rescap">
   <Identity
-      Name="TyfloCentrum.Windows"
-      Publisher="CN=TyfloCentrum"
+      Name="MichaDziwisz.TyfloCentrum"
+      Publisher="CN=1066245B-0EAF-4A43-9A3E-A1AF4E57687B"
       Version="0.1.0.0" />
 
   <Properties>
     <DisplayName>TyfloCentrum</DisplayName>
-    <PublisherDisplayName>TyfloCentrum</PublisherDisplayName>
+    <PublisherDisplayName>Michał Dziwisz</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -36,6 +39,21 @@
             Square310x310Logo="Assets\Square310x310Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <desktop:Extension Category="windows.toastNotificationActivation">
+          <desktop:ToastNotificationActivation ToastActivatorCLSID="0f1e1c0a-7c49-4a37-9a0d-6e7e0c4aa111" />
+        </desktop:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="$targetnametoken$.exe" Arguments="----AppNotificationActivated:">
+              <com:Class Id="0f1e1c0a-7c49-4a37-9a0d-6e7e0c4aa111" />
+            </com:ExeServer>
+            <com:ExeServer Executable="$targetnametoken$.exe" Arguments="----WindowsAppRuntimePushServer:">
+              <com:Class Id="6f96d75e-3f7c-46a4-bfe2-0bfdd8ddf2d1" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

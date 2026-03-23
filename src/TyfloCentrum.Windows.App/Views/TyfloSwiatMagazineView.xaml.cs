@@ -13,6 +13,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class TyfloSwiatMagazineView : UserControl
 {
+    private readonly IContentDownloadService _contentDownloadService;
     private readonly InAppBrowserDialogService _inAppBrowserDialogService;
     private readonly IShareService _shareService;
     private TyfloSwiatMagazineIssueItemViewModel? _pendingFocusedIssue;
@@ -23,11 +24,13 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
 
     public TyfloSwiatMagazineView(
         TyfloSwiatMagazineViewModel viewModel,
+        IContentDownloadService contentDownloadService,
         InAppBrowserDialogService inAppBrowserDialogService,
         IShareService shareService
     )
     {
         ViewModel = viewModel;
+        _contentDownloadService = contentDownloadService;
         _inAppBrowserDialogService = inAppBrowserDialogService;
         _shareService = shareService;
         InitializeComponent();
@@ -223,6 +226,11 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenTocItemInBrowserAsync(item);
         flyout.Items.Add(browserItem);
 
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
+        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł: {item.Title}");
+        downloadItem.Click += async (_, _) => await DownloadTocItemAsync(item);
+        flyout.Items.Add(downloadItem);
+
         var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
         AutomationProperties.SetName(shareItem, $"Udostępnij artykuł: {item.Title}");
         shareItem.Click += async (_, _) =>
@@ -287,6 +295,35 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
         if (HandleEscapeNavigation())
         {
             e.Handled = true;
+        }
+    }
+
+    private async Task DownloadTocItemAsync(TyfloSwiatMagazineTocItemViewModel item)
+    {
+        try
+        {
+            var filePath = await _contentDownloadService.DownloadTyfloSwiatPageAsync(
+                item.PageId,
+                item.Title,
+                item.PublishedDate,
+                item.Link
+            );
+            AutomationAnnouncementHelper.Announce(
+                TocItemsList,
+                $"Pobrano artykuł: {Path.GetFileName(filePath)}.",
+                important: true
+            );
+        }
+        catch
+        {
+            await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się pobrać artykułu.");
+        }
+
+        if (ViewModel.TocItems.Contains(item))
+        {
+            TocItemsList.SelectedItem = item;
+            TocItemsList.ScrollIntoView(item);
+            TocItemsList.Focus(FocusState.Programmatic);
         }
     }
 

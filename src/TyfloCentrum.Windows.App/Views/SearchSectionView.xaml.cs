@@ -14,6 +14,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class SearchSectionView : UserControl
 {
+    private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
     private readonly PostDetailDialogService _postDetailDialogService;
@@ -24,6 +25,7 @@ public sealed partial class SearchSectionView : UserControl
 
     public SearchSectionView(
         SearchViewModel viewModel,
+        IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
         IShareService shareService,
@@ -31,6 +33,7 @@ public sealed partial class SearchSectionView : UserControl
     )
     {
         ViewModel = viewModel;
+        _contentDownloadService = contentDownloadService;
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
         _shareService = shareService;
@@ -134,15 +137,28 @@ public sealed partial class SearchSectionView : UserControl
         openItem.Click += async (_, _) => await OpenDefaultActionAsync(item);
         flyout.Items.Add(openItem);
 
-        var detailsItem = new MenuFlyoutItem { Text = "Szczegóły" };
-        AutomationProperties.SetName(detailsItem, item.OpenDetailsLabel);
-        detailsItem.Click += async (_, _) => await OpenDetailsAsync(item);
-        flyout.Items.Add(detailsItem);
+        if (!item.SupportsPlayback)
+        {
+            var detailsItem = new MenuFlyoutItem { Text = "Szczegóły" };
+            AutomationProperties.SetName(detailsItem, item.OpenDetailsLabel);
+            detailsItem.Click += async (_, _) => await OpenDetailsAsync(item);
+            flyout.Items.Add(detailsItem);
+        }
 
         var browserItem = new MenuFlyoutItem { Text = "Otwórz w przeglądarce" };
         AutomationProperties.SetName(browserItem, item.OpenLinkLabel);
         browserItem.Click += async (_, _) => await ViewModel.OpenResultAsync(item);
         flyout.Items.Add(browserItem);
+
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
+        AutomationProperties.SetName(
+            downloadItem,
+            item.SupportsPlayback
+                ? $"Pobierz podcast: {item.Title}"
+                : $"Pobierz artykuł: {item.Title}"
+        );
+        downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
+        flyout.Items.Add(downloadItem);
 
         var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
         AutomationProperties.SetName(
@@ -229,6 +245,39 @@ public sealed partial class SearchSectionView : UserControl
             var message = item.SupportsPlayback
                 ? "Nie udało się udostępnić podcastu."
                 : "Nie udało się udostępnić artykułu.";
+            await DialogHelpers.ShowErrorAsync(XamlRoot, message);
+        }
+
+        ListViewFocusHelper.RestoreFocus(ResultsList, item);
+    }
+
+    private async Task DownloadItemAsync(ContentPostItemViewModel item)
+    {
+        try
+        {
+            var filePath = item.SupportsPlayback
+                ? await _contentDownloadService.DownloadPodcastAsync(item.PostId, item.Title)
+                : await _contentDownloadService.DownloadArticleAsync(
+                    item.Source,
+                    item.PostId,
+                    item.Title,
+                    item.PublishedDate,
+                    item.Link
+                );
+
+            AutomationAnnouncementHelper.Announce(
+                ResultsList,
+                item.SupportsPlayback
+                    ? $"Pobrano podcast: {Path.GetFileName(filePath)}."
+                    : $"Pobrano artykuł: {Path.GetFileName(filePath)}.",
+                important: true
+            );
+        }
+        catch
+        {
+            var message = item.SupportsPlayback
+                ? "Nie udało się pobrać podcastu."
+                : "Nie udało się pobrać artykułu.";
             await DialogHelpers.ShowErrorAsync(XamlRoot, message);
         }
 

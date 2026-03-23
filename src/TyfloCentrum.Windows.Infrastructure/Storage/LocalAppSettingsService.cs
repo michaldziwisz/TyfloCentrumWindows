@@ -8,9 +8,12 @@ public sealed class LocalAppSettingsService : IAppSettingsService
 {
     private const string PreferredInputDeviceIdKey = "settings.audio.inputDeviceId";
     private const string PreferredOutputDeviceIdKey = "settings.audio.outputDeviceId";
+    private const string DownloadDirectoryPathKey = "settings.download.directoryPath";
     private const string DefaultPlaybackRateKey = "settings.playback.defaultRate";
     private const string RememberLastPlaybackRateKey = "settings.playback.rememberLastRate";
     private const string LastPlaybackRateKey = "settings.playback.lastRate";
+    private const string NotifyAboutNewPodcastsKey = "settings.notifications.newPodcasts";
+    private const string NotifyAboutNewArticlesKey = "settings.notifications.newArticles";
 
     private readonly ILocalSettingsStore _localSettingsStore;
 
@@ -27,6 +30,9 @@ public sealed class LocalAppSettingsService : IAppSettingsService
         var preferredOutputDeviceIdTask = _localSettingsStore
             .GetStringAsync(PreferredOutputDeviceIdKey, cancellationToken)
             .AsTask();
+        var downloadDirectoryPathTask = _localSettingsStore
+            .GetStringAsync(DownloadDirectoryPathKey, cancellationToken)
+            .AsTask();
         var defaultPlaybackRateTask = _localSettingsStore
             .GetStringAsync(DefaultPlaybackRateKey, cancellationToken)
             .AsTask();
@@ -36,21 +42,33 @@ public sealed class LocalAppSettingsService : IAppSettingsService
         var lastPlaybackRateTask = _localSettingsStore
             .GetStringAsync(LastPlaybackRateKey, cancellationToken)
             .AsTask();
+        var notifyAboutNewPodcastsTask = _localSettingsStore
+            .GetStringAsync(NotifyAboutNewPodcastsKey, cancellationToken)
+            .AsTask();
+        var notifyAboutNewArticlesTask = _localSettingsStore
+            .GetStringAsync(NotifyAboutNewArticlesKey, cancellationToken)
+            .AsTask();
 
         await Task.WhenAll(
             preferredInputDeviceIdTask,
             preferredOutputDeviceIdTask,
+            downloadDirectoryPathTask,
             defaultPlaybackRateTask,
             rememberLastPlaybackRateTask,
-            lastPlaybackRateTask
+            lastPlaybackRateTask,
+            notifyAboutNewPodcastsTask,
+            notifyAboutNewArticlesTask
         );
 
         var snapshot = new AppSettingsSnapshot(
             NullIfWhiteSpace(preferredInputDeviceIdTask.Result),
             NullIfWhiteSpace(preferredOutputDeviceIdTask.Result),
+            NullIfWhiteSpace(downloadDirectoryPathTask.Result),
             ParseDoubleOrDefault(defaultPlaybackRateTask.Result, PlaybackRateCatalog.DefaultValue),
             ParseBoolOrDefault(rememberLastPlaybackRateTask.Result, false),
-            ParseNullableDouble(lastPlaybackRateTask.Result)
+            ParseNullableDouble(lastPlaybackRateTask.Result),
+            ParseBoolOrDefault(notifyAboutNewPodcastsTask.Result, true),
+            ParseBoolOrDefault(notifyAboutNewArticlesTask.Result, true)
         );
 
         return snapshot.Normalize();
@@ -81,6 +99,13 @@ public sealed class LocalAppSettingsService : IAppSettingsService
                 .AsTask(),
             _localSettingsStore
                 .SetStringAsync(
+                    DownloadDirectoryPathKey,
+                    normalized.DownloadDirectoryPath ?? string.Empty,
+                    cancellationToken
+                )
+                .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
                     DefaultPlaybackRateKey,
                     normalized.DefaultPlaybackRate.ToString(CultureInfo.InvariantCulture),
                     cancellationToken
@@ -98,6 +123,20 @@ public sealed class LocalAppSettingsService : IAppSettingsService
                     LastPlaybackRateKey,
                     normalized.LastPlaybackRate?.ToString(CultureInfo.InvariantCulture)
                         ?? string.Empty,
+                    cancellationToken
+                )
+                .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
+                    NotifyAboutNewPodcastsKey,
+                    normalized.NotifyAboutNewPodcasts.ToString(),
+                    cancellationToken
+                )
+                .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
+                    NotifyAboutNewArticlesKey,
+                    normalized.NotifyAboutNewArticles.ToString(),
                     cancellationToken
                 )
                 .AsTask(),

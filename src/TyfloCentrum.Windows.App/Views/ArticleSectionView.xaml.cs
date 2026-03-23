@@ -15,6 +15,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class ArticleSectionView : UserControl
 {
+    private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
     private readonly IShareService _shareService;
@@ -35,6 +36,7 @@ public sealed partial class ArticleSectionView : UserControl
 
     public ArticleSectionView(
         ArticleCatalogViewModel viewModel,
+        IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
         IShareService shareService,
@@ -43,6 +45,7 @@ public sealed partial class ArticleSectionView : UserControl
     )
     {
         ViewModel = viewModel;
+        _contentDownloadService = contentDownloadService;
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
         _shareService = shareService;
@@ -76,6 +79,46 @@ public sealed partial class ArticleSectionView : UserControl
         }
 
         CategoriesList.Focus(FocusState.Programmatic);
+    }
+
+    public async Task PrepareForScreenshotAsync()
+    {
+        await ViewModel.LoadIfNeededAsync();
+
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            if (!ViewModel.IsLoading && (ViewModel.HasLoaded || ViewModel.HasError))
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        var targetNavigationItem =
+            _navigationItems.FirstOrDefault(item => !ReferenceEquals(item, _magazineNavigationItem))
+            ?? _navigationItems.FirstOrDefault()
+            ?? _magazineNavigationItem;
+
+        await SelectNavigationItemFromUiAsync(targetNavigationItem);
+
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            if (!_isMagazineSelected && !ViewModel.IsLoading)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        if (!_isMagazineSelected && ViewModel.HasItems && ViewModel.Items.Count > 0)
+        {
+            ItemsList.SelectedItem = ViewModel.Items[0];
+        }
+
+        UpdateLayout();
+        await Task.Delay(200);
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -284,6 +327,11 @@ public sealed partial class ArticleSectionView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenItemAsync(item);
         flyout.Items.Add(browserItem);
 
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
+        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł: {item.Title}");
+        downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
+        flyout.Items.Add(downloadItem);
+
         var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
         AutomationProperties.SetName(shareItem, $"Udostępnij artykuł: {item.Title}");
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
@@ -337,6 +385,31 @@ public sealed partial class ArticleSectionView : UserControl
         if (!shared)
         {
             await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się udostępnić artykułu.");
+        }
+
+        ListViewFocusHelper.RestoreFocus(ItemsList, item);
+    }
+
+    private async Task DownloadItemAsync(ContentPostItemViewModel item)
+    {
+        try
+        {
+            var filePath = await _contentDownloadService.DownloadArticleAsync(
+                item.Source,
+                item.PostId,
+                item.Title,
+                item.PublishedDate,
+                item.Link
+            );
+            AutomationAnnouncementHelper.Announce(
+                ItemsList,
+                $"Pobrano artykuł: {Path.GetFileName(filePath)}.",
+                important: true
+            );
+        }
+        catch
+        {
+            await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się pobrać artykułu.");
         }
 
         ListViewFocusHelper.RestoreFocus(ItemsList, item);

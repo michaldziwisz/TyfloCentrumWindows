@@ -13,6 +13,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -74,7 +75,7 @@
             </StackPanel>
         </Grid>
 
-        <ScrollViewer Grid.Row="4">
+        <ScrollViewer Grid.Row="5">
             <StackPanel Spacing="16">
                 <Border
                     Padding="16"
@@ -107,6 +108,78 @@
                             ItemsSource="{Binding OutputDevices}"
                             MinWidth="360"
                             SelectedItem="{Binding SelectedOutputDevice, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            AutomationProperties.HeadingLevel="Level2"
+                            FontWeight="SemiBold"
+                            Text="Powiadomienia" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding NotificationsDescription}"
+                            TextWrapping="WrapWholeWords" />
+                        <ToggleSwitch
+                            x:Name="NotifyNewPodcastsToggle"
+                            AutomationProperties.Name="Powiadomienia o nowych podcastach"
+                            Header="Powiadamiaj o nowych podcastach"
+                            IsOn="{Binding NotifyAboutNewPodcasts, Mode=TwoWay}" />
+                        <ToggleSwitch
+                            x:Name="NotifyNewArticlesToggle"
+                            AutomationProperties.Name="Powiadomienia o nowych artykułach"
+                            Header="Powiadamiaj o nowych artykułach"
+                            IsOn="{Binding NotifyAboutNewArticles, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            AutomationProperties.HeadingLevel="Level2"
+                            FontWeight="SemiBold"
+                            Text="Pobieranie plików" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Pusta ścieżka oznacza użycie domyślnego folderu Pobrane systemu Windows."
+                            TextWrapping="WrapWholeWords" />
+                        <TextBox
+                            x:Name="DownloadDirectoryTextBox"
+                            AutomationProperties.Name="Folder pobierania podcastów i artykułów"
+                            Header="Folder pobierania"
+                            PlaceholderText="Domyślny folder Pobrane systemu Windows"
+                            Text="{Binding DownloadDirectoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                x:Name="ChooseDownloadDirectoryButton"
+                                AutomationProperties.AutomationId="settings.chooseDownloadDirectory"
+                                AutomationProperties.Name="Wybierz folder pobierania"
+                                Click="OnChooseDownloadDirectoryClick"
+                                Content="Wybierz folder" />
+                            <Button
+                                x:Name="UseDefaultDownloadDirectoryButton"
+                                AutomationProperties.AutomationId="settings.useDefaultDownloadDirectory"
+                                AutomationProperties.Name="Użyj domyślnego folderu Pobrane"
+                                Click="OnUseDefaultDownloadDirectoryClick"
+                                Content="Użyj folderu Pobrane" />
+                        </StackPanel>
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding EffectiveDownloadDirectoryDescription}"
+                            TextWrapping="WrapWholeWords" />
                     </StackPanel>
                 </Border>
 

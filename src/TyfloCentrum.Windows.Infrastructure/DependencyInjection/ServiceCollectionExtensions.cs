@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Infrastructure.Http;
+using TyfloCentrum.Windows.Infrastructure.Notifications;
 using TyfloCentrum.Windows.Infrastructure.Playback;
 using TyfloCentrum.Windows.Infrastructure.Storage;
 
@@ -16,9 +17,20 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(endpoints);
         services.AddSingleton<ILocalSettingsStore, FileLocalSettingsStore>();
         services.AddSingleton<IAppSettingsService, LocalAppSettingsService>();
+        services.AddSingleton<IContentNotificationStateStore, LocalContentNotificationStateStore>();
+        services.AddSingleton<IContentNotificationMonitor, ContentNotificationMonitor>();
         services.AddSingleton<IPlaybackResumeService, LocalPlaybackResumeService>();
         services.AddSingleton<IFavoritesService, FileFavoritesService>();
         services.AddSingleton<IAudioPlaybackRequestFactory, AudioPlaybackRequestFactory>();
+        services.AddHttpClient<IPushNotificationRegistrationSyncService, PushNotificationRegistrationSyncService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        });
+        services.AddHttpClient<IContentDownloadService, ContentDownloadService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
         services.AddHttpClient<INewsFeedService, WordPressNewsFeedService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);

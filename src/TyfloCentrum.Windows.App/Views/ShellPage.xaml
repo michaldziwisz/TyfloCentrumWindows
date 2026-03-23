@@ -54,7 +54,10 @@
             Modifiers="Menu"
             Invoked="OnSectionShortcutInvoked" />
     </Page.KeyboardAccelerators>
-    <Grid Padding="24" ColumnSpacing="24">
+    <Grid
+        x:Name="RootLayout"
+        Padding="24"
+        ColumnSpacing="24">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280" />
             <ColumnDefinition Width="*" />
@@ -100,6 +103,7 @@
                 TextWrapping="WrapWholeWords" />
 
             <TextBlock
+                x:Name="ShortcutsText"
                 Grid.Row="2"
                 AutomationProperties.AutomationId="Shell.Shortcuts"
                 AutomationProperties.Name="Skróty klawiaturowe sekcji"
@@ -108,6 +112,7 @@
                 TextWrapping="WrapWholeWords" />
 
             <InfoBar
+                x:Name="BootstrapInfo"
                 Grid.Row="3"
                 AutomationProperties.AutomationId="Shell.BootstrapInfo"
                 AutomationProperties.LiveSetting="Polite"

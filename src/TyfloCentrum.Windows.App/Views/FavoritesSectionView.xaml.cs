@@ -177,17 +177,17 @@ public sealed partial class FavoritesSectionView : UserControl
         switch (item.Kind)
         {
             case FavoriteKind.Podcast:
-                await _postDetailDialogService.ShowAsync(
-                    ContentSource.Podcast,
+            {
+                var request = _audioPlaybackRequestFactory.CreatePodcast(
                     item.PostId,
                     item.Title,
-                    item.PublishedDate,
-                    item.Link,
-                    XamlRoot
+                    string.IsNullOrWhiteSpace(item.Subtitle) ? item.PublishedDate : item.Subtitle
                 );
+                await _audioPlayerDialogService.ShowAsync(request, XamlRoot);
                 await ViewModel.ReloadAsync();
                 RestoreItemFocus(item.Id);
                 break;
+            }
             case FavoriteKind.Article when item.ArticleOrigin == FavoriteArticleOrigin.Page:
                 await _inAppBrowserDialogService.ShowTyfloSwiatPageAsync(
                     item.PostId,

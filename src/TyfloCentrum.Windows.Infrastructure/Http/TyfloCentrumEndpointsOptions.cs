@@ -12,5 +12,9 @@ public sealed class TyfloCentrumEndpointsOptions
 
     public Uri PushServiceBaseUrl { get; init; } = new("https://tyflocentrum.tyflo.eu.org/");
 
+    public string PushAzureAppId { get; init; } = "6f96d75e-3f7c-46a4-bfe2-0bfdd8ddf2d1";
+
+    public string? PushAzureObjectId { get; init; }
+
     public Uri TyfloradioStreamUrl { get; init; } = new("https://radio.tyflopodcast.net/hls/stream.m3u8");
 }

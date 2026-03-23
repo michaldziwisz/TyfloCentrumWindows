@@ -37,7 +37,25 @@ public sealed partial class RadioSectionView : UserControl
 
     public void FocusPrimaryContent()
     {
-        ContactButton.Focus(FocusState.Programmatic);
+        ListenButton.Focus(FocusState.Programmatic);
+    }
+
+    public async Task PrepareForScreenshotAsync()
+    {
+        await ViewModel.LoadIfNeededAsync();
+
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            if (!ViewModel.IsLoading && (ViewModel.HasLoaded || ViewModel.HasError))
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        UpdateLayout();
+        await Task.Delay(200);
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)

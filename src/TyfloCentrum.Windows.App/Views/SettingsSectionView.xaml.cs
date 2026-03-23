@@ -10,11 +10,20 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class SettingsSectionView : UserControl
 {
+    private readonly WindowsDownloadDirectoryService _downloadDirectoryService;
+    private readonly WindowsPushNotificationService _windowsPushNotificationService;
+
     public event EventHandler? ExitToSectionListRequested;
 
-    public SettingsSectionView(SettingsViewModel viewModel)
+    public SettingsSectionView(
+        SettingsViewModel viewModel,
+        WindowsDownloadDirectoryService downloadDirectoryService,
+        WindowsPushNotificationService windowsPushNotificationService
+    )
     {
         ViewModel = viewModel;
+        _downloadDirectoryService = downloadDirectoryService;
+        _windowsPushNotificationService = windowsPushNotificationService;
         InitializeComponent();
         DataContext = ViewModel;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -41,6 +50,10 @@ public sealed partial class SettingsSectionView : UserControl
     private async void OnSaveClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.SaveAsync();
+        if (!ViewModel.HasError)
+        {
+            await _windowsPushNotificationService.SyncRegistrationIfPossibleAsync();
+        }
     }
 
     private async void OnRefreshDevicesClick(object sender, RoutedEventArgs e)
@@ -56,6 +69,22 @@ public sealed partial class SettingsSectionView : UserControl
     private async void OnClearRememberedRateClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ClearRememberedPlaybackRateAsync();
+    }
+
+    private async void OnChooseDownloadDirectoryClick(object sender, RoutedEventArgs e)
+    {
+        var path = await _downloadDirectoryService.PickDirectoryAsync();
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            ViewModel.DownloadDirectoryPath = path;
+            DownloadDirectoryTextBox.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private void OnUseDefaultDownloadDirectoryClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.DownloadDirectoryPath = null;
+        DownloadDirectoryTextBox.Focus(FocusState.Programmatic);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -86,6 +115,11 @@ public sealed partial class SettingsSectionView : UserControl
         OutputDeviceComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         DefaultPlaybackRateComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         RememberLastRateToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        NotifyNewPodcastsToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        NotifyNewArticlesToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        DownloadDirectoryTextBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        ChooseDownloadDirectoryButton.IsEnabled = ViewModel.CanChooseDownloadDirectory;
+        UseDefaultDownloadDirectoryButton.IsEnabled = ViewModel.CanChooseDownloadDirectory;
     }
 
     private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)

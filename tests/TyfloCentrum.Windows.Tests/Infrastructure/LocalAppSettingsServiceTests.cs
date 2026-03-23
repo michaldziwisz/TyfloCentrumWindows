@@ -24,9 +24,12 @@ public sealed class LocalAppSettingsServiceTests
         var expected = new AppSettingsSnapshot(
             "mic-1",
             "speaker-1",
+            @"D:\Pobrane\TyfloCentrum",
             1.25,
             true,
-            1.5
+            1.5,
+            false,
+            true
         );
 
         await service.SaveAsync(expected);
@@ -34,9 +37,12 @@ public sealed class LocalAppSettingsServiceTests
 
         Assert.Equal("mic-1", actual.PreferredInputDeviceId);
         Assert.Equal("speaker-1", actual.PreferredOutputDeviceId);
+        Assert.Equal(@"D:\Pobrane\TyfloCentrum", actual.DownloadDirectoryPath);
         Assert.Equal(1.25, actual.DefaultPlaybackRate);
         Assert.True(actual.RememberLastPlaybackRate);
         Assert.Equal(1.5, actual.LastPlaybackRate);
         Assert.Equal(1.5, actual.EffectivePlaybackRate);
+        Assert.False(actual.NotifyAboutNewPodcasts);
+        Assert.True(actual.NotifyAboutNewArticles);
     }
 }

@@ -1,16 +1,23 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 using TyfloCentrum.Windows.App.Services;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Windows.System;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 
 namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class ShellPage : Page
 {
+    private readonly ContentEntryActionService _contentEntryActionService;
+    private readonly NotificationActivationService _notificationActivationService;
     private readonly ShellViewModel _viewModel;
     private readonly ArticleSectionView _articleSectionView;
     private readonly FavoritesSectionView _favoritesSectionView;
@@ -20,9 +27,12 @@ public sealed partial class ShellPage : Page
     private readonly SearchSectionView _searchSectionView;
     private readonly SettingsSectionView _settingsSectionView;
     private bool _synchronizingSectionSelection;
+    private readonly TaskCompletionSource _loadedCompletionSource = new();
 
     public ShellPage(
         ShellViewModel viewModel,
+        ContentEntryActionService contentEntryActionService,
+        NotificationActivationService notificationActivationService,
         NewsSectionView newsSectionView,
         PodcastSectionView podcastSectionView,
         ArticleSectionView articleSectionView,
@@ -33,6 +43,8 @@ public sealed partial class ShellPage : Page
     )
     {
         InitializeComponent();
+        _contentEntryActionService = contentEntryActionService;
+        _notificationActivationService = notificationActivationService;
         _viewModel = viewModel;
         _newsSectionView = newsSectionView;
         _podcastSectionView = podcastSectionView;
@@ -49,6 +61,7 @@ public sealed partial class ShellPage : Page
         _favoritesSectionView.ExitToSectionListRequested += OnFavoritesExitToSectionListRequested;
         _radioSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
         _settingsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        _notificationActivationService.PendingRequestChanged += OnPendingNotificationRequestChanged;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -59,6 +72,25 @@ public sealed partial class ShellPage : Page
         }
 
         UpdateSectionContent();
+        _loadedCompletionSource.TrySetResult();
+        _ = ProcessPendingNotificationRequestAsync();
+    }
+
+    internal async Task CaptureInternalStoreScreenshotAsync(InternalStoreScreenshotRequest request)
+    {
+        await _loadedCompletionSource.Task;
+        ApplyInternalStoreScreenshotLayout();
+
+        var section =
+            _viewModel.Sections.FirstOrDefault(candidate =>
+                string.Equals(candidate.Key, request.SectionKey, StringComparison.OrdinalIgnoreCase)
+            ) ?? _viewModel.Sections[0];
+
+        ActivateSection(section, moveFocus: false);
+        await PrepareSelectedSectionForScreenshotAsync(section.Key);
+        RootLayout.UpdateLayout();
+        await Task.Delay(300);
+        await SaveRootLayoutAsPngAsync(request.OutputPath);
     }
 
     private void OnSectionListSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -189,6 +221,72 @@ public sealed partial class ShellPage : Page
         }
     }
 
+    private void ApplyInternalStoreScreenshotLayout()
+    {
+        RequestedTheme = ElementTheme.Light;
+        RootLayout.Background = new SolidColorBrush(Microsoft.UI.Colors.White);
+        SectionList.Background = new SolidColorBrush(Microsoft.UI.Colors.White);
+        BootstrapInfo.Visibility = Visibility.Collapsed;
+        ShortcutsText.Visibility = Visibility.Collapsed;
+    }
+
+    private async Task PrepareSelectedSectionForScreenshotAsync(string sectionKey)
+    {
+        switch (sectionKey)
+        {
+            case "news":
+                await _newsSectionView.PrepareForScreenshotAsync();
+                break;
+            case "podcasts":
+                await _podcastSectionView.PrepareForScreenshotAsync();
+                break;
+            case "articles":
+                await _articleSectionView.PrepareForScreenshotAsync();
+                break;
+            case "radio":
+                await _radioSectionView.PrepareForScreenshotAsync();
+                break;
+            default:
+                await Task.Delay(1200);
+                break;
+        }
+    }
+
+    private async Task SaveRootLayoutAsPngAsync(string outputPath)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+        var renderTargetBitmap = new RenderTargetBitmap();
+        var width = Math.Max(1, (int)Math.Ceiling(RootLayout.ActualWidth));
+        var height = Math.Max(1, (int)Math.Ceiling(RootLayout.ActualHeight));
+
+        await renderTargetBitmap.RenderAsync(RootLayout, width, height);
+        var pixels = await renderTargetBitmap.GetPixelsAsync();
+        var pixelBytes = pixels.ToArray();
+
+        using var stream = new InMemoryRandomAccessStream();
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+        encoder.SetPixelData(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied,
+            (uint)renderTargetBitmap.PixelWidth,
+            (uint)renderTargetBitmap.PixelHeight,
+            96,
+            96,
+            pixelBytes
+        );
+        await encoder.FlushAsync();
+
+        stream.Seek(0);
+        using var inputStream = stream.GetInputStreamAt(0);
+        using var dataReader = new DataReader(inputStream);
+        await dataReader.LoadAsync((uint)stream.Size);
+
+        var bytes = new byte[(int)stream.Size];
+        dataReader.ReadBytes(bytes);
+        await File.WriteAllBytesAsync(outputPath, bytes);
+    }
+
     private void ActivateSection(AppSection? section, bool moveFocus)
     {
         if (section is null)
@@ -265,6 +363,51 @@ public sealed partial class ShellPage : Page
         }
 
         SectionList.Focus(FocusState.Programmatic);
+    }
+
+    private void OnPendingNotificationRequestChanged(object? sender, EventArgs e)
+    {
+        _ = ProcessPendingNotificationRequestAsync();
+    }
+
+    private async Task ProcessPendingNotificationRequestAsync()
+    {
+        if (!IsLoaded || XamlRoot is null)
+        {
+            return;
+        }
+
+        var request = _notificationActivationService.TakePendingRequest();
+        if (request is null)
+        {
+            return;
+        }
+
+        var sectionKey = request.Source == ContentSource.Podcast ? "podcasts" : "articles";
+        var section = _viewModel.Sections.FirstOrDefault(item =>
+            string.Equals(item.Key, sectionKey, StringComparison.OrdinalIgnoreCase)
+        );
+        ActivateSection(section, moveFocus: false);
+
+        if (request.Source == ContentSource.Podcast)
+        {
+            await _contentEntryActionService.OpenPodcastAsync(
+                request.PostId,
+                request.Title,
+                request.PublishedDate ?? string.Empty,
+                XamlRoot
+            );
+            return;
+        }
+
+        await _contentEntryActionService.OpenArticleAsync(
+            request.Source,
+            request.PostId,
+            request.Title,
+            request.PublishedDate ?? string.Empty,
+            request.Link ?? string.Empty,
+            XamlRoot
+        );
     }
 
     private void FocusSelectedSectionContent()

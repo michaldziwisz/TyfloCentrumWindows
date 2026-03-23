@@ -12,7 +12,16 @@ public sealed class SettingsViewModelTests
     {
         var settingsService = new FakeAppSettingsService
         {
-            Snapshot = new AppSettingsSnapshot("mic-2", "speaker-2", 1.25, true, 1.5),
+            Snapshot = new AppSettingsSnapshot(
+                "mic-2",
+                "speaker-2",
+                @"D:\Tyflo\Pobrane",
+                1.25,
+                true,
+                1.5,
+                false,
+                true
+            ),
         };
         var deviceCatalogService = new FakeAudioDeviceCatalogService
         {
@@ -27,14 +36,21 @@ public sealed class SettingsViewModelTests
                 new AudioDeviceInfo("speaker-2", "Głośnik 2"),
             ],
         };
-        var viewModel = new SettingsViewModel(settingsService, deviceCatalogService);
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            deviceCatalogService,
+            new FakeDownloadDirectoryService()
+        );
 
         await viewModel.LoadIfNeededAsync();
 
         Assert.Equal("mic-2", viewModel.SelectedInputDevice?.DeviceId);
         Assert.Equal("speaker-2", viewModel.SelectedOutputDevice?.DeviceId);
+        Assert.Equal(@"D:\Tyflo\Pobrane", viewModel.DownloadDirectoryPath);
         Assert.Equal(1.25, viewModel.SelectedDefaultPlaybackRate?.Value);
         Assert.True(viewModel.RememberLastPlaybackRate);
+        Assert.False(viewModel.NotifyAboutNewPodcasts);
+        Assert.True(viewModel.NotifyAboutNewArticles);
         Assert.Equal("Ostatnio zapamiętana prędkość: 1,5x.", viewModel.RememberedPlaybackRateDescription);
         Assert.Equal(3, viewModel.InputDevices.Count);
         Assert.Equal(3, viewModel.OutputDevices.Count);
@@ -46,26 +62,42 @@ public sealed class SettingsViewModelTests
     {
         var settingsService = new FakeAppSettingsService
         {
-            Snapshot = new AppSettingsSnapshot("mic-1", "speaker-1", 1.25, true, 1.5),
+            Snapshot = new AppSettingsSnapshot(
+                "mic-1",
+                "speaker-1",
+                @"D:\Tyflo\Pobrane",
+                1.25,
+                true,
+                1.5,
+                false,
+                true
+            ),
         };
         var deviceCatalogService = new FakeAudioDeviceCatalogService
         {
             InputDevices = [new AudioDeviceInfo("mic-1", "Mikrofon 1")],
             OutputDevices = [new AudioDeviceInfo("speaker-1", "Głośnik 1")],
         };
-        var viewModel = new SettingsViewModel(settingsService, deviceCatalogService);
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            deviceCatalogService,
+            new FakeDownloadDirectoryService()
+        );
         await viewModel.LoadIfNeededAsync();
 
         await viewModel.ResetAudioSettingsAsync();
 
         Assert.Null(settingsService.LastSavedSnapshot?.PreferredInputDeviceId);
         Assert.Null(settingsService.LastSavedSnapshot?.PreferredOutputDeviceId);
+        Assert.Equal(@"D:\Tyflo\Pobrane", settingsService.LastSavedSnapshot?.DownloadDirectoryPath);
         Assert.Equal(
             PlaybackRateCatalog.DefaultValue,
             settingsService.LastSavedSnapshot?.DefaultPlaybackRate
         );
         Assert.False(settingsService.LastSavedSnapshot?.RememberLastPlaybackRate);
         Assert.Null(settingsService.LastSavedSnapshot?.LastPlaybackRate);
+        Assert.False(settingsService.LastSavedSnapshot?.NotifyAboutNewPodcasts);
+        Assert.True(settingsService.LastSavedSnapshot?.NotifyAboutNewArticles);
         Assert.Equal("Przywrócono domyślne ustawienia audio.", viewModel.StatusMessage);
         Assert.False(viewModel.HasRememberedPlaybackRate);
     }
@@ -114,6 +146,21 @@ public sealed class SettingsViewModelTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(OutputDevices);
+        }
+    }
+
+    private sealed class FakeDownloadDirectoryService : IDownloadDirectoryService
+    {
+        public string GetDefaultDownloadDirectoryPath()
+        {
+            return @"C:\Users\Test\Downloads";
+        }
+
+        public string GetEffectiveDownloadDirectoryPath(string? configuredPath)
+        {
+            return string.IsNullOrWhiteSpace(configuredPath)
+                ? GetDefaultDownloadDirectoryPath()
+                : configuredPath.Trim();
         }
     }
 }
