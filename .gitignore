@@ -23,6 +23,7 @@ coverage/
 
 # Packages
 packages/
+node_modules/
 
 # OS files
 .DS_Store
@@ -30,3 +31,7 @@ Thumbs.db
 
 # Local scratch files
 .tmp-*.ps1
+
+# Local Store / release helpers
+src/TyfloCentrum.Windows.App/Package.StoreAssociation.xml
+tyflocentrum_icons.zip

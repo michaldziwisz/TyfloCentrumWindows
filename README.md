@@ -17,6 +17,10 @@ Status repo:
 - działa już formularz kontaktu tekstowego do Tyfloradia
 - działa już pierwsza wersja głosówek z nagrywaniem `RAW`, appendem fragmentów, trybem `przytrzymaj i mów`, systemowym promptem zgody na mikrofon przy pierwszej próbie, komunikatami przerwań, odsłuchem i uploadem
 - działa już sekcja `Ustawienia` z wyborem urządzenia wejściowego i wyjściowego, domyślną prędkością odtwarzania i zapamiętywaniem ostatniej prędkości
+- działają już lokalne powiadomienia Windows o nowych artykułach i podcastach, z osobnymi przełącznikami w `Ustawieniach`; monitorowanie działa, gdy aplikacja jest uruchomiona
+- działa już kliencka warstwa WNS pod powiadomienia przy zamkniętej aplikacji: rejestracja kanału, synchronizacja z `push-service`, obsługa kliknięcia toastu i routing do artykułu albo podcastu; pełne E2E wymaga jeszcze zewnętrznej konfiguracji Azure/WNS i wysyłki po stronie backendu
+- repo zawiera juz tez osobny backend `TyfloCentrum.PushService` dla Windows `WNS`, z pollingiem `WordPress`, endpointami `register/update/unregister`, eventami webhook i realna wysylka do `WNS`; do produkcji brakuje jeszcze tylko konfiguracji sekretow Azure i wdrozenia na VPS
+- działają już pobierania z menu kontekstowego: podcasty zapisują się jako `mp3`, a artykuły jako pojedynczy plik `html` z osadzonymi obrazami; w `Ustawieniach` można wskazać folder docelowy albo użyć domyślnego folderu `Pobrane`
 - działa już pierwszy wariant `TyfloŚwiata`: roczniki, numery czasopisma, PDF, spis treści artykułów z `pages`, szybkie dodawanie stron do ulubionych i udostępnianie linków
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
@@ -32,9 +36,11 @@ Status repo:
 - [Architektura](docs/architecture.md)
 - [Wymagania dostepnosci](docs/accessibility-requirements.md)
 - [Integracje API](docs/api-integrations.md)
+- [Push Service dla Windows](docs/push-service-windows.md)
 - [Strategia testow](docs/testing-strategy.md)
 - [Setup deweloperski](docs/developer-setup.md)
 - [Release do MSIX i Microsoft Store](docs/release-msix-store.md)
+- [GitHub Pages dla polityki prywatności](site/privacy/index.html)
 
 ## Repo zrodlowe i analiza bazowa
 Kod bazowej aplikacji iOS znajduje sie lokalnie w:

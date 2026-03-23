@@ -154,6 +154,7 @@ Pozniej automatyzowac:
 - akcja:
   - podcast uruchamia wbudowany odtwarzacz
   - artykuł otwiera się w wewnętrznej przeglądarce `WebView2`
+  - `Pobierz` w menu kontekstowym zapisuje podcast jako `mp3` albo artykuł jako pojedynczy plik `html`
   - po zamknięciu widoku artykułu focus wraca na poprzedni element listy
   - dojście do końca listy automatycznie dociąga starsze treści bez ręcznego przycisku `więcej`
 
@@ -195,8 +196,19 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - zmiana urządzenia wyjściowego jest używana przy następnym otwarciu odtwarzacza
   - zmiana urządzenia wejściowego jest używana przy następnym nagraniu głosówki
+  - wybranie folderu pobierania zapisuje ścieżkę do następnych pobrań podcastów i artykułów
+  - pozostawienie pustej ścieżki oznacza użycie systemowego folderu `Pobrane`
+  - przełączniki powiadomień o nowych podcastach i artykułach zapisują się niezależnie
   - po wybraniu niedostępnego wcześniej urządzenia aplikacja pokazuje czytelny komunikat i nie przechodzi na inne urządzenie po cichu
   - zapamiętana prędkość odtwarzania jest odtwarzana po ponownym otwarciu playera, jeśli opcja jest włączona
+
+### Modul `Powiadomienia o nowych treściach`
+- funkcjonalnie:
+  - przy pierwszym uruchomieniu monitor zapisuje bieżący stan i nie pokazuje zaległych toastów
+  - kolejne nowe podcasty pokazują toast `Nowy podcast`
+  - kolejne nowe artykuły pokazują toast `Nowy artykuł`
+  - wyłączenie powiadomień dla podcastów albo artykułów zatrzymuje toast dla tej kategorii, ale nie blokuje aktualizacji stanu ostatnio widzianych wpisów
+  - powiadomienia działają tylko wtedy, gdy aplikacja jest uruchomiona
 
 ### Modul `TyfloŚwiat`
 - klawiatura:

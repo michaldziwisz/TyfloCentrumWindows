@@ -95,3 +95,38 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - `/mnt/d/projekty/tyflocentrum/Tyflocentrum/TyfloAPI.swift`
 - `/mnt/d/projekty/tyflocentrum/docs/voice-messages.md`
 - `/mnt/d/projekty/tyflocentrum/docs/push-notifications.md`
+
+## Push service dla Windows
+
+### Rejestracja klienta WNS
+- `POST /api/v1/register`
+- body:
+  - `token`
+  - `env`
+  - `prefs`
+- klient Windows wysyła:
+  - `env = windows-wns`
+  - `token = channelUri` z WNS
+  - `prefs` w tym samym kształcie co iOS:
+    - `podcast`
+    - `article`
+    - `live`
+    - `schedule`
+
+### Wyrejestrowanie klienta WNS
+- `POST /api/v1/unregister`
+- body:
+  - `token`
+
+### Uwagi implementacyjne
+- aplikacja Windows ma już klienta synchronizacji do `push-service`, ale pełne E2E wymaga jeszcze backendu wysyłającego do WNS
+- repo Windows ma juz osobny backend `TyfloCentrum.PushService`, ktory implementuje:
+  - polling `WordPress`
+  - `register/update/unregister`
+  - webhooki live/schedule
+  - wysylke do `WNS`
+- żeby kanał WNS działał przy zamkniętej aplikacji, potrzebne są:
+  - `Azure App ID`
+  - `Azure Object ID`
+  - mapowanie `PFN -> Azure App ID` po stronie Microsoft
+  - wdrożony serwer z poprawnymi sekretami Azure

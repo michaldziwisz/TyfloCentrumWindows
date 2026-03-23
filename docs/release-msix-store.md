@@ -61,6 +61,10 @@ Szczegoly:
 - push notifications moga wplynac na szczegoly konfiguracji pakietu
 - mikrofon i audio wymagaja poprawnych capabilities i testow na maszynie docelowej
 - nie nalezy odkladac pracy nad `MSIX` na koniec projektu
+- powiadomienia przy zamknietej aplikacji wymagaja poza kodem rowniez:
+  - konfiguracji Azure App Registration
+  - mapowania `PFN -> App ID`
+  - wdrozonego nadawcy WNS po stronie `TyfloCentrum.PushService`
 
 ## Zasady projektowe pod release
 - nie wprowadzac zaleznosci, ktore lamia model packaged app bez osobnej decyzji architektonicznej
@@ -75,3 +79,4 @@ Szczegoly:
 - [Architektura](architecture.md)
 - [Roadmapa implementacji](implementation-roadmap.md)
 - [ADR 0001](adr/0001-winui3-windowsappsdk-msix.md)
+- [Push Service dla Windows](push-service-windows.md)

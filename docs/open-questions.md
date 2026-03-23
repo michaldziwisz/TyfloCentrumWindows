@@ -11,12 +11,12 @@
   - liczba workaroundow
   - koszt utrzymania
 
-### 2. Push notifications w `1.0` czy `1.1`
+### 2. Pelne E2E push przy zamknietej aplikacji
 - Wplyw:
-  - architektura
-  - pipeline release
-  - testy
+  - konfiguracja Azure/WNS
   - kontrakt push-service
+  - testy end-to-end
+  - harmonogram publikacji
 
 ### 3. Wymagalnosc `JAWS`
 - Wplyw:
@@ -43,6 +43,18 @@
 ### 7. Telemetria i diagnostyka
 - Czy w `1.0` potrzebujemy tylko logowania technicznego, czy rowniez telemetry zdarzen?
 
+### 8. Operacyjne wdrozenie backendu Windows push
+- Czy `TyfloCentrum.PushService` dostaje:
+  - osobna subdomene
+  - czy wspolny host z istniejacym backendem push
+- Czy utrzymujemy rownolegle dwa backendy push:
+  - stary dla iOS
+  - nowy `WNS` dla Windows
+- Kto utrzyma sekrety Azure i ich rotacje:
+  - `Tenant ID`
+  - `Client ID`
+  - `Client Secret`
+
 ## Decyzje juz podjete
 - natywny stack Windows:
   - `WinUI 3`
@@ -54,4 +66,3 @@
 - priorytet czytnikow ekranu:
   - `Narrator`
   - `NVDA`
-

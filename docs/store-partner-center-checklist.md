@@ -51,6 +51,10 @@ Uwaga:
 - Uzupelnij dane supportowe.
 - Dodaj URL polityki prywatnosci.
 
+Na potrzeby pierwszej submission mozna uzyc strony z repo po wdrozeniu GitHub Pages:
+- polityka prywatnosci: `https://michaldziwisz.github.io/TyfloCentrumWindows/privacy/`
+- strona glowna/support: `https://michaldziwisz.github.io/TyfloCentrumWindows/`
+
 Praktycznie dla `TyfloCentrum` warto przygotowac od razu:
 - opis funkcji: aktualnosci, podcasty, artykuly, Tyfloradio, glosowki
 - informacje o dostepnosci: obsluga klawiatury, NVDA, Narrator

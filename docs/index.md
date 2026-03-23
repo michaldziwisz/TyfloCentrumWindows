@@ -16,6 +16,7 @@ Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Win
 - [Analiza aplikacji iOS](source-analysis.md)
 - [Integracje API i kontrakty](api-integrations.md)
 - [Głosówki w Windows](voice-messages.md)
+- [Push Service dla Windows](push-service-windows.md)
 
 ## Architektura i standardy
 - [Architektura docelowa](architecture.md)
@@ -28,6 +29,7 @@ Ten katalog jest glownym zrodlem prawdy dla przygotowania i wdrozenia wersji Win
 - [Pakowanie MSIX i Microsoft Store](release-msix-store.md)
 - [Pierwsza publikacja w Partner Center](store-partner-center-checklist.md)
 - [Microsoft Store przez GitHub Actions](store-publishing-github-actions.md)
+- [Polityka prywatności na GitHub Pages](../site/privacy/index.html)
 
 ## Decyzje architektoniczne
 - [ADR 0001 - WinUI 3 + Windows App SDK + MSIX](adr/0001-winui3-windowsappsdk-msix.md)
