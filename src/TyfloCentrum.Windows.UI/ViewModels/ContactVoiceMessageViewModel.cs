@@ -163,6 +163,15 @@ public partial class ContactVoiceMessageViewModel : ObservableObject
         NotifyStateChanged();
     }
 
+    public void AnnounceMicrophoneAccessCheck(bool append)
+    {
+        ErrorMessage = null;
+        StatusMessage = append
+            ? "Sprawdzanie dostępu do mikrofonu przed dograniem fragmentu. Windows może teraz poprosić o zgodę na użycie mikrofonu."
+            : "Sprawdzanie dostępu do mikrofonu. Windows może teraz poprosić o zgodę na użycie mikrofonu.";
+        NotifyStateChanged();
+    }
+
     private async Task StartRecordingCoreAsync(
         bool cueAlreadyAnnounced,
         CancellationToken cancellationToken

@@ -275,9 +275,12 @@ public sealed partial class ContactVoiceMessageView : UserControl
         }
 
         _isStartingWithCue = true;
+        ViewModel.AnnounceMicrophoneAccessCheck(append);
+        UpdateVisualState();
 
         try
         {
+            await Task.Yield();
             var microphoneAccessResult = await ViewModel.EnsureMicrophoneAccessAsync();
             if (!microphoneAccessResult.Success)
             {

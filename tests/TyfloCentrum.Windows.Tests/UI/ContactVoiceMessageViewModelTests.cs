@@ -54,6 +54,42 @@ public sealed class ContactVoiceMessageViewModelTests
     }
 
     [Fact]
+    public void AnnounceMicrophoneAccessCheck_sets_status_for_new_recording()
+    {
+        var viewModel = new ContactVoiceMessageViewModel(
+            new FakeRadioVoiceContactService(),
+            new FakeVoiceMessageRecorder(),
+            new FakeLocalSettingsStore()
+        );
+
+        viewModel.AnnounceMicrophoneAccessCheck(append: false);
+
+        Assert.Equal(
+            "Sprawdzanie dostępu do mikrofonu. Windows może teraz poprosić o zgodę na użycie mikrofonu.",
+            viewModel.StatusMessage
+        );
+        Assert.False(viewModel.HasError);
+    }
+
+    [Fact]
+    public void AnnounceMicrophoneAccessCheck_sets_status_for_append()
+    {
+        var viewModel = new ContactVoiceMessageViewModel(
+            new FakeRadioVoiceContactService(),
+            new FakeVoiceMessageRecorder(),
+            new FakeLocalSettingsStore()
+        );
+
+        viewModel.AnnounceMicrophoneAccessCheck(append: true);
+
+        Assert.Equal(
+            "Sprawdzanie dostępu do mikrofonu przed dograniem fragmentu. Windows może teraz poprosić o zgodę na użycie mikrofonu.",
+            viewModel.StatusMessage
+        );
+        Assert.False(viewModel.HasError);
+    }
+
+    [Fact]
     public async Task StartRecordingAsync_surfaces_microphone_permission_error()
     {
         var recorder = new FakeVoiceMessageRecorder
