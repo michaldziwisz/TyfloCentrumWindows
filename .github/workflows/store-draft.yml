@@ -3,6 +3,11 @@ name: Store Draft Submission
 on:
   workflow_dispatch:
     inputs:
+      git_ref:
+        description: Branch, tag albo commit do zbudowania
+        required: true
+        default: main
+        type: string
       platform:
         description: Architektura pakietu MSIX
         required: true
@@ -31,6 +36,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref }}
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -97,11 +104,37 @@ jobs:
             "appxsym_path=$($appxsym.FullName)" >> $env:GITHUB_OUTPUT
           }
 
+      - name: Create MSIX upload package
+        id: upload
+        shell: pwsh
+        run: |
+          $packageDir = "${{ steps.artifacts.outputs.package_dir }}"
+          $msixFileName = Split-Path "${{ steps.artifacts.outputs.msix_path }}" -Leaf
+          $msixuploadPath = Join-Path $packageDir (
+            [System.IO.Path]::GetFileNameWithoutExtension($msixFileName) + '.msixupload'
+          )
+
+          $archiveEntries = @($msixFileName)
+          if (-not [string]::IsNullOrWhiteSpace("${{ steps.artifacts.outputs.appxsym_path }}")) {
+            $archiveEntries += Split-Path "${{ steps.artifacts.outputs.appxsym_path }}" -Leaf
+          }
+
+          Push-Location $packageDir
+          try {
+            Compress-Archive -Path $archiveEntries -DestinationPath $msixuploadPath -Force
+          }
+          finally {
+            Pop-Location
+          }
+
+          "msixupload_path=$msixuploadPath" >> $env:GITHUB_OUTPUT
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
           name: store-draft-${{ inputs.platform }}
           path: |
+            ${{ steps.upload.outputs.msixupload_path }}
             ${{ steps.artifacts.outputs.msix_path }}
             ${{ steps.artifacts.outputs.appxsym_path }}
           if-no-files-found: error
@@ -110,7 +143,7 @@ jobs:
         shell: pwsh
         run: |
           msstore publish "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App" `
-            --inputFile "${{ steps.artifacts.outputs.msix_path }}" `
+            --inputFile "${{ steps.upload.outputs.msixupload_path }}" `
             -id $env:STORE_PRODUCT_ID `
             --noCommit
 
