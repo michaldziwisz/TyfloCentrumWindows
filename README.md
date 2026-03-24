@@ -22,6 +22,8 @@ Status repo:
 - repo zawiera juz tez osobny backend `TyfloCentrum.PushService` dla Windows `WNS`, z pollingiem `WordPress`, endpointami `register/update/unregister`, eventami webhook i realna wysylka do `WNS`; do produkcji brakuje jeszcze tylko konfiguracji sekretow Azure i wdrozenia na VPS
 - działają już pobierania z menu kontekstowego: podcasty zapisują się jako `mp3`, a artykuły jako pojedynczy plik `html` z osadzonymi obrazami; w `Ustawieniach` można wskazać folder docelowy albo użyć domyślnego folderu `Pobrane`
 - działa już pierwszy wariant `TyfloŚwiata`: roczniki, numery czasopisma, PDF, spis treści artykułów z `pages`, szybkie dodawanie stron do ulubionych i udostępnianie linków
+- repo ma juz tez drugi kanal dystrybucji poza Store: instalator `EXE`, budowany z tej samej bazy kodu na podstawie dzialajacego pakietu `MSIX`
+- repo ma juz tez workflow GitHub Actions `Direct EXE Build`, ktory buduje instalator poza Store i zapisuje go jako artefakt
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
 ## Cele produktu
@@ -40,6 +42,7 @@ Status repo:
 - [Strategia testow](docs/testing-strategy.md)
 - [Setup deweloperski](docs/developer-setup.md)
 - [Release do MSIX i Microsoft Store](docs/release-msix-store.md)
+- [Dystrybucja poza Store jako direct EXE](docs/release-direct-exe.md)
 - [GitHub Pages dla polityki prywatności](site/privacy/index.html)
 
 ## Repo zrodlowe i analiza bazowa
@@ -75,4 +78,7 @@ Wnioski z analizy tej aplikacji sa zebrane w:
   - generuje odpowiadajaca mu paczke symboli `.appxsym`
   - usuwa poprzednia wersje pakietu testowego
   - instaluje nowy pakiet
+- alternatywnie, dla kanalu poza Store:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectSetupExe.ps1`
+- ten workflow generuje instalator `EXE` oparty o dzialajacy pakiet `MSIX`
 - szczegoly sa opisane w [Setup deweloperski](docs/developer-setup.md) i [Pakowanie MSIX i Microsoft Store](docs/release-msix-store.md)

@@ -73,10 +73,13 @@ Szczegoly:
 
 ## Uwagi organizacyjne
 - jesli produkt ma byc publikowany tylko przez Store, nalezy utrzymac proces release zgodny z tym scenariuszem od pierwszej wersji RC
-- jesli w przyszlosci pojawi sie dystrybucja poza Store, trzeba dopisac osobna procedure i zweryfikowac wymagania podpisu
+- repo ma juz tez osobna procedure dla kanalu poza Store:
+  - [Dystrybucja poza Store jako direct EXE](release-direct-exe.md)
+- kanal direct EXE nie zastępuje Store i nie daje podpisanego `MSIX/AppInstaller`; to osobna sciezka dystrybucji poza ekosystemem Store
 
 ## Dokumenty powiazane
 - [Architektura](architecture.md)
 - [Roadmapa implementacji](implementation-roadmap.md)
 - [ADR 0001](adr/0001-winui3-windowsappsdk-msix.md)
 - [Push Service dla Windows](push-service-windows.md)
+- [Dystrybucja poza Store jako direct EXE](release-direct-exe.md)
