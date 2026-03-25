@@ -17,9 +17,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<RadioViewModel>();
         services.AddTransient<FavoritesViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<FeedbackSectionViewModel>();
         services.AddTransient<TyfloSwiatMagazineViewModel>();
         services.AddTransient<TyfloSwiatPageDetailViewModel>();
-        services.AddTransient<PostDetailViewModel>();
         services.AddTransient<CommentDetailViewModel>();
         services.AddTransient<ContactTextMessageViewModel>();
         services.AddTransient<ContactVoiceMessageViewModel>();

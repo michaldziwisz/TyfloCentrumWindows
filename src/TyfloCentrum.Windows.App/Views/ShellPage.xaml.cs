@@ -26,6 +26,7 @@ public sealed partial class ShellPage : Page
     private readonly RadioSectionView _radioSectionView;
     private readonly SearchSectionView _searchSectionView;
     private readonly SettingsSectionView _settingsSectionView;
+    private readonly FeedbackSectionView _feedbackSectionView;
     private bool _synchronizingSectionSelection;
     private readonly TaskCompletionSource _loadedCompletionSource = new();
 
@@ -39,7 +40,8 @@ public sealed partial class ShellPage : Page
         SearchSectionView searchSectionView,
         FavoritesSectionView favoritesSectionView,
         RadioSectionView radioSectionView,
-        SettingsSectionView settingsSectionView
+        SettingsSectionView settingsSectionView,
+        FeedbackSectionView feedbackSectionView
     )
     {
         InitializeComponent();
@@ -53,6 +55,7 @@ public sealed partial class ShellPage : Page
         _favoritesSectionView = favoritesSectionView;
         _radioSectionView = radioSectionView;
         _settingsSectionView = settingsSectionView;
+        _feedbackSectionView = feedbackSectionView;
         DataContext = _viewModel;
         _newsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
         _podcastSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
@@ -61,6 +64,7 @@ public sealed partial class ShellPage : Page
         _favoritesSectionView.ExitToSectionListRequested += OnFavoritesExitToSectionListRequested;
         _radioSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
         _settingsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        _feedbackSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
         _notificationActivationService.PendingRequestChanged += OnPendingNotificationRequestChanged;
     }
 
@@ -179,6 +183,7 @@ public sealed partial class ShellPage : Page
             VirtualKey.Number5 => 5,
             VirtualKey.Number6 => 6,
             VirtualKey.Number7 => 7,
+            VirtualKey.Number8 => 8,
             _ => 0,
         };
 
@@ -208,6 +213,7 @@ public sealed partial class ShellPage : Page
             "favorites" => _favoritesSectionView,
             "radio" => _radioSectionView,
             "settings" => _settingsSectionView,
+            "feedback" => _feedbackSectionView,
             _ => CreatePlaceholderContent(),
         };
 
@@ -434,6 +440,9 @@ public sealed partial class ShellPage : Page
                 break;
             case "settings":
                 _settingsSectionView.FocusPrimaryContent();
+                break;
+            case "feedback":
+                _feedbackSectionView.FocusPrimaryContent();
                 break;
         }
     }

@@ -50,6 +50,13 @@
         </StackPanel>
 
         <Grid Grid.Row="2">
+            <TextBlock
+                x:Name="StatusTextBlock"
+                AutomationProperties.LiveSetting="Polite"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords"
+                VerticalAlignment="Top"
+                Visibility="Collapsed" />
             <ProgressRing
                 x:Name="LoadingIndicator"
                 HorizontalAlignment="Left"
@@ -57,6 +64,7 @@
                 Visibility="Collapsed" />
             <StackPanel
                 x:Name="ErrorPanel"
+                Margin="0,28,0,0"
                 Visibility="Collapsed">
                 <InfoBar
                     x:Name="ErrorBar"

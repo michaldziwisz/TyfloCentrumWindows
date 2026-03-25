@@ -219,7 +219,7 @@ public partial class FavoritesViewModel : ObservableObject
     {
         await _favoritesService.RemoveAsync(item.Id, cancellationToken);
         await ReloadAsync(cancellationToken);
-        StatusMessage = "Pozycja została usunięta z ulubionych.";
+        StatusMessage = $"Usunięto z ulubionych: {item.Title}.";
         NotifyStateChanged();
     }
 

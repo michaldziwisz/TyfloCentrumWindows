@@ -53,6 +53,10 @@
             Key="Number7"
             Modifiers="Menu"
             Invoked="OnSectionShortcutInvoked" />
+        <KeyboardAccelerator
+            Key="Number8"
+            Modifiers="Menu"
+            Invoked="OnSectionShortcutInvoked" />
     </Page.KeyboardAccelerators>
     <Grid
         x:Name="RootLayout"

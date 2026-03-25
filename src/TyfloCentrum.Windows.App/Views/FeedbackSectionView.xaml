@@ -1,0 +1,151 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.FeedbackSectionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid MaxWidth="760" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <InfoBar
+                Grid.Row="0"
+                IsClosable="False"
+                IsOpen="True"
+                Severity="Warning"
+                Title="Uwaga o prywatności"
+                Message="Tytuł i opis trafią do publicznego zgłoszenia GitHub. Nie wpisuj tu danych prywatnych, numerów telefonu, adresów ani sekretów." />
+
+            <TextBlock
+                Grid.Row="1"
+                AutomationProperties.AutomationId="feedback.privateLogInfo"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Opcjonalny e-mail i log techniczny są wysyłane tylko do prywatnego repo diagnostycznego. Publiczne issue zawiera wyłącznie bezpieczny opis i diagnostykę jawną."
+                TextWrapping="WrapWholeWords" />
+
+            <TextBlock
+                x:Name="StatusTextBlock"
+                Grid.Row="2"
+                AutomationProperties.LiveSetting="Polite"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="WrapWholeWords"
+                Visibility="Collapsed" />
+
+            <InfoBar
+                x:Name="ErrorBar"
+                Grid.Row="3"
+                IsClosable="False"
+                IsOpen="False"
+                Severity="Error"
+                Visibility="Collapsed" />
+
+            <StackPanel
+                Grid.Row="4"
+                Spacing="12">
+                <ComboBox
+                    x:Name="KindComboBox"
+                    AutomationProperties.AutomationId="feedback.kind"
+                    Header="Typ zgłoszenia"
+                    ItemsSource="{Binding KindOptions}"
+                    SelectedItem="{Binding SelectedKindOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBox
+                    x:Name="TitleTextBox"
+                    AutomationProperties.AutomationId="feedback.title"
+                    Header="Tytuł publicznego zgłoszenia"
+                    MaxLength="180"
+                    PlaceholderText="Krótki tytuł widoczny publicznie"
+                    Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBox
+                    x:Name="DescriptionTextBox"
+                    AutomationProperties.AutomationId="feedback.description"
+                    AcceptsReturn="True"
+                    Header="Opis publiczny"
+                    Height="240"
+                    PlaceholderText="Opisz problem albo sugestię bez danych prywatnych"
+                    Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap" />
+
+                <TextBox
+                    x:Name="ContactEmailTextBox"
+                    AutomationProperties.AutomationId="feedback.contactEmail"
+                    Header="Adres e-mail do kontaktu (opcjonalnie, tylko prywatnie)"
+                    InputScope="EmailSmtpAddress"
+                    PlaceholderText="Adres zapisany wyłącznie w prywatnym repo diagnostycznym"
+                    Text="{Binding ContactEmail, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <CheckBox
+                    x:Name="AllowPrivateContactByEmailCheckBox"
+                    AutomationProperties.AutomationId="feedback.allowPrivateContactByEmail"
+                    Content="Wyrażam zgodę na wysłanie tego adresu e-mail tylko do prywatnego repo diagnostycznego, bez publikacji w publicznym issue."
+                    IsChecked="{Binding AllowPrivateContactByEmail, Mode=TwoWay}" />
+
+                <CheckBox
+                    x:Name="IncludeDiagnosticsCheckBox"
+                    AutomationProperties.AutomationId="feedback.includeDiagnostics"
+                    Content="Dołącz bezpieczną diagnostykę techniczną"
+                    IsChecked="{Binding IncludeDiagnostics, Mode=TwoWay}" />
+
+                <CheckBox
+                    x:Name="IncludeLogCheckBox"
+                    AutomationProperties.AutomationId="feedback.includeLog"
+                    Content="Dołącz prywatny log techniczny"
+                    IsChecked="{Binding IncludeLogFile, Mode=TwoWay}" />
+            </StackPanel>
+
+            <StackPanel
+                Grid.Row="5"
+                HorizontalAlignment="Left"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    x:Name="SubmitButton"
+                    AutomationProperties.AutomationId="feedback.submit"
+                    Click="OnSubmitClick"
+                    Content="{Binding SubmitButtonText}" />
+
+                <Button
+                    x:Name="OpenIssueButton"
+                    AutomationProperties.AutomationId="feedback.openIssue"
+                    Click="OnOpenIssueClick"
+                    Content="Otwórz publiczne zgłoszenie"
+                    Visibility="Collapsed" />
+
+                <ProgressRing
+                    x:Name="SubmittingIndicator"
+                    IsActive="False"
+                    Visibility="Collapsed" />
+            </StackPanel>
+
+            <TextBlock
+                Grid.Row="6"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Po udanym wysłaniu powstanie publiczne issue w repozytorium TyfloCentrum, a pełne surowe dane techniczne pozostaną po stronie prywatnej."
+                TextWrapping="WrapWholeWords" />
+
+            <TextBlock
+                Grid.Row="7"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Naciśnij Escape, aby wrócić do listy sekcji głównych."
+                TextWrapping="WrapWholeWords" />
+        </Grid>
+    </ScrollViewer>
+</UserControl>

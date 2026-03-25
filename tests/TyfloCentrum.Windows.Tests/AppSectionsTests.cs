@@ -53,6 +53,12 @@ public sealed class AppSectionsTests
                 Assert.Equal("settings", item.Key);
                 Assert.Equal(7, item.ShortcutNumber);
                 Assert.Equal("Alt+7", item.ShortcutLabel);
+            },
+            item =>
+            {
+                Assert.Equal("feedback", item.Key);
+                Assert.Equal(8, item.ShortcutNumber);
+                Assert.Equal("Alt+8", item.ShortcutLabel);
             }
         );
     }

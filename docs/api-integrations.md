@@ -8,6 +8,7 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - `https://tyfloswiat.pl/wp-json`
 - `https://kontakt.tyflopodcast.net/json.php`
 - opcjonalnie: `https://tyflocentrum.tyflo.eu.org`
+- opcjonalnie: `Sygnalista` `POST /v1/report`
 
 ## WordPress - Tyflopodcast
 
@@ -68,6 +69,7 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - omijanie cache lokalnego dla endpointow live
 - dodatkowy memory cache dla odpowiedzi z `Cache-Control: no-store`
 - logowanie endpointow bez danych wrazliwych
+- klient zgłoszeń zawsze wysyła jawny `User-Agent`, bo ruch bez tego nagłówka może zostać odrzucony przez warstwę `Cloudflare`
 
 ## Modele domenowe do odwzorowania
 - `Podcast`
@@ -130,3 +132,27 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
   - `Azure Object ID`
   - mapowanie `PFN -> Azure App ID` po stronie Microsoft
   - wdrożony serwer z poprawnymi sekretami Azure
+
+## Sygnalista - zgłoszenia błędów i sugestii
+
+### Endpoint
+- `POST /v1/report`
+- `Content-Type: application/json`
+- opcjonalny nagłówek:
+  - `x-sygnalista-app-token`
+
+### Publiczne i prywatne dane
+- tytuł i opis zgłoszenia trafiają do publicznego issue `GitHub`
+- opcjonalny adres e-mail do kontaktu trafia tylko do prywatnego repo intake
+- bezpieczna diagnostyka jawna może być pokazana w publicznym issue
+- opcjonalny log techniczny jest wysyłany tylko do prywatnego repo intake
+
+### Wymagania prywatnosci i Store
+- wysyłka zgłoszenia jest akcją jawną i dobrowolną
+- UI musi ostrzegać, że tytuł i opis są publiczne
+- UI musi wymagać wyraźnej zgody przed wysłaniem opcjonalnego adresu e-mail do prywatnego repo diagnostycznego
+- polityka prywatności musi opisywać:
+  - publiczne issue `GitHub`
+  - opcjonalny prywatny adres e-mail do kontaktu
+  - prywatne repo diagnostyczne dla logów
+  - zakres bezpiecznej diagnostyki wysyłanej wraz ze zgłoszeniem

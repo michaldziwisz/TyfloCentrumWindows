@@ -125,7 +125,7 @@ Pozniej automatyzowac:
 
 ### Modul `Shell`
 - klawiatura:
-  - `Alt+1` do `Alt+7` przełącza sekcje bez użycia myszy
+  - `Alt+1` do `Alt+8` przełącza sekcje bez użycia myszy
   - strzałka w górę i strzałka w dół przełącza aktywną sekcję na liście sekcji
   - wpisanie pierwszej litery sekcji przenosi fokus do kolejnej sekcji zaczynającej się od tej litery
   - `Enter` na liście sekcji przechodzi do głównej kontroli bieżącej sekcji, jak `Tab`
@@ -209,6 +209,24 @@ Pozniej automatyzowac:
   - kolejne nowe artykuły pokazują toast `Nowy artykuł`
   - wyłączenie powiadomień dla podcastów albo artykułów zatrzymuje toast dla tej kategorii, ale nie blokuje aktualizacji stanu ostatnio widzianych wpisów
   - powiadomienia działają tylko wtedy, gdy aplikacja jest uruchomiona
+
+### Modul `Zgłoś błąd lub sugestię`
+- klawiatura:
+  - `Alt+8` przełącza do sekcji zgłoszeń
+  - `Enter` na liście sekcji przechodzi do pola tytułu zgłoszenia
+  - `Tab` przechodzi kolejno przez typ zgłoszenia, tytuł, opis, pola wyboru i przyciski akcji
+  - `Escape` z formularza wraca do listy sekcji głównych
+- `Narrator`:
+  - odczytuje ostrzeżenie o publicznym issue
+  - odczytuje etykiety pól `Typ zgłoszenia`, `Tytuł publicznego zgłoszenia`, `Opis publiczny`
+  - odczytuje status wysyłki i błąd serwera
+- `NVDA`:
+  - odczytuje stan pól wyboru diagnostyki i prywatnego logu bez pustych nazw
+  - odczytuje pojawienie się przycisku otwierającego publiczne issue po udanej wysyłce
+- funkcjonalnie:
+  - publiczne zgłoszenie zawiera tylko tytuł, opis i bezpieczną diagnostykę jawną
+  - opcjonalny log techniczny trafia wyłącznie do prywatnego repo intake
+  - klient zawsze wysyła nagłówek `User-Agent`
 
 ### Modul `TyfloŚwiat`
 - klawiatura:

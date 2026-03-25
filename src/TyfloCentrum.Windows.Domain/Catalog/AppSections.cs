@@ -60,6 +60,14 @@ public static class AppSections
         "Alt+7"
     );
 
+    public static readonly AppSection Feedback = new(
+        "feedback",
+        "Zgłoś błąd lub sugestię",
+        "Publiczne zgłoszenie na GitHub z bezpieczną diagnostyką i opcjonalnym prywatnym logiem technicznym.",
+        8,
+        "Alt+8"
+    );
+
     public static IReadOnlyList<AppSection> All { get; } = new[]
     {
         News,
@@ -69,5 +77,6 @@ public static class AppSections
         Favorites,
         Radio,
         Settings,
+        Feedback,
     };
 }

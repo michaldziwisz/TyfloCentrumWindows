@@ -19,7 +19,6 @@ public sealed partial class ArticleSectionView : UserControl
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
     private readonly IShareService _shareService;
-    private readonly PostDetailDialogService _postDetailDialogService;
     private readonly TyfloSwiatMagazineView _magazineView;
     private readonly ContentCategoryItemViewModel _magazineNavigationItem = new(
         -1,
@@ -40,7 +39,6 @@ public sealed partial class ArticleSectionView : UserControl
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
         IShareService shareService,
-        PostDetailDialogService postDetailDialogService,
         TyfloSwiatMagazineView magazineView
     )
     {
@@ -49,7 +47,6 @@ public sealed partial class ArticleSectionView : UserControl
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
         _shareService = shareService;
-        _postDetailDialogService = postDetailDialogService;
         _magazineView = magazineView;
         InitializeComponent();
         DataContext = ViewModel;
@@ -254,14 +251,25 @@ public sealed partial class ArticleSectionView : UserControl
     private async void OnItemsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (
-            e.Key == VirtualKey.D
-            && KeyboardShortcutHelper.IsControlPressed()
-            && sender is ListView { SelectedItem: ContentPostItemViewModel favoriteItem }
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: ContentPostItemViewModel selectedItem }
         )
         {
-            e.Handled = true;
-            await ToggleFavoriteAsync(favoriteItem);
-            return;
+            switch (e.Key)
+            {
+                case VirtualKey.D:
+                    e.Handled = true;
+                    await ToggleFavoriteAsync(selectedItem);
+                    return;
+                case VirtualKey.S:
+                    e.Handled = true;
+                    await DownloadItemAsync(selectedItem);
+                    return;
+                case VirtualKey.U:
+                    e.Handled = true;
+                    await ShareItemAsync(selectedItem);
+                    return;
+            }
         }
 
         if (e.Key != VirtualKey.Enter)
@@ -317,23 +325,18 @@ public sealed partial class ArticleSectionView : UserControl
         openItem.Click += async (_, _) => await OpenDefaultActionAsync(item);
         flyout.Items.Add(openItem);
 
-        var detailsItem = new MenuFlyoutItem { Text = "Szczegóły" };
-        AutomationProperties.SetName(detailsItem, item.OpenDetailsLabel);
-        detailsItem.Click += async (_, _) => await OpenDetailsAsync(item);
-        flyout.Items.Add(detailsItem);
-
         var browserItem = new MenuFlyoutItem { Text = "Otwórz w przeglądarce" };
         AutomationProperties.SetName(browserItem, item.OpenLinkLabel);
         browserItem.Click += async (_, _) => await ViewModel.OpenItemAsync(item);
         flyout.Items.Add(browserItem);
 
-        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
-        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł: {item.Title}");
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
+        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł (Ctrl+S): {item.Title}");
         downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
         flyout.Items.Add(downloadItem);
 
-        var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
-        AutomationProperties.SetName(shareItem, $"Udostępnij artykuł: {item.Title}");
+        var shareItem = new MenuFlyoutItem { Text = "Udostępnij (Ctrl+U)" };
+        AutomationProperties.SetName(shareItem, $"Udostępnij artykuł (Ctrl+U): {item.Title}");
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
         flyout.Items.Add(shareItem);
 
@@ -365,18 +368,6 @@ public sealed partial class ArticleSectionView : UserControl
         }
 
         ListViewFocusHelper.RestoreFocus(ItemsList, item);
-    }
-
-    private Task OpenDetailsAsync(ContentPostItemViewModel item)
-    {
-        return _postDetailDialogService.ShowAsync(
-            item.Source,
-            item.PostId,
-            item.Title,
-            item.PublishedDate,
-            item.Link,
-            XamlRoot
-        );
     }
 
     private async Task ShareItemAsync(ContentPostItemViewModel item)

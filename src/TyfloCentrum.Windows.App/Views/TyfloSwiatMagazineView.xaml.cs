@@ -129,8 +129,20 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
         }
     }
 
-    private void OnIssuesListKeyDown(object sender, KeyRoutedEventArgs e)
+    private async void OnIssuesListKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: TyfloSwiatMagazineIssueItemViewModel }
+            && e.Key == VirtualKey.S
+            && ViewModel.CanOpenSelectedIssuePdf
+        )
+        {
+            e.Handled = true;
+            await ViewModel.OpenPdfAsync();
+            return;
+        }
+
         if (e.Key != VirtualKey.Enter)
         {
             return;
@@ -166,8 +178,8 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
 
         if (ViewModel.CanOpenSelectedIssuePdf)
         {
-            var pdfItem = new MenuFlyoutItem { Text = "Pobierz PDF" };
-            AutomationProperties.SetName(pdfItem, $"Pobierz PDF numeru: {issue.Title}");
+            var pdfItem = new MenuFlyoutItem { Text = "Pobierz PDF (Ctrl+S)" };
+            AutomationProperties.SetName(pdfItem, $"Pobierz PDF numeru (Ctrl+S): {issue.Title}");
             pdfItem.Click += async (_, _) => await ViewModel.OpenPdfAsync();
             flyout.Items.Add(pdfItem);
         }
@@ -185,6 +197,24 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
 
     private async void OnTocItemsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: TyfloSwiatMagazineTocItemViewModel selectedItem }
+        )
+        {
+            switch (e.Key)
+            {
+                case VirtualKey.S:
+                    e.Handled = true;
+                    await DownloadTocItemAsync(selectedItem);
+                    return;
+                case VirtualKey.U:
+                    e.Handled = true;
+                    await ShareTocItemAsync(selectedItem);
+                    return;
+            }
+        }
+
         if (e.Key != VirtualKey.Enter)
         {
             return;
@@ -226,28 +256,14 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenTocItemInBrowserAsync(item);
         flyout.Items.Add(browserItem);
 
-        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
-        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł: {item.Title}");
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
+        AutomationProperties.SetName(downloadItem, $"Pobierz artykuł (Ctrl+S): {item.Title}");
         downloadItem.Click += async (_, _) => await DownloadTocItemAsync(item);
         flyout.Items.Add(downloadItem);
 
-        var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
-        AutomationProperties.SetName(shareItem, $"Udostępnij artykuł: {item.Title}");
-        shareItem.Click += async (_, _) =>
-        {
-            var shared = await _shareService.ShareLinkAsync(item.Title, null, item.Link);
-            if (!shared)
-            {
-                await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się udostępnić artykułu.");
-            }
-
-            if (ViewModel.TocItems.Contains(item))
-            {
-                TocItemsList.SelectedItem = item;
-                TocItemsList.ScrollIntoView(item);
-                TocItemsList.Focus(FocusState.Programmatic);
-            }
-        };
+        var shareItem = new MenuFlyoutItem { Text = "Udostępnij (Ctrl+U)" };
+        AutomationProperties.SetName(shareItem, $"Udostępnij artykuł (Ctrl+U): {item.Title}");
+        shareItem.Click += async (_, _) => await ShareTocItemAsync(item);
         flyout.Items.Add(shareItem);
 
         var favoriteItem = new MenuFlyoutItem { Text = item.FavoriteButtonText };
@@ -317,6 +333,22 @@ public sealed partial class TyfloSwiatMagazineView : UserControl
         catch
         {
             await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się pobrać artykułu.");
+        }
+
+        if (ViewModel.TocItems.Contains(item))
+        {
+            TocItemsList.SelectedItem = item;
+            TocItemsList.ScrollIntoView(item);
+            TocItemsList.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private async Task ShareTocItemAsync(TyfloSwiatMagazineTocItemViewModel item)
+    {
+        var shared = await _shareService.ShareLinkAsync(item.Title, null, item.Link);
+        if (!shared)
+        {
+            await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się udostępnić artykułu.");
         }
 
         if (ViewModel.TocItems.Contains(item))

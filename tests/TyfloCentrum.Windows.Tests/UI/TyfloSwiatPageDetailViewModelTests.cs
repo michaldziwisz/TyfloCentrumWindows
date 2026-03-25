@@ -66,9 +66,11 @@ public sealed class TyfloSwiatPageDetailViewModelTests
 
         await viewModel.ToggleFavoriteAsync();
         Assert.True(viewModel.IsFavorite);
+        Assert.Equal("Dodano do ulubionych: Strona.", viewModel.StatusMessage);
 
         await viewModel.ToggleFavoriteAsync();
         Assert.False(viewModel.IsFavorite);
+        Assert.Equal("Usunięto z ulubionych: Strona.", viewModel.StatusMessage);
     }
 
     [Fact]

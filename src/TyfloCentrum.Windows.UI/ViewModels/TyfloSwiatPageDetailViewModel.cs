@@ -51,11 +51,16 @@ public partial class TyfloSwiatPageDetailViewModel : ObservableObject
     private string? errorMessage;
 
     [ObservableProperty]
+    private string? statusMessage;
+
+    [ObservableProperty]
     private bool isFavorite;
 
     public bool HasContent => !string.IsNullOrWhiteSpace(ContentText);
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+
+    public bool HasStatus => !string.IsNullOrWhiteSpace(StatusMessage);
 
     public string FavoriteButtonLabel =>
         IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych";
@@ -74,6 +79,7 @@ public partial class TyfloSwiatPageDetailViewModel : ObservableObject
         Link = fallbackLink;
         ContentText = string.Empty;
         ErrorMessage = null;
+        StatusMessage = null;
         HasLoaded = false;
         IsFavorite = false;
         _hasRequestedInitialLoad = false;
@@ -125,11 +131,13 @@ public partial class TyfloSwiatPageDetailViewModel : ObservableObject
                 cancellationToken
             );
             IsFavorite = false;
+            StatusMessage = $"Usunięto z ulubionych: {Title}.";
             return;
         }
 
         await _favoritesService.AddOrUpdateAsync(CreateFavoriteItem(), cancellationToken);
         IsFavorite = true;
+        StatusMessage = $"Dodano do ulubionych: {Title}.";
     }
 
     public async Task ShareAsync(CancellationToken cancellationToken = default)
@@ -162,6 +170,11 @@ public partial class TyfloSwiatPageDetailViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(FavoriteButtonLabel));
         OnPropertyChanged(nameof(FavoriteButtonAutomationLabel));
+    }
+
+    partial void OnStatusMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasStatus));
     }
 
     private async Task LoadAsync(CancellationToken cancellationToken)

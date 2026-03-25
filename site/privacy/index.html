@@ -29,6 +29,9 @@
         <li>dane wpisane przez użytkownika w formularzu kontaktowym do Tyfloradia, w tym nazwa lub podpis autora wiadomości</li>
         <li>nagrania głosowe wysyłane przez użytkownika do Tyfloradia</li>
         <li>techniczne identyfikatory powiadomień, w tym tokeny lub kanały push wymagane do dostarczania powiadomień</li>
+        <li>tytuł i opis zgłoszenia błędu lub sugestii, jeśli użytkownik skorzysta z sekcji zgłoszeń</li>
+        <li>opcjonalny adres e-mail do kontaktu, jeśli użytkownik wyraźnie zgodzi się wysłać go razem ze zgłoszeniem</li>
+        <li>bezpieczna diagnostyka techniczna oraz opcjonalny prywatny log techniczny dołączane do zgłoszenia przez użytkownika</li>
         <li>lokalne ustawienia aplikacji, ulubione, pozycje odtwarzania i informacje o pobranych plikach przechowywane na urządzeniu użytkownika</li>
       </ul>
     </section>
@@ -38,6 +41,7 @@
       <ul>
         <li>obsługa kontaktu tekstowego i głosowego z Tyfloradiem</li>
         <li>obsługa powiadomień o nowych treściach</li>
+        <li>przyjmowanie zgłoszeń błędów i sugestii oraz diagnozowanie problemów technicznych</li>
         <li>zapisywanie ustawień i preferencji użytkownika na jego urządzeniu</li>
         <li>działanie funkcji pobierania, odtwarzania i wznawiania treści</li>
       </ul>
@@ -49,6 +53,7 @@
         <li>dane lokalne, takie jak ustawienia, ulubione i pozycje odtwarzania, są przechowywane lokalnie na urządzeniu użytkownika</li>
         <li>wiadomości tekstowe i głosowe są przesyłane do usług TyfloPodcast lub TyfloRadio obsługujących kontakt z redakcją</li>
         <li>tokeny lub kanały powiadomień mogą być przesyłane do backendu powiadomień TyfloCentrum w celu dostarczania powiadomień push</li>
+        <li>zgłoszenia błędów i sugestii mogą być przesyłane do publicznego repozytorium GitHub jako issue, a opcjonalny adres e-mail, prywatne dane techniczne i opcjonalny log techniczny mogą być zapisywane wyłącznie w prywatnym repozytorium diagnostycznym</li>
       </ul>
     </section>
 
@@ -57,6 +62,8 @@
       <ul>
         <li>dane nie są sprzedawane</li>
         <li>dane są udostępniane wyłącznie usługom technicznym niezbędnym do działania funkcji aplikacji, takim jak backend kontaktowy, serwis powiadomień i źródła treści</li>
+        <li>w przypadku zgłoszenia błędu lub sugestii opis publiczny może zostać opublikowany w publicznym issue GitHub, dlatego użytkownik nie powinien wpisywać tam danych prywatnych</li>
+        <li>opcjonalny adres e-mail podany przy zgłoszeniu błędu lub sugestii nie jest publikowany w publicznym issue i trafia tylko do prywatnego repozytorium diagnostycznego</li>
       </ul>
     </section>
 
@@ -65,6 +72,7 @@
       <ul>
         <li>mikrofon jest używany wyłącznie do nagrywania głosówek, jeśli użytkownik wybierze tę funkcję</li>
         <li>połączenie z internetem jest używane do pobierania treści, wysyłania wiadomości i obsługi powiadomień</li>
+        <li>przy zgłoszeniach błędów aplikacja może wysłać bezpieczną diagnostykę techniczną, opcjonalny prywatny log techniczny i opcjonalny adres e-mail tylko po wyraźnym wyborze użytkownika</li>
       </ul>
     </section>
 
@@ -73,6 +81,7 @@
       <ul>
         <li>użytkownik może nie korzystać z funkcji kontaktu tekstowego i głosowego</li>
         <li>użytkownik może wyłączyć powiadomienia w ustawieniach aplikacji lub systemu Windows</li>
+        <li>użytkownik może wysłać zgłoszenie bez prywatnego logu technicznego, bez adresu e-mail albo całkowicie zrezygnować z wysłania zgłoszenia</li>
         <li>użytkownik może usunąć lokalne dane aplikacji przez odinstalowanie aplikacji lub wyczyszczenie jej danych w systemie</li>
       </ul>
     </section>

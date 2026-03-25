@@ -17,7 +17,6 @@ public sealed partial class SearchSectionView : UserControl
     private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
-    private readonly PostDetailDialogService _postDetailDialogService;
     private readonly IShareService _shareService;
     private bool _focusResultsAfterSearch;
 
@@ -28,8 +27,7 @@ public sealed partial class SearchSectionView : UserControl
         IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
-        IShareService shareService,
-        PostDetailDialogService postDetailDialogService
+        IShareService shareService
     )
     {
         ViewModel = viewModel;
@@ -37,7 +35,6 @@ public sealed partial class SearchSectionView : UserControl
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
         _shareService = shareService;
-        _postDetailDialogService = postDetailDialogService;
         InitializeComponent();
         DataContext = ViewModel;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -89,14 +86,25 @@ public sealed partial class SearchSectionView : UserControl
     private async void OnResultsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (
-            e.Key == VirtualKey.D
-            && KeyboardShortcutHelper.IsControlPressed()
-            && sender is ListView { SelectedItem: ContentPostItemViewModel favoriteItem }
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: ContentPostItemViewModel selectedItem }
         )
         {
-            e.Handled = true;
-            await ToggleFavoriteAsync(favoriteItem);
-            return;
+            switch (e.Key)
+            {
+                case VirtualKey.D:
+                    e.Handled = true;
+                    await ToggleFavoriteAsync(selectedItem);
+                    return;
+                case VirtualKey.S:
+                    e.Handled = true;
+                    await DownloadItemAsync(selectedItem);
+                    return;
+                case VirtualKey.U:
+                    e.Handled = true;
+                    await ShareItemAsync(selectedItem);
+                    return;
+            }
         }
 
         if (e.Key != VirtualKey.Enter)
@@ -137,35 +145,27 @@ public sealed partial class SearchSectionView : UserControl
         openItem.Click += async (_, _) => await OpenDefaultActionAsync(item);
         flyout.Items.Add(openItem);
 
-        if (!item.SupportsPlayback)
-        {
-            var detailsItem = new MenuFlyoutItem { Text = "Szczegóły" };
-            AutomationProperties.SetName(detailsItem, item.OpenDetailsLabel);
-            detailsItem.Click += async (_, _) => await OpenDetailsAsync(item);
-            flyout.Items.Add(detailsItem);
-        }
-
         var browserItem = new MenuFlyoutItem { Text = "Otwórz w przeglądarce" };
         AutomationProperties.SetName(browserItem, item.OpenLinkLabel);
         browserItem.Click += async (_, _) => await ViewModel.OpenResultAsync(item);
         flyout.Items.Add(browserItem);
 
-        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
         AutomationProperties.SetName(
             downloadItem,
             item.SupportsPlayback
-                ? $"Pobierz podcast: {item.Title}"
-                : $"Pobierz artykuł: {item.Title}"
+                ? $"Pobierz podcast (Ctrl+S): {item.Title}"
+                : $"Pobierz artykuł (Ctrl+S): {item.Title}"
         );
         downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
         flyout.Items.Add(downloadItem);
 
-        var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
+        var shareItem = new MenuFlyoutItem { Text = "Udostępnij (Ctrl+U)" };
         AutomationProperties.SetName(
             shareItem,
             item.SupportsPlayback
-                ? $"Udostępnij podcast: {item.Title}"
-                : $"Udostępnij artykuł: {item.Title}"
+                ? $"Udostępnij podcast (Ctrl+U): {item.Title}"
+                : $"Udostępnij artykuł (Ctrl+U): {item.Title}"
         );
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
         flyout.Items.Add(shareItem);
@@ -203,18 +203,6 @@ public sealed partial class SearchSectionView : UserControl
         }
 
         ListViewFocusHelper.RestoreFocus(ResultsList, item);
-    }
-
-    private Task OpenDetailsAsync(ContentPostItemViewModel item)
-    {
-        return _postDetailDialogService.ShowAsync(
-            item.Source,
-            item.PostId,
-            item.Title,
-            item.PublishedDate,
-            item.Link,
-            XamlRoot
-        );
     }
 
     private async Task ToggleFavoriteAsync(ContentPostItemViewModel item)

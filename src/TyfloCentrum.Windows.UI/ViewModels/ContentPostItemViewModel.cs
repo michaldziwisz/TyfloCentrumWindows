@@ -39,8 +39,6 @@ public sealed class ContentPostItemViewModel
     public string OpenLinkLabel =>
         $"Otwórz {ItemTypeLabel.ToLowerInvariant()} w zewnętrznej przeglądarce: {Title}";
 
-    public string OpenDetailsLabel => $"Pokaż szczegóły {ItemTypeLabel.ToLowerInvariant()}: {Title}";
-
     public string AccessibleLabel
     {
         get

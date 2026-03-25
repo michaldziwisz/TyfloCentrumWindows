@@ -15,20 +15,17 @@ public sealed partial class FavoritesSectionView : UserControl
     private readonly AudioPlayerDialogService _audioPlayerDialogService;
     private readonly IAudioPlaybackRequestFactory _audioPlaybackRequestFactory;
     private readonly InAppBrowserDialogService _inAppBrowserDialogService;
-    private readonly PostDetailDialogService _postDetailDialogService;
 
     public event EventHandler? ExitToSectionListRequested;
 
     public FavoritesSectionView(
         FavoritesViewModel viewModel,
-        PostDetailDialogService postDetailDialogService,
         InAppBrowserDialogService inAppBrowserDialogService,
         AudioPlayerDialogService audioPlayerDialogService,
         IAudioPlaybackRequestFactory audioPlaybackRequestFactory
     )
     {
         ViewModel = viewModel;
-        _postDetailDialogService = postDetailDialogService;
         _inAppBrowserDialogService = inAppBrowserDialogService;
         _audioPlayerDialogService = audioPlayerDialogService;
         _audioPlaybackRequestFactory = audioPlaybackRequestFactory;
@@ -141,6 +138,7 @@ public sealed partial class FavoritesSectionView : UserControl
         if (sender is FrameworkElement { DataContext: FavoriteItemViewModel item })
         {
             await ViewModel.RemoveAsync(item);
+            AutomationAnnouncementHelper.Announce(StatusTextBlock, ViewModel.StatusMessage, important: true);
         }
     }
 

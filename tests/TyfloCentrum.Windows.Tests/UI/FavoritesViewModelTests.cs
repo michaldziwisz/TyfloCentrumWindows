@@ -122,7 +122,7 @@ public sealed class FavoritesViewModelTests
 
         Assert.Empty(viewModel.Items);
         Assert.Equal(FavoriteItem.CreateId(ContentSource.Podcast, 11), service.LastRemovedId);
-        Assert.Equal("Pozycja została usunięta z ulubionych.", viewModel.StatusMessage);
+        Assert.Equal("Usunięto z ulubionych: Podcast.", viewModel.StatusMessage);
     }
 
     [Fact]

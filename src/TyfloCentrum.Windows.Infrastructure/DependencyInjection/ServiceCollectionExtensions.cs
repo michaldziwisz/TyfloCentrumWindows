@@ -22,6 +22,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlaybackResumeService, LocalPlaybackResumeService>();
         services.AddSingleton<IFavoritesService, FileFavoritesService>();
         services.AddSingleton<IAudioPlaybackRequestFactory, AudioPlaybackRequestFactory>();
+        services.AddHttpClient<IFeedbackSubmissionService, SygnalistaFeedbackSubmissionService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        });
         services.AddHttpClient<IPushNotificationRegistrationSyncService, PushNotificationRegistrationSyncService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);

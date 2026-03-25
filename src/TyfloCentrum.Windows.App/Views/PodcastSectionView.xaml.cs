@@ -206,14 +206,25 @@ public sealed partial class PodcastSectionView : UserControl
     private async void OnItemsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (
-            e.Key == VirtualKey.D
-            && KeyboardShortcutHelper.IsControlPressed()
-            && sender is ListView { SelectedItem: ContentPostItemViewModel favoriteItem }
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: ContentPostItemViewModel selectedItem }
         )
         {
-            e.Handled = true;
-            await ToggleFavoriteAsync(favoriteItem);
-            return;
+            switch (e.Key)
+            {
+                case VirtualKey.D:
+                    e.Handled = true;
+                    await ToggleFavoriteAsync(selectedItem);
+                    return;
+                case VirtualKey.S:
+                    e.Handled = true;
+                    await DownloadItemAsync(selectedItem);
+                    return;
+                case VirtualKey.U:
+                    e.Handled = true;
+                    await ShareItemAsync(selectedItem);
+                    return;
+            }
         }
 
         if (e.Key != VirtualKey.Enter)
@@ -274,13 +285,13 @@ public sealed partial class PodcastSectionView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenItemAsync(item);
         flyout.Items.Add(browserItem);
 
-        var downloadItem = new MenuFlyoutItem { Text = "Pobierz" };
-        AutomationProperties.SetName(downloadItem, $"Pobierz podcast: {item.Title}");
+        var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
+        AutomationProperties.SetName(downloadItem, $"Pobierz podcast (Ctrl+S): {item.Title}");
         downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
         flyout.Items.Add(downloadItem);
 
-        var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
-        AutomationProperties.SetName(shareItem, $"Udostępnij podcast: {item.Title}");
+        var shareItem = new MenuFlyoutItem { Text = "Udostępnij (Ctrl+U)" };
+        AutomationProperties.SetName(shareItem, $"Udostępnij podcast (Ctrl+U): {item.Title}");
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
         flyout.Items.Add(shareItem);
 

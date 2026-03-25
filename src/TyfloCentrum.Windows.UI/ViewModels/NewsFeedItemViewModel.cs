@@ -41,8 +41,6 @@ public sealed class NewsFeedItemViewModel
     public string OpenLinkLabel =>
         $"Otwórz {KindLabel.ToLowerInvariant()} w zewnętrznej przeglądarce: {Title}";
 
-    public string OpenDetailsLabel => $"Pokaż szczegóły {KindLabel.ToLowerInvariant()}: {Title}";
-
     public string AccessibleLabel
     {
         get

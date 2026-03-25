@@ -8,7 +8,7 @@ Status repo:
 - działają już sekcje: `Nowości`, `Podcasty`, `Artykuły`, `Szukaj`, `Ulubione`, `Tyfloradio`
 - listy `Nowości`, `Podcasty`, `Artykuły` i `Szukaj` mają domyślne akcje na `Enter` i menu kontekstowe dla akcji pobocznych zamiast osobnych przycisków w każdym wierszu
 - listy `Nowości`, `Podcasty` i `Artykuły` dociągają automatycznie starsze treści podczas przewijania
-- działa już pierwszy wariant szczegółów wpisu, komentarzy podcastów z licznikiem i szczegółami komentarza oraz wbudowanego odtwarzacza audio
+- działają już komentarze podcastów z licznikiem i szczegółami komentarza oraz wbudowany odtwarzacz audio
 - działa już pierwsza wersja wewnętrznej przeglądarki artykułów opartej o `WebView2`, w widoku czytania opartym o treść z API
 - działają już skróty klawiaturowe dla głównych sekcji aplikacji i podstawowych akcji odtwarzacza
 - player zapamiętuje pozycję podcastu i wznawia od ostatniego miejsca po ponownym otwarciu
@@ -22,8 +22,10 @@ Status repo:
 - repo zawiera juz tez osobny backend `TyfloCentrum.PushService` dla Windows `WNS`, z pollingiem `WordPress`, endpointami `register/update/unregister`, eventami webhook i realna wysylka do `WNS`; do produkcji brakuje jeszcze tylko konfiguracji sekretow Azure i wdrozenia na VPS
 - działają już pobierania z menu kontekstowego: podcasty zapisują się jako `mp3`, a artykuły jako pojedynczy plik `html` z osadzonymi obrazami; w `Ustawieniach` można wskazać folder docelowy albo użyć domyślnego folderu `Pobrane`
 - działa już pierwszy wariant `TyfloŚwiata`: roczniki, numery czasopisma, PDF, spis treści artykułów z `pages`, szybkie dodawanie stron do ulubionych i udostępnianie linków
+- działa już osobna sekcja `Zgłoś błąd lub sugestię`, która wysyła publiczne issue `GitHub` z bezpieczną diagnostyką jawną i opcjonalnym prywatnym logiem technicznym do `Sygnalisty`
 - repo ma juz tez drugi kanal dystrybucji poza Store: instalator `EXE`, budowany z tej samej bazy kodu na podstawie dzialajacego pakietu `MSIX`
 - repo ma juz tez workflow GitHub Actions `Direct EXE Build`, ktory buduje instalator poza Store i zapisuje go jako artefakt
+- listy treści oraz wybrane widoki wspierają już skróty `Ctrl+S` do pobierania i `Ctrl+U` do udostępniania, a komunikaty o zmianach ulubionych są ogłaszane także czytnikom ekranu
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
 ## Cele produktu

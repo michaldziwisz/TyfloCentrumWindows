@@ -36,6 +36,7 @@ public partial class App : Application
             {
                 logging.ClearProviders();
                 logging.AddDebug();
+                logging.AddProvider(new RollingFileLoggerProvider());
             })
             .ConfigureServices((context, services) =>
             {
@@ -48,6 +49,7 @@ public partial class App : Application
                 services.AddSingleton<WindowHandleProvider>();
                 services.AddSingleton<InternalStoreScreenshotCoordinator>();
                 services.AddSingleton<WindowsDownloadDirectoryService>();
+                services.AddSingleton<IFeedbackDiagnosticsCollector, WindowsFeedbackDiagnosticsCollector>();
                 services.AddSingleton<NotificationActivationService>();
                 services.AddSingleton<IDownloadDirectoryService>(serviceProvider =>
                     serviceProvider.GetRequiredService<WindowsDownloadDirectoryService>()
@@ -64,7 +66,6 @@ public partial class App : Application
                 services.AddSingleton<ContactTextMessageDialogService>();
                 services.AddSingleton<ContactVoiceMessageDialogService>();
                 services.AddSingleton<InAppBrowserDialogService>();
-                services.AddSingleton<PostDetailDialogService>();
                 services.AddSingleton<CommentDetailDialogService>();
                 services.AddSingleton<TyfloSwiatMagazineDialogService>();
                 services.AddSingleton<TyfloSwiatPageDetailDialogService>();
@@ -75,13 +76,13 @@ public partial class App : Application
                 services.AddTransient<FavoritesSectionView>();
                 services.AddTransient<RadioSectionView>();
                 services.AddTransient<SettingsSectionView>();
+                services.AddTransient<FeedbackSectionView>();
                 services.AddTransient<TyfloSwiatMagazineView>();
                 services.AddTransient<TyfloSwiatPageDetailView>();
                 services.AddTransient<AudioPlayerView>();
                 services.AddTransient<InAppBrowserView>();
                 services.AddTransient<ContactTextMessageView>();
                 services.AddTransient<ContactVoiceMessageView>();
-                services.AddTransient<PostDetailView>();
                 services.AddTransient<CommentDetailView>();
                 services.AddSingleton<ShellPage>();
                 services.AddSingleton<MainWindow>();

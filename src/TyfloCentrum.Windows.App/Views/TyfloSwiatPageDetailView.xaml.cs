@@ -1,12 +1,15 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.ComponentModel;
+using TyfloCentrum.Windows.App.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 
 namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class TyfloSwiatPageDetailView : UserControl
 {
+    private string? _lastAnnouncedStatusMessage;
+
     public TyfloSwiatPageDetailView(TyfloSwiatPageDetailViewModel viewModel)
     {
         ViewModel = viewModel;
@@ -49,6 +52,7 @@ public sealed partial class TyfloSwiatPageDetailView : UserControl
     private async void OnToggleFavoriteClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ToggleFavoriteAsync();
+        AnnounceStatusMessage(ViewModel.StatusMessage);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -65,6 +69,26 @@ public sealed partial class TyfloSwiatPageDetailView : UserControl
         ErrorBar.IsOpen = ViewModel.HasError;
         ErrorBar.Message = ViewModel.ErrorMessage;
 
+        StatusTextBlock.Text = ViewModel.StatusMessage ?? string.Empty;
+        StatusTextBlock.Visibility = ViewModel.HasStatus ? Visibility.Visible : Visibility.Collapsed;
+
         ContentTextBlock.Visibility = ViewModel.HasContent ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void AnnounceStatusMessage(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            _lastAnnouncedStatusMessage = null;
+            return;
+        }
+
+        if (string.Equals(_lastAnnouncedStatusMessage, message, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAnnouncedStatusMessage = message;
+        AutomationAnnouncementHelper.Announce(StatusTextBlock, message, important: true);
     }
 }

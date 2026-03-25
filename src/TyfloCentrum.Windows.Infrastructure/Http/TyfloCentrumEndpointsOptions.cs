@@ -12,6 +12,12 @@ public sealed class TyfloCentrumEndpointsOptions
 
     public Uri PushServiceBaseUrl { get; init; } = new("https://tyflocentrum.tyflo.eu.org/");
 
+    public Uri? SygnalistaBaseUrl { get; init; }
+
+    public string SygnalistaAppId { get; init; } = "tyflocentrum";
+
+    public string? SygnalistaAppToken { get; init; }
+
     public string PushAzureAppId { get; init; } = "6f96d75e-3f7c-46a4-bfe2-0bfdd8ddf2d1";
 
     public string? PushAzureObjectId { get; init; }

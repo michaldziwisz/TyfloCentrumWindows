@@ -12,7 +12,7 @@ public sealed class ShellViewModelTests
         var viewModel = new ShellViewModel();
 
         Assert.Equal(
-            "Skróty sekcji: Alt+1 Nowości, Alt+2 Podcasty, Alt+3 Artykuły, Alt+4 Szukaj, Alt+5 Ulubione, Alt+6 Tyfloradio, Alt+7 Ustawienia.",
+            "Skróty sekcji: Alt+1 Nowości, Alt+2 Podcasty, Alt+3 Artykuły, Alt+4 Szukaj, Alt+5 Ulubione, Alt+6 Tyfloradio, Alt+7 Ustawienia, Alt+8 Zgłoś błąd lub sugestię.",
             viewModel.KeyboardShortcutsDescription
         );
     }
@@ -40,5 +40,15 @@ public sealed class ShellViewModelTests
             "Wersja testowa Windows. Aktualnie wybrana sekcja: Ulubione. Skrót: Alt+5.",
             viewModel.BootstrapStatusMessage
         );
+    }
+
+    [Fact]
+    public void GetSectionByShortcutNumber_returns_feedback_section_for_alt_8()
+    {
+        var viewModel = new ShellViewModel();
+
+        var section = viewModel.GetSectionByShortcutNumber(8);
+
+        Assert.Equal(AppSections.Feedback, section);
     }
 }

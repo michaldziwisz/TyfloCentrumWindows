@@ -577,12 +577,17 @@ public sealed partial class AudioPlayerView : UserControl
         _ = PersistResumePositionAsync(_currentRequest.SourceUrl, positionSeconds);
     }
 
-    private void SetStatusMessage(string? message)
+    private void SetStatusMessage(string? message, bool announce = false, bool important = false)
     {
         StatusTextBlock.Text = message ?? string.Empty;
         StatusTextBlock.Visibility = string.IsNullOrWhiteSpace(message)
             ? Visibility.Collapsed
             : Visibility.Visible;
+
+        if (announce)
+        {
+            AutomationAnnouncementHelper.Announce(StatusTextBlock, message, important);
+        }
     }
 
     private async Task LoadShowNotesAsync(int podcastPostId, CancellationToken cancellationToken)
@@ -667,8 +672,8 @@ public sealed partial class AudioPlayerView : UserControl
     private void ConfigureShortcutHelpText(AudioPlaybackRequest request)
     {
         ShortcutHelpTextBlock.Text = request.CanChangePlaybackRate
-            ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Ctrl+strzałka w górę i dół zmieniają prędkość, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka."
-            : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka.";
+            ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Ctrl+strzałka w górę i dół zmieniają prędkość, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik."
+            : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik.";
     }
 
     private void SetVolume(double percent, bool announce)
@@ -792,7 +797,9 @@ public sealed partial class AudioPlayerView : UserControl
 
         var favoriteItem = new MenuFlyoutItem
         {
-            Text = item.IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych",
+            Text = item.IsFavorite
+                ? "Usuń z ulubionych (Ctrl+D)"
+                : "Dodaj do ulubionych (Ctrl+D)",
         };
         AutomationProperties.SetName(favoriteItem, item.FavoriteMenuLabel);
         favoriteItem.Click += async (_, _) => await ToggleChapterMarkerFavoriteAsync(item);
@@ -811,6 +818,17 @@ public sealed partial class AudioPlayerView : UserControl
 
     private async void OnRelatedLinksListKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (
+            KeyboardShortcutHelper.IsControlPressed()
+            && sender is ListView { SelectedItem: RelatedLinkItem selectedItem }
+            && e.Key == VirtualKey.U
+        )
+        {
+            e.Handled = true;
+            await ShareRelatedLinkAsync(selectedItem);
+            return;
+        }
+
         if (e.Key != VirtualKey.Enter)
         {
             return;
@@ -852,14 +870,16 @@ public sealed partial class AudioPlayerView : UserControl
         copyItem.Click += async (_, _) => await CopyRelatedLinkAsync(item);
         flyout.Items.Add(copyItem);
 
-        var shareItem = new MenuFlyoutItem { Text = "Udostępnij" };
+        var shareItem = new MenuFlyoutItem { Text = "Udostępnij (Ctrl+U)" };
         AutomationProperties.SetName(shareItem, item.ShareMenuLabel);
         shareItem.Click += async (_, _) => await ShareRelatedLinkAsync(item);
         flyout.Items.Add(shareItem);
 
         var favoriteItem = new MenuFlyoutItem
         {
-            Text = item.IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych",
+            Text = item.IsFavorite
+                ? "Usuń z ulubionych (Ctrl+D)"
+                : "Dodaj do ulubionych (Ctrl+D)",
         };
         AutomationProperties.SetName(favoriteItem, item.FavoriteMenuLabel);
         favoriteItem.Click += async (_, _) => await ToggleRelatedLinkFavoriteAsync(item);
@@ -946,12 +966,20 @@ public sealed partial class AudioPlayerView : UserControl
             if (item.IsFavorite)
             {
                 await _favoritesService.RemoveAsync(favoriteItem.Id);
-                SetStatusMessage($"Usunięto temat z ulubionych: {item.Title}.");
+                SetStatusMessage(
+                    $"Usunięto temat z ulubionych: {item.Title}.",
+                    announce: true,
+                    important: true
+                );
             }
             else
             {
                 await _favoritesService.AddOrUpdateAsync(favoriteItem);
-                SetStatusMessage($"Dodano temat do ulubionych: {item.Title}.");
+                SetStatusMessage(
+                    $"Dodano temat do ulubionych: {item.Title}.",
+                    announce: true,
+                    important: true
+                );
             }
 
             _chapterMarkers = _chapterMarkers
@@ -984,12 +1012,20 @@ public sealed partial class AudioPlayerView : UserControl
             if (item.IsFavorite)
             {
                 await _favoritesService.RemoveAsync(favoriteItem.Id);
-                SetStatusMessage($"Usunięto odnośnik z ulubionych: {item.Title}.");
+                SetStatusMessage(
+                    $"Usunięto odnośnik z ulubionych: {item.Title}.",
+                    announce: true,
+                    important: true
+                );
             }
             else
             {
                 await _favoritesService.AddOrUpdateAsync(favoriteItem);
-                SetStatusMessage($"Dodano odnośnik do ulubionych: {item.Title}.");
+                SetStatusMessage(
+                    $"Dodano odnośnik do ulubionych: {item.Title}.",
+                    announce: true,
+                    important: true
+                );
             }
 
             _relatedLinks = _relatedLinks
@@ -1434,7 +1470,7 @@ public sealed partial class AudioPlayerView : UserControl
         public string AccessibleLabel => $"{Title}. {TimeLabel}.";
 
         public string FavoriteMenuLabel =>
-            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")}: temat {Title}";
+            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")} (Ctrl+D): temat {Title}";
 
         public override string ToString() => AccessibleLabel;
     }
@@ -1453,10 +1489,10 @@ public sealed partial class AudioPlayerView : UserControl
 
         public string CopyMenuLabel => $"Kopiuj odnośnik: {Title}";
 
-        public string ShareMenuLabel => $"Udostępnij odnośnik: {Title}";
+        public string ShareMenuLabel => $"Udostępnij odnośnik (Ctrl+U): {Title}";
 
         public string FavoriteMenuLabel =>
-            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")}: odnośnik {Title}";
+            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")} (Ctrl+D): odnośnik {Title}";
 
         public override string ToString() => AccessibleLabel;
     }
