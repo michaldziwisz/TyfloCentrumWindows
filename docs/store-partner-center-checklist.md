@@ -50,6 +50,7 @@ Uwaga:
 - Dodaj kategorie i slowa kluczowe, jesli Partner Center ich wymaga dla wybranego typu wpisu.
 - Uzupelnij dane supportowe.
 - Dodaj URL polityki prywatnosci.
+- Jesli certyfikacja wykryje zaleznosc od zewnetrznego oprogramowania, ujawnij ja w pierwszych dwoch liniach opisu aplikacji.
 
 Na potrzeby pierwszej submission mozna uzyc strony z repo po wdrozeniu GitHub Pages:
 - polityka prywatnosci: `https://michaldziwisz.github.io/TyfloCentrumWindows/privacy/`
@@ -59,6 +60,8 @@ Praktycznie dla `TyfloCentrum` warto przygotowac od razu:
 - opis funkcji: aktualnosci, podcasty, artykuly, Tyfloradio, glosowki
 - informacje o dostepnosci: obsluga klawiatury, NVDA, Narrator
 - minimum jeden komplet aktualnych screenshotow z aplikacji
+- jesli Store zglosi zaleznosc `.NET Desktop Runtime`, zacznij opis od zdania:
+  - `TyfloCentrum wymaga do dzialania Microsoft .NET Desktop Runtime.`
 
 ### 4. Ustaw dostepnosc rynkowa i model biznesowy
 - Ustaw produkt jako bezplatny.

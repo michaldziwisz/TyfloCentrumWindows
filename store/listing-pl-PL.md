@@ -1,6 +1,7 @@
 # TyfloCentrum — teksty do Microsoft Store
 
 ## Description
+TyfloCentrum wymaga do działania Microsoft .NET Desktop Runtime.
 TyfloCentrum to dostępna aplikacja dla systemu Windows, która zbiera w jednym miejscu treści z ekosystemu TyfloPodcast. Pozwala wygodnie przeglądać aktualności, artykuły i podcasty, słuchać TyfloRadia, korzystać z ulubionych, pobierać materiały do czytania i odsłuchu offline oraz wysyłać wiadomości tekstowe i głosowe do redakcji.
 
 Aplikacja została zaprojektowana z naciskiem na pełną obsługę klawiaturą, współpracę z czytnikami ekranu i prostą, uporządkowaną nawigację. Dzięki temu można wygodnie czytać treści, słuchać audycji i wracać do ulubionych materiałów bez zbędnych kroków.
