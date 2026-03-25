@@ -19,15 +19,13 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-Pierwsze publiczne wydanie aplikacji TyfloCentrum dla Windows.
+W tej wersji dodano nową sekcję „Zgłoś błąd lub sugestię”, która pozwala szybko wysłać zgłoszenie bezpośrednio z poziomu aplikacji. Publiczne zgłoszenie trafia do repozytorium projektu, a opcjonalne dane techniczne i adres e-mail są przekazywane wyłącznie do prywatnego kanału diagnostycznego po wyrażeniu zgody.
 
-Najważniejsze funkcje tej wersji:
-- dostęp do aktualności, artykułów i podcastów z poziomu jednej aplikacji,
-- odtwarzacz podcastów ze znacznikami czasu, odnośnikami i regulacją prędkości,
-- obsługa Tyfloradia wraz z możliwością wysyłania wiadomości tekstowych i głosowych,
-- pobieranie podcastów do MP3 i artykułów do pojedynczych plików HTML,
-- ulubione, powiadomienia o nowych treściach i wygodna nawigacja klawiaturą,
-- interfejs projektowany z myślą o czytnikach ekranu i dostępności.
+Uproszczono też pracę z treściami i dostępność interfejsu:
+- artykuły otwierają się już bezpośrednio w readerze, bez osobnego widoku szczegółów,
+- poprawiono komunikaty dla czytników ekranu przy dodawaniu i usuwaniu ulubionych,
+- rozszerzono skróty klawiaturowe o `Ctrl+S` dla pobierania i `Ctrl+U` dla udostępniania w listach treści oraz odpowiednich miejscach w odtwarzaczu i TyfloŚwiecie,
+- poprawiono informowanie o sprawdzaniu dostępu do mikrofonu przy starcie nagrywania głosówki.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
