@@ -23,8 +23,11 @@ W tej wersji dodano nową sekcję „Zgłoś błąd lub sugestię”, która poz
 
 Uproszczono też pracę z treściami i dostępność interfejsu:
 - artykuły otwierają się już bezpośrednio w readerze, bez osobnego widoku szczegółów,
+- dodano zapamiętywanie głośności wspólne dla podcastów i `Tyfloradia`,
+- dodano kopiowanie adresu artykułu, strony podcastu i pliku podcastu,
 - poprawiono komunikaty dla czytników ekranu przy dodawaniu i usuwaniu ulubionych,
-- rozszerzono skróty klawiaturowe o `Ctrl+S` dla pobierania i `Ctrl+U` dla udostępniania w listach treści oraz odpowiednich miejscach w odtwarzaczu i TyfloŚwiecie,
+- rozszerzono skróty klawiaturowe o `Ctrl+S` dla pobierania, `Ctrl+U` dla udostępniania, `Ctrl+C` dla kopiowania adresu strony oraz `Ctrl+P` dla kopiowania adresu pliku podcastu,
+- zmieniono skróty w odtwarzaczu tak, aby `Alt+strzałka w górę i dół` zmieniały prędkość, a `Ctrl+strzałka w górę i dół` regulowały głośność,
 - poprawiono informowanie o sprawdzaniu dostępu do mikrofonu przy starcie nagrywania głosówki.
 
 ## Product Features

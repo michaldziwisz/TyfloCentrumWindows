@@ -74,7 +74,7 @@ public sealed class SygnalistaFeedbackSubmissionServiceTests
 
         Assert.True(result.Success);
         Assert.Equal("https://sygnalista.example/v1/report", capturedUrl);
-        Assert.Equal("TyfloCentrum.Windows.App/0.1.2.0", capturedUserAgent);
+        Assert.Equal("TyfloCentrum.Windows.App/0.1.3.0", capturedUserAgent);
         Assert.Equal("secret-token", capturedAppToken);
 
         using var json = JsonDocument.Parse(capturedPayload!);
@@ -199,10 +199,10 @@ public sealed class SygnalistaFeedbackSubmissionServiceTests
         {
             return Task.FromResult(
                 new FeedbackDiagnosticsSnapshot(
-                    "0.1.2.0",
-                    "0.1.2.0",
+                    "0.1.3.0",
+                    "0.1.3.0",
                     "stable",
-                    "TyfloCentrum.Windows.App/0.1.2.0",
+                    "TyfloCentrum.Windows.App/0.1.3.0",
                     includeDiagnostics
                         ? new Dictionary<string, object?> { ["app"] = "TyfloCentrum" }
                         : new Dictionary<string, object?>(),
