@@ -29,7 +29,9 @@ public sealed class LocalAppSettingsServiceTests
             true,
             1.5,
             false,
-            true
+            true,
+            true,
+            42d
         );
 
         await service.SaveAsync(expected);
@@ -44,5 +46,8 @@ public sealed class LocalAppSettingsServiceTests
         Assert.Equal(1.5, actual.EffectivePlaybackRate);
         Assert.False(actual.NotifyAboutNewPodcasts);
         Assert.True(actual.NotifyAboutNewArticles);
+        Assert.True(actual.RememberLastPlaybackVolume);
+        Assert.Equal(42d, actual.LastPlaybackVolumePercent);
+        Assert.Equal(42d, actual.EffectivePlaybackVolumePercent);
     }
 }

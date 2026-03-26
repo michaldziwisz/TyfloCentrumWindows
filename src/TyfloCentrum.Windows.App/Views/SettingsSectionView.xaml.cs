@@ -34,7 +34,7 @@ public sealed partial class SettingsSectionView : UserControl
 
     public void FocusPrimaryContent()
     {
-        SaveButton.Focus(FocusState.Programmatic);
+        InputDeviceComboBox.Focus(FocusState.Programmatic);
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -69,6 +69,11 @@ public sealed partial class SettingsSectionView : UserControl
     private async void OnClearRememberedRateClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ClearRememberedPlaybackRateAsync();
+    }
+
+    private async void OnClearRememberedVolumeClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.ClearRememberedPlaybackVolumeAsync();
     }
 
     private async void OnChooseDownloadDirectoryClick(object sender, RoutedEventArgs e)
@@ -115,6 +120,8 @@ public sealed partial class SettingsSectionView : UserControl
         OutputDeviceComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         DefaultPlaybackRateComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         RememberLastRateToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        RememberLastVolumeToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        ClearRememberedVolumeButton.IsEnabled = ViewModel.CanClearRememberedPlaybackVolume;
         NotifyNewPodcastsToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         NotifyNewArticlesToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         DownloadDirectoryTextBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;

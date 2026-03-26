@@ -8,9 +8,13 @@ public sealed record AppSettingsSnapshot(
     bool RememberLastPlaybackRate,
     double? LastPlaybackRate,
     bool NotifyAboutNewPodcasts,
-    bool NotifyAboutNewArticles
+    bool NotifyAboutNewArticles,
+    bool RememberLastPlaybackVolume = false,
+    double? LastPlaybackVolumePercent = null
 )
 {
+    public const double DefaultPlaybackVolumePercent = 100d;
+
     public AppSettingsSnapshot Normalize()
     {
         return this with
@@ -22,6 +26,9 @@ public sealed record AppSettingsSnapshot(
             LastPlaybackRate = LastPlaybackRate is null
                 ? null
                 : PlaybackRateCatalog.Coerce(LastPlaybackRate.Value),
+            LastPlaybackVolumePercent = LastPlaybackVolumePercent is null
+                ? null
+                : CoerceVolumePercent(LastPlaybackVolumePercent.Value),
         };
     }
 
@@ -29,6 +36,11 @@ public sealed record AppSettingsSnapshot(
         RememberLastPlaybackRate && LastPlaybackRate is double lastPlaybackRate
             ? PlaybackRateCatalog.Coerce(lastPlaybackRate)
             : PlaybackRateCatalog.Coerce(DefaultPlaybackRate);
+
+    public double EffectivePlaybackVolumePercent =>
+        RememberLastPlaybackVolume && LastPlaybackVolumePercent is double lastPlaybackVolumePercent
+            ? CoerceVolumePercent(lastPlaybackVolumePercent)
+            : DefaultPlaybackVolumePercent;
 
     public static AppSettingsSnapshot Defaults { get; } = new(
         null,
@@ -38,7 +50,9 @@ public sealed record AppSettingsSnapshot(
         false,
         null,
         true,
-        true
+        true,
+        false,
+        null
     );
 
     private static string? NormalizeDeviceId(string? deviceId)
@@ -49,5 +63,15 @@ public sealed record AppSettingsSnapshot(
     private static string? NormalizePath(string? path)
     {
         return string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+    }
+
+    private static double CoerceVolumePercent(double value)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return DefaultPlaybackVolumePercent;
+        }
+
+        return Math.Clamp(value, 0d, 100d);
     }
 }

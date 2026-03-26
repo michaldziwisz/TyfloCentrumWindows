@@ -12,4 +12,11 @@ internal static class KeyboardShortcutHelper
             CoreVirtualKeyStates.Down
         );
     }
+
+    public static bool IsAltPressed()
+    {
+        return InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(
+            CoreVirtualKeyStates.Down
+        );
+    }
 }

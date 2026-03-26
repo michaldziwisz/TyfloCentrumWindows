@@ -140,6 +140,8 @@ Pozniej automatyzowac:
 - klawiatura:
   - focus wchodzi do listy nowości i menu kontekstowego w logicznej kolejności
   - `Enter` uruchamia domyślną akcję wiersza
+  - `Ctrl+C` kopiuje adres strony podcastu albo artykułu dla zaznaczonego elementu
+  - `Ctrl+P` kopiuje adres pliku podcastu dla zaznaczonego podcastu
   - `Escape` z listy nowości przenosi fokus do listy sekcji głównych
 - `Narrator`:
   - odczytuje nazwe sekcji
@@ -170,6 +172,7 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - zmiana kategorii przeładowuje listę treści dla wybranej kategorii
   - po przeładowaniu lista kategorii zachowuje zaznaczenie i fokus na aktywnej pozycji
+  - w listach `Podcastów` i `Artykułów` menu kontekstowe pokazuje skróty `Ctrl+S`, `Ctrl+U`, `Ctrl+C`, a dla podcastów także `Ctrl+P`
 
 ### Modul `Czytanie artykulu`
 - klawiatura:
@@ -190,6 +193,7 @@ Pozniej automatyzowac:
 - `Narrator`:
   - odczytuje nagłówki sekcji, etykiety pól `Urządzenie wejściowe`, `Urządzenie wyjściowe`, `Domyślna prędkość odtwarzania`
   - odczytuje zmianę stanu przełącznika zapamiętywania prędkości
+  - odczytuje zmianę stanu przełącznika zapamiętywania głośności
   - odczytuje komunikat po zapisaniu ustawień
 - `NVDA`:
   - odczytuje listy urządzeń bez pustych nazw i bez numerów identyfikatorów urządzeń
@@ -201,6 +205,7 @@ Pozniej automatyzowac:
   - przełączniki powiadomień o nowych podcastach i artykułach zapisują się niezależnie
   - po wybraniu niedostępnego wcześniej urządzenia aplikacja pokazuje czytelny komunikat i nie przechodzi na inne urządzenie po cichu
   - zapamiętana prędkość odtwarzania jest odtwarzana po ponownym otwarciu playera, jeśli opcja jest włączona
+  - zapamiętana głośność odtwarzania jest współdzielona między podcastami i `Tyfloradiem`, jeśli opcja jest włączona
 
 ### Modul `Powiadomienia o nowych treściach`
 - funkcjonalnie:
@@ -278,7 +283,8 @@ Pozniej automatyzowac:
   - focus przechodzi przez przyciski `Wstecz 30 s`, `Dalej 30 s`, wybór prędkości, `Głośność`, przyciski dodatków i akcje w listach w logicznej kolejności
   - `Ctrl+spacja` wstrzymuje i wznawia odtwarzanie
   - `Ctrl+strzałka w lewo` i `Ctrl+strzałka w prawo` przewijają podcast o `30 s`
-  - `Ctrl+strzałka w górę` i `Ctrl+strzałka w dół` zmieniają prędkość podcastu
+  - `Alt+strzałka w górę` i `Alt+strzałka w dół` zmieniają prędkość podcastu
+  - `Ctrl+strzałka w górę` i `Ctrl+strzałka w dół` zmieniają głośność odtwarzacza
 - `Narrator`:
   - odczytuje zmianę prędkości, zmianę głośności, przejście do znacznika czasu, dodanie tematu do ulubionych i otwarcie odnośnika
   - odczytuje komunikat `Dodano do ulubionych` albo `Usunięto z ulubionych` po `Ctrl+D` na temacie i odnośniku

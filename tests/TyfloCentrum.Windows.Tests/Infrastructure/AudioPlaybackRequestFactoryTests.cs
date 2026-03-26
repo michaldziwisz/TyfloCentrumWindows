@@ -31,6 +31,21 @@ public sealed class AudioPlaybackRequestFactoryTests
     }
 
     [Fact]
+    public void CreatePodcastDownloadUri_builds_expected_download_url()
+    {
+        var factory = new AudioPlaybackRequestFactory(
+            new TyfloCentrumEndpointsOptions
+            {
+                TyflopodcastDownloadUrl = new Uri("https://podcasts.example/pobierz.php"),
+            }
+        );
+
+        var uri = factory.CreatePodcastDownloadUri(42);
+
+        Assert.Equal("https://podcasts.example/pobierz.php?id=42&plik=0", uri.ToString());
+    }
+
+    [Fact]
     public void CreateRadio_uses_configured_stream_url()
     {
         var factory = new AudioPlaybackRequestFactory(

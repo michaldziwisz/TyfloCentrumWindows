@@ -20,7 +20,9 @@ public sealed class SettingsViewModelTests
                 true,
                 1.5,
                 false,
-                true
+                true,
+                true,
+                65d
             ),
         };
         var deviceCatalogService = new FakeAudioDeviceCatalogService
@@ -49,9 +51,11 @@ public sealed class SettingsViewModelTests
         Assert.Equal(@"D:\Tyflo\Pobrane", viewModel.DownloadDirectoryPath);
         Assert.Equal(1.25, viewModel.SelectedDefaultPlaybackRate?.Value);
         Assert.True(viewModel.RememberLastPlaybackRate);
+        Assert.True(viewModel.RememberLastPlaybackVolume);
         Assert.False(viewModel.NotifyAboutNewPodcasts);
         Assert.True(viewModel.NotifyAboutNewArticles);
         Assert.Equal("Ostatnio zapamiętana prędkość: 1,5x.", viewModel.RememberedPlaybackRateDescription);
+        Assert.Equal("Ostatnio zapamiętana głośność: 65%.", viewModel.RememberedPlaybackVolumeDescription);
         Assert.Equal(3, viewModel.InputDevices.Count);
         Assert.Equal(3, viewModel.OutputDevices.Count);
         Assert.Equal("Ustawienia zostały wczytane.", viewModel.StatusMessage);
@@ -70,7 +74,9 @@ public sealed class SettingsViewModelTests
                 true,
                 1.5,
                 false,
-                true
+                true,
+                true,
+                65d
             ),
         };
         var deviceCatalogService = new FakeAudioDeviceCatalogService
@@ -96,10 +102,50 @@ public sealed class SettingsViewModelTests
         );
         Assert.False(settingsService.LastSavedSnapshot?.RememberLastPlaybackRate);
         Assert.Null(settingsService.LastSavedSnapshot?.LastPlaybackRate);
+        Assert.False(settingsService.LastSavedSnapshot?.RememberLastPlaybackVolume);
+        Assert.Null(settingsService.LastSavedSnapshot?.LastPlaybackVolumePercent);
         Assert.False(settingsService.LastSavedSnapshot?.NotifyAboutNewPodcasts);
         Assert.True(settingsService.LastSavedSnapshot?.NotifyAboutNewArticles);
         Assert.Equal("Przywrócono domyślne ustawienia audio.", viewModel.StatusMessage);
         Assert.False(viewModel.HasRememberedPlaybackRate);
+        Assert.False(viewModel.HasRememberedPlaybackVolume);
+    }
+
+    [Fact]
+    public async Task ClearRememberedPlaybackVolumeAsync_clears_volume_and_updates_status()
+    {
+        var settingsService = new FakeAppSettingsService
+        {
+            Snapshot = new AppSettingsSnapshot(
+                "mic-1",
+                "speaker-1",
+                null,
+                PlaybackRateCatalog.DefaultValue,
+                false,
+                null,
+                true,
+                true,
+                true,
+                35d
+            ),
+        };
+        var deviceCatalogService = new FakeAudioDeviceCatalogService
+        {
+            InputDevices = [new AudioDeviceInfo("mic-1", "Mikrofon 1")],
+            OutputDevices = [new AudioDeviceInfo("speaker-1", "Głośnik 1")],
+        };
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            deviceCatalogService,
+            new FakeDownloadDirectoryService()
+        );
+        await viewModel.LoadIfNeededAsync();
+
+        await viewModel.ClearRememberedPlaybackVolumeAsync();
+
+        Assert.Null(settingsService.LastSavedSnapshot?.LastPlaybackVolumePercent);
+        Assert.Equal("Wyczyszczono zapamiętaną głośność odtwarzania.", viewModel.StatusMessage);
+        Assert.False(viewModel.HasRememberedPlaybackVolume);
     }
 
     private sealed class FakeAppSettingsService : IAppSettingsService

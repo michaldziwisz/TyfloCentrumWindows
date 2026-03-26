@@ -4,6 +4,8 @@ namespace TyfloCentrum.Windows.Domain.Services;
 
 public interface IAudioPlaybackRequestFactory
 {
+    Uri CreatePodcastDownloadUri(int postId);
+
     AudioPlaybackRequest CreatePodcast(
         int postId,
         string title,

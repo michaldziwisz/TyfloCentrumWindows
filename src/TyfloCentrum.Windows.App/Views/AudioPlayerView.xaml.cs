@@ -17,7 +17,6 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class AudioPlayerView : UserControl
 {
-    private const double DefaultVolumePercent = 100d;
     private const double ResumePersistIntervalSeconds = 5d;
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
@@ -73,7 +72,7 @@ public sealed partial class AudioPlayerView : UserControl
         PlaybackRateComboBox.SelectedItem = _playbackRates.First(option =>
             option.Value == PlaybackRateCatalog.DefaultValue
         );
-        SetVolume(DefaultVolumePercent, announce: false);
+        SetVolume(AppSettingsSnapshot.DefaultPlaybackVolumePercent, announce: false);
     }
 
     public async Task InitializeAsync(
@@ -109,6 +108,7 @@ public sealed partial class AudioPlayerView : UserControl
 
         _currentSettings = (await _appSettingsService.GetAsync(cancellationToken)).Normalize();
         ConfigurePlaybackRateSelection(request);
+        SetVolume(_currentSettings.EffectivePlaybackVolumePercent, announce: false);
         ConfigureTransportControls(request);
         await ConfigureMediaPlayerAsync(request, cancellationToken);
 
@@ -244,34 +244,44 @@ public sealed partial class AudioPlayerView : UserControl
 
     private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (!KeyboardShortcutHelper.IsControlPressed())
+        var controlPressed = KeyboardShortcutHelper.IsControlPressed();
+        var altPressed = KeyboardShortcutHelper.IsAltPressed();
+        if (!controlPressed && !altPressed)
         {
             return;
         }
 
         switch (e.Key)
         {
-            case VirtualKey.Space:
+            case VirtualKey.Space when controlPressed:
                 e.Handled = true;
                 TogglePlayback();
                 break;
-            case VirtualKey.Left when _currentRequest?.CanSeek == true:
+            case VirtualKey.Left when controlPressed && _currentRequest?.CanSeek == true:
                 e.Handled = true;
                 SeekBy(TimeSpan.FromSeconds(-30), "Przewinięto wstecz o 30 sekund.");
                 break;
-            case VirtualKey.Right when _currentRequest?.CanSeek == true:
+            case VirtualKey.Right when controlPressed && _currentRequest?.CanSeek == true:
                 e.Handled = true;
                 SeekBy(TimeSpan.FromSeconds(30), "Przewinięto do przodu o 30 sekund.");
                 break;
-            case VirtualKey.Up:
+            case VirtualKey.Up when altPressed:
                 e.Handled = true;
                 AdjustPlaybackRate(1);
                 break;
-            case VirtualKey.Down:
+            case VirtualKey.Down when altPressed:
                 e.Handled = true;
                 AdjustPlaybackRate(-1);
                 break;
-            case VirtualKey.D:
+            case VirtualKey.Up when controlPressed:
+                e.Handled = true;
+                AdjustVolume(1);
+                break;
+            case VirtualKey.Down when controlPressed:
+                e.Handled = true;
+                AdjustVolume(-1);
+                break;
+            case VirtualKey.D when controlPressed:
                 e.Handled = true;
                 _ = ToggleFocusedShowNotesFavoriteAsync();
                 break;
@@ -340,6 +350,24 @@ public sealed partial class AudioPlayerView : UserControl
         args.Handled = true;
     }
 
+    private void OnIncreaseVolumeAcceleratorInvoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args
+    )
+    {
+        AdjustVolume(1);
+        args.Handled = true;
+    }
+
+    private void OnDecreaseVolumeAcceleratorInvoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args
+    )
+    {
+        AdjustVolume(-1);
+        args.Handled = true;
+    }
+
     private async void OnPlaybackRateSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_mediaPlayer is null || PlaybackRateComboBox.SelectedItem is not PlaybackRateOption option)
@@ -369,7 +397,7 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
-    private void OnVolumeSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+    private async void OnVolumeSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
         var percent = Math.Clamp(e.NewValue, 0d, 100d);
         VolumeValueTextBlock.Text = $"{percent:0}%";
@@ -385,6 +413,24 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         SetStatusMessage($"Głośność: {percent:0}%.");
+
+        if (!_currentSettings.RememberLastPlaybackVolume)
+        {
+            return;
+        }
+
+        _currentSettings = _currentSettings with { LastPlaybackVolumePercent = percent };
+
+        try
+        {
+            await _appSettingsService.SaveAsync(_currentSettings);
+        }
+        catch
+        {
+            SetStatusMessage(
+                $"Głośność: {percent:0}%. Nie udało się zapisać tej preferencji."
+            );
+        }
     }
 
     private void SeekBy(TimeSpan delta, string announcement)
@@ -465,6 +511,25 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         PlaybackRateComboBox.SelectedItem = _playbackRates[targetIndex];
+    }
+
+    private void AdjustVolume(int direction)
+    {
+        var step = VolumeSlider.StepFrequency > 0d ? VolumeSlider.StepFrequency : 5d;
+        var currentValue = VolumeSlider.Value;
+        var targetValue = Math.Clamp(currentValue + (direction * step), 0d, 100d);
+
+        if (Math.Abs(targetValue - currentValue) < 0.01d)
+        {
+            SetStatusMessage(
+                direction < 0
+                    ? "To jest najniższa dostępna głośność."
+                    : "To jest najwyższa dostępna głośność."
+            );
+            return;
+        }
+
+        VolumeSlider.Value = targetValue;
     }
 
     private static string FormatTime(double seconds)
@@ -672,8 +737,8 @@ public sealed partial class AudioPlayerView : UserControl
     private void ConfigureShortcutHelpText(AudioPlaybackRequest request)
     {
         ShortcutHelpTextBlock.Text = request.CanChangePlaybackRate
-            ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Ctrl+strzałka w górę i dół zmieniają prędkość, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik."
-            : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik.";
+            ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Alt+strzałka w górę i dół zmieniają prędkość, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik."
+            : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik.";
     }
 
     private void SetVolume(double percent, bool announce)

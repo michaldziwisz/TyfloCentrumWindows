@@ -26,12 +26,20 @@
             Invoked="OnSkipForwardAcceleratorInvoked" />
         <KeyboardAccelerator
             Key="Up"
-            Modifiers="Control"
+            Modifiers="Menu"
             Invoked="OnIncreasePlaybackRateAcceleratorInvoked" />
         <KeyboardAccelerator
             Key="Down"
-            Modifiers="Control"
+            Modifiers="Menu"
             Invoked="OnDecreasePlaybackRateAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Up"
+            Modifiers="Control"
+            Invoked="OnIncreaseVolumeAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="Down"
+            Modifiers="Control"
+            Invoked="OnDecreaseVolumeAcceleratorInvoked" />
     </UserControl.KeyboardAccelerators>
     <UserControl.Resources>
         <DataTemplate x:Key="ChapterMarkerItemTemplate">
@@ -116,7 +124,7 @@
                 Visibility="Collapsed">
                 <ComboBox
                     x:Name="PlaybackRateComboBox"
-                    AutomationProperties.HelpText="Skróty: Ctrl+strzałka w górę i Ctrl+strzałka w dół"
+                    AutomationProperties.HelpText="Skróty: Alt+strzałka w górę i Alt+strzałka w dół"
                     AutomationProperties.Name="Prędkość odtwarzania"
                     Header="Prędkość odtwarzania"
                     MinWidth="180"
@@ -137,6 +145,7 @@
                     </Grid.ColumnDefinitions>
                     <Slider
                         x:Name="VolumeSlider"
+                        AutomationProperties.HelpText="Skróty: Ctrl+strzałka w górę i Ctrl+strzałka w dół"
                         AutomationProperties.Name="Głośność odtwarzacza"
                         LargeChange="10"
                         Maximum="100"
@@ -177,7 +186,7 @@
                     AutomationProperties.AutomationId="AudioPlayer.Shortcuts"
                     AutomationProperties.Name="Skróty klawiaturowe odtwarzacza"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Ctrl+strzałka w górę i dół zmieniają prędkość, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka."
+                    Text="Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Alt+strzałka w górę i dół zmieniają prędkość, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka."
                     TextWrapping="WrapWholeWords" />
         </StackPanel>
 

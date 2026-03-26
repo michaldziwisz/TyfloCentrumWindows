@@ -15,6 +15,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class ArticleSectionView : UserControl
 {
+    private readonly IClipboardService _clipboardService;
     private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
@@ -35,6 +36,7 @@ public sealed partial class ArticleSectionView : UserControl
 
     public ArticleSectionView(
         ArticleCatalogViewModel viewModel,
+        IClipboardService clipboardService,
         IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
@@ -43,6 +45,7 @@ public sealed partial class ArticleSectionView : UserControl
     )
     {
         ViewModel = viewModel;
+        _clipboardService = clipboardService;
         _contentDownloadService = contentDownloadService;
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
@@ -265,6 +268,10 @@ public sealed partial class ArticleSectionView : UserControl
                     e.Handled = true;
                     await DownloadItemAsync(selectedItem);
                     return;
+                case VirtualKey.C:
+                    e.Handled = true;
+                    await CopyArticleLinkAsync(selectedItem);
+                    return;
                 case VirtualKey.U:
                     e.Handled = true;
                     await ShareItemAsync(selectedItem);
@@ -330,6 +337,11 @@ public sealed partial class ArticleSectionView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenItemAsync(item);
         flyout.Items.Add(browserItem);
 
+        var copyLinkItem = new MenuFlyoutItem { Text = "Kopiuj adres artykułu (Ctrl+C)" };
+        AutomationProperties.SetName(copyLinkItem, $"Kopiuj adres artykułu (Ctrl+C): {item.Title}");
+        copyLinkItem.Click += async (_, _) => await CopyArticleLinkAsync(item);
+        flyout.Items.Add(copyLinkItem);
+
         var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
         AutomationProperties.SetName(downloadItem, $"Pobierz artykuł (Ctrl+S): {item.Title}");
         downloadItem.Click += async (_, _) => await DownloadItemAsync(item);
@@ -352,6 +364,24 @@ public sealed partial class ArticleSectionView : UserControl
         flyout.Items.Add(favoriteItem);
 
         flyout.ShowAt(e.OriginalSource as FrameworkElement ?? listView);
+    }
+
+    private async Task CopyArticleLinkAsync(ContentPostItemViewModel item)
+    {
+        var copied = await _clipboardService.SetTextAsync(item.Link);
+        if (!copied)
+        {
+            await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się skopiować adresu artykułu.");
+            ListViewFocusHelper.RestoreFocus(ItemsList, item);
+            return;
+        }
+
+        AutomationAnnouncementHelper.Announce(
+            ItemsList,
+            $"Skopiowano adres artykułu: {item.Title}.",
+            important: true
+        );
+        ListViewFocusHelper.RestoreFocus(ItemsList, item);
     }
 
     private async Task OpenDefaultActionAsync(ContentPostItemViewModel item)

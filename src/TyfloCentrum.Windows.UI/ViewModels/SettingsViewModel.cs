@@ -12,6 +12,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IDownloadDirectoryService _downloadDirectoryService;
     private bool _hasLoaded;
     private double? _lastPlaybackRate;
+    private double? _lastPlaybackVolumePercent;
 
     public SettingsViewModel(
         IAppSettingsService appSettingsService,
@@ -66,6 +67,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool rememberLastPlaybackRate;
 
     [ObservableProperty]
+    private bool rememberLastPlaybackVolume;
+
+    [ObservableProperty]
     private bool notifyAboutNewPodcasts;
 
     [ObservableProperty]
@@ -90,9 +94,18 @@ public partial class SettingsViewModel : ObservableObject
 
     public bool CanClearRememberedPlaybackRate => !IsLoading && !IsSaving && HasRememberedPlaybackRate;
 
+    public bool HasRememberedPlaybackVolume => _lastPlaybackVolumePercent.HasValue;
+
+    public bool CanClearRememberedPlaybackVolume =>
+        !IsLoading && !IsSaving && HasRememberedPlaybackVolume;
+
     public string RememberedPlaybackRateDescription => _lastPlaybackRate is double value
         ? $"Ostatnio zapamiętana prędkość: {PlaybackRateCatalog.FormatLabel(value)}."
         : "Brak zapamiętanej prędkości odtwarzania.";
+
+    public string RememberedPlaybackVolumeDescription => _lastPlaybackVolumePercent is double value
+        ? $"Ostatnio zapamiętana głośność: {value:0}%."
+        : "Brak zapamiętanej głośności odtwarzania.";
 
     public string EffectiveDownloadDirectoryDescription
     {
@@ -153,11 +166,15 @@ public partial class SettingsViewModel : ObservableObject
             SelectedDefaultPlaybackRate = SelectPlaybackRate(settings.DefaultPlaybackRate);
             DownloadDirectoryPath = settings.DownloadDirectoryPath;
             RememberLastPlaybackRate = settings.RememberLastPlaybackRate;
+            RememberLastPlaybackVolume = settings.RememberLastPlaybackVolume;
             NotifyAboutNewPodcasts = settings.NotifyAboutNewPodcasts;
             NotifyAboutNewArticles = settings.NotifyAboutNewArticles;
             _lastPlaybackRate = settings.LastPlaybackRate is null
                 ? null
                 : PlaybackRateCatalog.Coerce(settings.LastPlaybackRate.Value);
+            _lastPlaybackVolumePercent = settings.LastPlaybackVolumePercent is null
+                ? null
+                : Math.Clamp(settings.LastPlaybackVolumePercent.Value, 0d, 100d);
 
             HasLoadedOnce = true;
             StatusMessage = BuildLoadStatusMessage(settings);
@@ -224,7 +241,9 @@ public partial class SettingsViewModel : ObservableObject
         SelectedOutputDevice = OutputDevices.FirstOrDefault();
         SelectedDefaultPlaybackRate = SelectPlaybackRate(PlaybackRateCatalog.DefaultValue);
         RememberLastPlaybackRate = false;
+        RememberLastPlaybackVolume = false;
         _lastPlaybackRate = null;
+        _lastPlaybackVolumePercent = null;
         NotifyStateChanged();
 
         await SaveAsync(cancellationToken);
@@ -249,6 +268,24 @@ public partial class SettingsViewModel : ObservableObject
         if (!HasError)
         {
             StatusMessage = "Wyczyszczono zapamiętaną prędkość odtwarzania.";
+            NotifyStateChanged();
+        }
+    }
+
+    public async Task ClearRememberedPlaybackVolumeAsync(CancellationToken cancellationToken = default)
+    {
+        if (!CanClearRememberedPlaybackVolume)
+        {
+            return;
+        }
+
+        _lastPlaybackVolumePercent = null;
+        NotifyStateChanged();
+        await SaveAsync(cancellationToken);
+
+        if (!HasError)
+        {
+            StatusMessage = "Wyczyszczono zapamiętaną głośność odtwarzania.";
             NotifyStateChanged();
         }
     }
@@ -285,6 +322,11 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSave));
     }
 
+    partial void OnRememberLastPlaybackVolumeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSave));
+    }
+
     partial void OnNotifyAboutNewPodcastsChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSave));
@@ -305,7 +347,9 @@ public partial class SettingsViewModel : ObservableObject
             RememberLastPlaybackRate,
             _lastPlaybackRate,
             NotifyAboutNewPodcasts,
-            NotifyAboutNewArticles
+            NotifyAboutNewArticles,
+            RememberLastPlaybackVolume,
+            _lastPlaybackVolumePercent
         ).Normalize();
     }
 
@@ -319,6 +363,9 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(HasRememberedPlaybackRate));
         OnPropertyChanged(nameof(CanClearRememberedPlaybackRate));
         OnPropertyChanged(nameof(RememberedPlaybackRateDescription));
+        OnPropertyChanged(nameof(HasRememberedPlaybackVolume));
+        OnPropertyChanged(nameof(CanClearRememberedPlaybackVolume));
+        OnPropertyChanged(nameof(RememberedPlaybackVolumeDescription));
         OnPropertyChanged(nameof(EffectiveDownloadDirectoryDescription));
     }
 

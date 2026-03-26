@@ -99,6 +99,11 @@ public sealed class RadioViewModelTests
     {
         public string? LastRadioSubtitle { get; private set; }
 
+        public Uri CreatePodcastDownloadUri(int postId)
+        {
+            return new Uri($"https://audio.example/podcast/{postId}.mp3");
+        }
+
         public AudioPlaybackRequest CreatePodcast(
             int postId,
             string title,
@@ -110,7 +115,7 @@ public sealed class RadioViewModelTests
                 "Podcast",
                 title,
                 subtitle,
-                new Uri($"https://audio.example/podcast/{postId}.mp3"),
+                CreatePodcastDownloadUri(postId),
                 false,
                 true,
                 true,

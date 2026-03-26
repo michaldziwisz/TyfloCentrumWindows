@@ -12,6 +12,8 @@ public sealed class LocalAppSettingsService : IAppSettingsService
     private const string DefaultPlaybackRateKey = "settings.playback.defaultRate";
     private const string RememberLastPlaybackRateKey = "settings.playback.rememberLastRate";
     private const string LastPlaybackRateKey = "settings.playback.lastRate";
+    private const string RememberLastPlaybackVolumeKey = "settings.playback.rememberLastVolume";
+    private const string LastPlaybackVolumePercentKey = "settings.playback.lastVolumePercent";
     private const string NotifyAboutNewPodcastsKey = "settings.notifications.newPodcasts";
     private const string NotifyAboutNewArticlesKey = "settings.notifications.newArticles";
 
@@ -42,6 +44,12 @@ public sealed class LocalAppSettingsService : IAppSettingsService
         var lastPlaybackRateTask = _localSettingsStore
             .GetStringAsync(LastPlaybackRateKey, cancellationToken)
             .AsTask();
+        var rememberLastPlaybackVolumeTask = _localSettingsStore
+            .GetStringAsync(RememberLastPlaybackVolumeKey, cancellationToken)
+            .AsTask();
+        var lastPlaybackVolumePercentTask = _localSettingsStore
+            .GetStringAsync(LastPlaybackVolumePercentKey, cancellationToken)
+            .AsTask();
         var notifyAboutNewPodcastsTask = _localSettingsStore
             .GetStringAsync(NotifyAboutNewPodcastsKey, cancellationToken)
             .AsTask();
@@ -56,6 +64,8 @@ public sealed class LocalAppSettingsService : IAppSettingsService
             defaultPlaybackRateTask,
             rememberLastPlaybackRateTask,
             lastPlaybackRateTask,
+            rememberLastPlaybackVolumeTask,
+            lastPlaybackVolumePercentTask,
             notifyAboutNewPodcastsTask,
             notifyAboutNewArticlesTask
         );
@@ -68,7 +78,9 @@ public sealed class LocalAppSettingsService : IAppSettingsService
             ParseBoolOrDefault(rememberLastPlaybackRateTask.Result, false),
             ParseNullableDouble(lastPlaybackRateTask.Result),
             ParseBoolOrDefault(notifyAboutNewPodcastsTask.Result, true),
-            ParseBoolOrDefault(notifyAboutNewArticlesTask.Result, true)
+            ParseBoolOrDefault(notifyAboutNewArticlesTask.Result, true),
+            ParseBoolOrDefault(rememberLastPlaybackVolumeTask.Result, false),
+            ParseNullableDouble(lastPlaybackVolumePercentTask.Result)
         );
 
         return snapshot.Normalize();
@@ -122,6 +134,21 @@ public sealed class LocalAppSettingsService : IAppSettingsService
                 .SetStringAsync(
                     LastPlaybackRateKey,
                     normalized.LastPlaybackRate?.ToString(CultureInfo.InvariantCulture)
+                        ?? string.Empty,
+                    cancellationToken
+                )
+                .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
+                    RememberLastPlaybackVolumeKey,
+                    normalized.RememberLastPlaybackVolume.ToString(),
+                    cancellationToken
+                )
+                .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
+                    LastPlaybackVolumePercentKey,
+                    normalized.LastPlaybackVolumePercent?.ToString(CultureInfo.InvariantCulture)
                         ?? string.Empty,
                     cancellationToken
                 )

@@ -14,6 +14,8 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class NewsSectionView : UserControl
 {
+    private readonly IAudioPlaybackRequestFactory _audioPlaybackRequestFactory;
+    private readonly IClipboardService _clipboardService;
     private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
@@ -23,6 +25,8 @@ public sealed partial class NewsSectionView : UserControl
 
     public NewsSectionView(
         NewsFeedViewModel viewModel,
+        IAudioPlaybackRequestFactory audioPlaybackRequestFactory,
+        IClipboardService clipboardService,
         IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
@@ -30,6 +34,8 @@ public sealed partial class NewsSectionView : UserControl
     )
     {
         ViewModel = viewModel;
+        _audioPlaybackRequestFactory = audioPlaybackRequestFactory;
+        _clipboardService = clipboardService;
         _contentDownloadService = contentDownloadService;
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
@@ -119,6 +125,14 @@ public sealed partial class NewsSectionView : UserControl
                     e.Handled = true;
                     await DownloadItemAsync(selectedItem);
                     return;
+                case VirtualKey.C:
+                    e.Handled = true;
+                    await CopyPageLinkAsync(selectedItem);
+                    return;
+                case VirtualKey.P when selectedItem.SupportsPlayback:
+                    e.Handled = true;
+                    await CopyPodcastAudioLinkAsync(selectedItem);
+                    return;
                 case VirtualKey.U:
                     e.Handled = true;
                     await ShareItemAsync(selectedItem);
@@ -185,6 +199,32 @@ public sealed partial class NewsSectionView : UserControl
         browserItem.Click += async (_, _) => await ViewModel.OpenItemAsync(item);
         flyout.Items.Add(browserItem);
 
+        var copyPageLinkItem = new MenuFlyoutItem
+        {
+            Text = item.SupportsPlayback
+                ? "Kopiuj adres strony podcastu (Ctrl+C)"
+                : "Kopiuj adres artykułu (Ctrl+C)",
+        };
+        AutomationProperties.SetName(
+            copyPageLinkItem,
+            item.SupportsPlayback
+                ? $"Kopiuj adres strony podcastu (Ctrl+C): {item.Title}"
+                : $"Kopiuj adres artykułu (Ctrl+C): {item.Title}"
+        );
+        copyPageLinkItem.Click += async (_, _) => await CopyPageLinkAsync(item);
+        flyout.Items.Add(copyPageLinkItem);
+
+        if (item.SupportsPlayback)
+        {
+            var copyAudioLinkItem = new MenuFlyoutItem { Text = "Kopiuj adres podcastu (Ctrl+P)" };
+            AutomationProperties.SetName(
+                copyAudioLinkItem,
+                $"Kopiuj adres podcastu (Ctrl+P): {item.Title}"
+            );
+            copyAudioLinkItem.Click += async (_, _) => await CopyPodcastAudioLinkAsync(item);
+            flyout.Items.Add(copyAudioLinkItem);
+        }
+
         var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
         AutomationProperties.SetName(
             downloadItem,
@@ -217,6 +257,49 @@ public sealed partial class NewsSectionView : UserControl
         flyout.Items.Add(favoriteItem);
 
         flyout.ShowAt(e.OriginalSource as FrameworkElement ?? listView);
+    }
+
+    private async Task CopyPageLinkAsync(NewsFeedItemViewModel item)
+    {
+        var copied = await _clipboardService.SetTextAsync(item.Link);
+        if (!copied)
+        {
+            var message = item.SupportsPlayback
+                ? "Nie udało się skopiować adresu strony podcastu."
+                : "Nie udało się skopiować adresu artykułu.";
+            await DialogHelpers.ShowErrorAsync(XamlRoot, message);
+            ListViewFocusHelper.RestoreFocus(NewsList, item);
+            return;
+        }
+
+        AutomationAnnouncementHelper.Announce(
+            NewsList,
+            item.SupportsPlayback
+                ? $"Skopiowano adres strony podcastu: {item.Title}."
+                : $"Skopiowano adres artykułu: {item.Title}.",
+            important: true
+        );
+        ListViewFocusHelper.RestoreFocus(NewsList, item);
+    }
+
+    private async Task CopyPodcastAudioLinkAsync(NewsFeedItemViewModel item)
+    {
+        var copied = await _clipboardService.SetTextAsync(
+            _audioPlaybackRequestFactory.CreatePodcastDownloadUri(item.PostId).ToString()
+        );
+        if (!copied)
+        {
+            await DialogHelpers.ShowErrorAsync(XamlRoot, "Nie udało się skopiować adresu podcastu.");
+            ListViewFocusHelper.RestoreFocus(NewsList, item);
+            return;
+        }
+
+        AutomationAnnouncementHelper.Announce(
+            NewsList,
+            $"Skopiowano adres podcastu: {item.Title}.",
+            important: true
+        );
+        ListViewFocusHelper.RestoreFocus(NewsList, item);
     }
 
     private async Task OpenDefaultActionAsync(NewsFeedItemViewModel item)

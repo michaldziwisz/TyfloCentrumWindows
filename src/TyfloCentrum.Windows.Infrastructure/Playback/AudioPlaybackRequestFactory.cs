@@ -13,12 +13,7 @@ public sealed class AudioPlaybackRequestFactory : IAudioPlaybackRequestFactory
         _options = options;
     }
 
-    public AudioPlaybackRequest CreatePodcast(
-        int postId,
-        string title,
-        string? subtitle = null,
-        double? initialSeekSeconds = null
-    )
+    public Uri CreatePodcastDownloadUri(int postId)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(postId);
 
@@ -27,11 +22,21 @@ public sealed class AudioPlaybackRequestFactory : IAudioPlaybackRequestFactory
             Query = $"id={postId}&plik=0",
         };
 
+        return builder.Uri;
+    }
+
+    public AudioPlaybackRequest CreatePodcast(
+        int postId,
+        string title,
+        string? subtitle = null,
+        double? initialSeekSeconds = null
+    )
+    {
         return new AudioPlaybackRequest(
             SourceTypeLabel: "Podcast",
             Title: NormalizeTitle(title, "Podcast"),
             Subtitle: NormalizeText(subtitle),
-            SourceUrl: builder.Uri,
+            SourceUrl: CreatePodcastDownloadUri(postId),
             IsLive: false,
             CanSeek: true,
             CanChangePlaybackRate: true,
