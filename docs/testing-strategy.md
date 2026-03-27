@@ -131,7 +131,7 @@ Pozniej automatyzowac:
   - `Enter` na liście sekcji przechodzi do głównej kontroli bieżącej sekcji, jak `Tab`
   - po przełączeniu focus trafia na aktywną pozycję listy sekcji
 - `Narrator`:
-  - odczytuje sekcje jako zwykłe elementy listy, bez komunikatów o drzewie i poziomach
+  - odczytuje sekcje jako zwykłe elementy, bez technicznego słowa `lista`, bez komunikatów o drzewie i poziomach
   - odczytuje komunikat o aktualnie wybranej sekcji po użyciu skrótu
 - `NVDA`:
   - odczytuje nazwy sekcji bez technicznych identyfikatorów i bez semantyki drzewa
@@ -140,12 +140,13 @@ Pozniej automatyzowac:
 - klawiatura:
   - focus wchodzi do listy nowości i menu kontekstowego w logicznej kolejności
   - `Enter` uruchamia domyślną akcję wiersza
+  - wpisanie pierwszej litery tytułu przenosi fokus do kolejnej nowości zaczynającej się od tej litery
   - `Ctrl+C` kopiuje adres strony podcastu albo artykułu dla zaznaczonego elementu
   - `Ctrl+P` kopiuje adres pliku podcastu dla zaznaczonego podcastu
   - `Escape` z listy nowości przenosi fokus do listy sekcji głównych
 - `Narrator`:
   - odczytuje nazwe sekcji
-  - odczytuje element listy jako typ tresci, tytul, date i zajawke
+  - odczytuje element jako tytuł, datę i zajawkę, a typ treści tylko zgodnie z ustawieniem dostępności
   - odczytuje menu kontekstowe z poprawnymi nazwami akcji `Odtwórz` albo `Otwórz artykuł`, `Szczegóły`, `Otwórz w przeglądarce`
 - `NVDA`:
   - odczytuje listę i menu kontekstowe bez pustych lub zdublowanych nazw
@@ -159,11 +160,13 @@ Pozniej automatyzowac:
   - `Pobierz` w menu kontekstowym zapisuje podcast jako `mp3` albo artykuł jako pojedynczy plik `html`
   - po zamknięciu widoku artykułu focus wraca na poprzedni element listy
   - dojście do końca listy automatycznie dociąga starsze treści bez ręcznego przycisku `więcej`
+  - szybkie wielokrotne dojście do końca listy, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie uruchamia równoległych awaryjnych doładowań
 
 ### Modul `Kategorie podcastów i artykułów`
 - klawiatura:
   - strzałka w górę i strzałka w dół przełącza kategorię bez dodatkowego `Enter`
   - wpisanie pierwszej litery kategorii przenosi fokus do kolejnej kategorii zaczynającej się od tej litery
+  - wpisanie pierwszej litery tytułu na liście `Podcastów` albo `Artykułów` przenosi fokus do kolejnego wpisu zaczynającego się od tej litery
   - po przełączeniu kategorii fokus zostaje na nowo wybranej kategorii, a nie wraca na pierwszy element listy
 - `Narrator`:
   - odczytuje nowo wybraną kategorię tylko raz, bez nieoczekiwanego powrotu na `Aktualności`
@@ -194,6 +197,7 @@ Pozniej automatyzowac:
   - odczytuje nagłówki sekcji, etykiety pól `Urządzenie wejściowe`, `Urządzenie wyjściowe`, `Domyślna prędkość odtwarzania`
   - odczytuje zmianę stanu przełącznika zapamiętywania prędkości
   - odczytuje zmianę stanu przełącznika zapamiętywania głośności
+  - odczytuje pole `Typ treści na listach` i wybraną opcję bez dodatkowych technicznych nazw
   - odczytuje komunikat po zapisaniu ustawień
 - `NVDA`:
   - odczytuje listy urządzeń bez pustych nazw i bez numerów identyfikatorów urządzeń
@@ -206,6 +210,7 @@ Pozniej automatyzowac:
   - po wybraniu niedostępnego wcześniej urządzenia aplikacja pokazuje czytelny komunikat i nie przechodzi na inne urządzenie po cichu
   - zapamiętana prędkość odtwarzania jest odtwarzana po ponownym otwarciu playera, jeśli opcja jest włączona
   - zapamiętana głośność odtwarzania jest współdzielona między podcastami i `Tyfloradiem`, jeśli opcja jest włączona
+  - ustawienie `Typ treści na listach` pozwala wybrać brak typu, typ przed nazwą albo typ po nazwie dla nowości, podcastów, artykułów, wyników wyszukiwania i pozycji spisu treści `TyfloŚwiata`
 
 ### Modul `Powiadomienia o nowych treściach`
 - funkcjonalnie:
@@ -218,7 +223,7 @@ Pozniej automatyzowac:
 ### Modul `Zgłoś błąd lub sugestię`
 - klawiatura:
   - `Alt+8` przełącza do sekcji zgłoszeń
-  - `Enter` na liście sekcji przechodzi do pola tytułu zgłoszenia
+  - `Enter` na liście sekcji przechodzi najpierw do pola `Typ zgłoszenia`, bez pomijania wyboru kategorii
   - `Tab` przechodzi kolejno przez typ zgłoszenia, tytuł, opis, pola wyboru i przyciski akcji
   - `Escape` z formularza wraca do listy sekcji głównych
 - `Narrator`:
@@ -246,7 +251,7 @@ Pozniej automatyzowac:
 - `Narrator`:
   - odczytuje rocznik z liczbą numerów
   - odczytuje numer czasopisma jako numer, tytuł i datę
-  - odczytuje pozycję spisu treści jako zwykły artykuł bez pustych przycisków wewnątrz wiersza
+  - odczytuje pozycję spisu treści bez pustych przycisków wewnątrz wiersza i z typem treści tylko zgodnie z ustawieniem dostępności
 - `NVDA`:
   - odczytuje listę numerów i spis treści bez nazw technicznych ani pustych kontrolek
 - funkcjonalnie:
@@ -281,6 +286,7 @@ Pozniej automatyzowac:
 ### Modul `Odtwarzacz`
 - klawiatura:
   - focus przechodzi przez przyciski `Wstecz 30 s`, `Dalej 30 s`, wybór prędkości, `Głośność`, przyciski dodatków i akcje w listach w logicznej kolejności
+  - fokus na przyciskach przewijania, przycisku odtwarzania i suwaku pozycji jest zawsze czytelny wizualnie, bez znikania kontrolek po samym wejściu z klawiatury
   - `Ctrl+spacja` wstrzymuje i wznawia odtwarzanie
   - `Ctrl+strzałka w lewo` i `Ctrl+strzałka w prawo` przewijają podcast o `30 s`
   - `Alt+strzałka w górę` i `Alt+strzałka w dół` zmieniają prędkość podcastu
@@ -295,6 +301,7 @@ Pozniej automatyzowac:
   - odczytuje listę odnośników jako tytuł i host bez pustych wartości
 - funkcjonalnie:
   - player `Tyfloradia` pozwala zmienić głośność bez wychodzenia z dialogu
+  - przyciski transportu i suwak pozycji pozostają stale widoczne wizualnie także przy nawigacji samą klawiaturą
   - komentarz z sekcją `Znaczniki czasu` daje listę markerów w kolejności rosnącej
   - komentarz z sekcją `Odnośniki` albo `Linki` daje listę linków
   - kliknięcie znacznika przewija player do właściwego czasu i uruchamia odtwarzanie
@@ -313,21 +320,37 @@ Pozniej automatyzowac:
   - `Ctrl+D` na zaznaczonym wpisie przełącza ulubione bez odrywania rąk od klawiatury
   - `Enter` na liście kategorii przechodzi do listy treści bez dodatkowego potwierdzania kategorii
   - `Enter` na zaznaczonym wpisie wykonuje jego akcję domyślną
+  - wpisanie pierwszej litery tytułu przenosi fokus do kolejnego pasującego wpisu także w `Szukaj`
   - w `Artykułach` strzałki i litery działają także na pozycji `TyfloŚwiat` w tej samej liście po lewej
 - `Narrator`:
   - odczytuje komunikat `Dodano do ulubionych` albo `Usunięto z ulubionych` po `Ctrl+D`
+  - odczytuje listy bez technicznego słowa `lista`, a typ treści tylko zgodnie z ustawieniem dostępności
+- funkcjonalnie:
+  - listy nie pokazują już osobnego, stałego wiersza `Podcast` albo `Artykuł` nad tytułem
+  - menu kontekstowe podcastu pokazuje `Pokaż komentarze`, `Pokaż znaczniki czasu` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
+  - `Pokaż znaczniki czasu` otwiera listę samych znaczników bez wchodzenia do playera
+  - `Enter` na znaczniku czasu uruchamia player podcastu od wybranej czasówki
+  - `Pokaż odnośniki` otwiera listę samych odnośników bez wchodzenia do playera
+  - `Enter` na odnośniku otwiera go w przeglądarce
+  - `Pokaż komentarze` otwiera listę komentarzy bez wchodzenia do playera
+  - szybkie wielokrotne dojście do końca listy w `Podcastach` albo `Artykułach`, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie powoduje równoległego dublowania doładowań
 
 ### Modul `Komentarze podcastu`
 - klawiatura:
-  - focus przechodzi przez licznik komentarzy, treść skróconą i przycisk `Szczegóły komentarza` w logicznej kolejności
+  - po otwarciu podcastu można pokazać komentarze bez opuszczania odtwarzacza
+  - komentarze można też otworzyć bezpośrednio z menu kontekstowego podcastu
+  - focus przechodzi przez licznik komentarzy, listę komentarzy i przycisk `Szczegóły komentarza` w logicznej kolejności
+  - `Enter` na zaznaczonym komentarzu rozwija albo zwija jego pełną treść
 - `Narrator`:
-  - odczytuje licznik komentarzy po załadowaniu szczegółów podcastu
+  - odczytuje licznik komentarzy po załadowaniu odtwarzacza podcastu
   - odczytuje przycisk `Szczegóły komentarza` z nazwą autora
 - `NVDA`:
   - odczytuje element listy komentarzy bez technicznych nazw i z sensownym skrótem treści
 - funkcjonalnie:
-  - licznik komentarzy aktualizuje się po odświeżeniu komentarzy bez gubienia fokusu
-  - otwarcie szczegółów komentarza pokazuje pełną treść i autora w osobnym dialogu
+  - licznik komentarzy aktualizuje się po załadowaniu podcastu bez gubienia fokusu
+  - pełna treść komentarza rozwija się inline w odtwarzaczu bez otwierania zagnieżdżonego dialogu
+  - komentarze główne są sortowane od najstarszych do najnowszych, a odpowiedzi pojawiają się bezpośrednio pod rodzicem
+  - odpowiedzi są także wizualnie odróżnione od komentarzy głównych przez wcięcie i lewy akcent
 
 ## Dokumenty powiazane
 - [Wymagania dostepnosci](accessibility-requirements.md)

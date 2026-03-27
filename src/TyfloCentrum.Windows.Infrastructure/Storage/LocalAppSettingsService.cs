@@ -16,6 +16,8 @@ public sealed class LocalAppSettingsService : IAppSettingsService
     private const string LastPlaybackVolumePercentKey = "settings.playback.lastVolumePercent";
     private const string NotifyAboutNewPodcastsKey = "settings.notifications.newPodcasts";
     private const string NotifyAboutNewArticlesKey = "settings.notifications.newArticles";
+    private const string ContentTypeAnnouncementPlacementKey =
+        "settings.accessibility.contentTypeAnnouncementPlacement";
 
     private readonly ILocalSettingsStore _localSettingsStore;
 
@@ -56,6 +58,9 @@ public sealed class LocalAppSettingsService : IAppSettingsService
         var notifyAboutNewArticlesTask = _localSettingsStore
             .GetStringAsync(NotifyAboutNewArticlesKey, cancellationToken)
             .AsTask();
+        var contentTypeAnnouncementPlacementTask = _localSettingsStore
+            .GetStringAsync(ContentTypeAnnouncementPlacementKey, cancellationToken)
+            .AsTask();
 
         await Task.WhenAll(
             preferredInputDeviceIdTask,
@@ -67,7 +72,8 @@ public sealed class LocalAppSettingsService : IAppSettingsService
             rememberLastPlaybackVolumeTask,
             lastPlaybackVolumePercentTask,
             notifyAboutNewPodcastsTask,
-            notifyAboutNewArticlesTask
+            notifyAboutNewArticlesTask,
+            contentTypeAnnouncementPlacementTask
         );
 
         var snapshot = new AppSettingsSnapshot(
@@ -80,7 +86,11 @@ public sealed class LocalAppSettingsService : IAppSettingsService
             ParseBoolOrDefault(notifyAboutNewPodcastsTask.Result, true),
             ParseBoolOrDefault(notifyAboutNewArticlesTask.Result, true),
             ParseBoolOrDefault(rememberLastPlaybackVolumeTask.Result, false),
-            ParseNullableDouble(lastPlaybackVolumePercentTask.Result)
+            ParseNullableDouble(lastPlaybackVolumePercentTask.Result),
+            ParseEnumOrDefault(
+                contentTypeAnnouncementPlacementTask.Result,
+                ContentTypeAnnouncementPlacement.None
+            )
         );
 
         return snapshot.Normalize();
@@ -167,6 +177,13 @@ public sealed class LocalAppSettingsService : IAppSettingsService
                     cancellationToken
                 )
                 .AsTask(),
+            _localSettingsStore
+                .SetStringAsync(
+                    ContentTypeAnnouncementPlacementKey,
+                    normalized.ContentTypeAnnouncementPlacement.ToString(),
+                    cancellationToken
+                )
+                .AsTask(),
         };
 
         await Task.WhenAll(saveTasks);
@@ -199,6 +216,15 @@ public sealed class LocalAppSettingsService : IAppSettingsService
         )
             ? parsed
             : null;
+    }
+
+    private static TEnum ParseEnumOrDefault<TEnum>(string? value, TEnum defaultValue)
+        where TEnum : struct, Enum
+    {
+        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var parsed)
+            && Enum.IsDefined(parsed)
+            ? parsed
+            : defaultValue;
     }
 
     private static string? NullIfWhiteSpace(string? value)

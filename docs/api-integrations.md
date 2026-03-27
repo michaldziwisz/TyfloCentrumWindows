@@ -67,7 +67,15 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - standardowy timeout requestu: wzorowany na iOS
 - retry tylko dla bledow przejsciowych
 - omijanie cache lokalnego dla endpointow live
-- dodatkowy memory cache dla odpowiedzi z `Cache-Control: no-store`
+- lokalny cache tresci `WordPress` dla endpointow odczytowych:
+  - warstwa pamieci w procesie
+  - warstwa dyskowa w `LocalApplicationData/TyfloCentrum.Windows/http-cache`
+  - krotkie `TTL` zalezne od typu danych:
+    - wyszukiwanie: ~2 minuty
+    - feedy, listy wpisow i komentarze: ~5 minut
+    - szczegoly wpisu i numeru `TyfloSwiata`: ~10 minut
+    - kategorie i lista numerow `TyfloSwiata`: ~30 minut
+- cache nie obejmuje endpointow live ani formularzy kontaktowych
 - logowanie endpointow bez danych wrazliwych
 - klient zgłoszeń zawsze wysyła jawny `User-Agent`, bo ruch bez tego nagłówka może zostać odrzucony przez warstwę `Cloudflare`
 

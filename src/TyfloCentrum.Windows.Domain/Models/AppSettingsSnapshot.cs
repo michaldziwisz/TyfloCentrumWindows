@@ -10,7 +10,9 @@ public sealed record AppSettingsSnapshot(
     bool NotifyAboutNewPodcasts,
     bool NotifyAboutNewArticles,
     bool RememberLastPlaybackVolume = false,
-    double? LastPlaybackVolumePercent = null
+    double? LastPlaybackVolumePercent = null,
+    ContentTypeAnnouncementPlacement ContentTypeAnnouncementPlacement =
+        ContentTypeAnnouncementPlacement.None
 )
 {
     public const double DefaultPlaybackVolumePercent = 100d;
@@ -29,6 +31,9 @@ public sealed record AppSettingsSnapshot(
             LastPlaybackVolumePercent = LastPlaybackVolumePercent is null
                 ? null
                 : CoerceVolumePercent(LastPlaybackVolumePercent.Value),
+            ContentTypeAnnouncementPlacement = NormalizeContentTypeAnnouncementPlacement(
+                ContentTypeAnnouncementPlacement
+            ),
         };
     }
 
@@ -52,7 +57,8 @@ public sealed record AppSettingsSnapshot(
         true,
         true,
         false,
-        null
+        null,
+        ContentTypeAnnouncementPlacement.None
     );
 
     private static string? NormalizeDeviceId(string? deviceId)
@@ -73,5 +79,12 @@ public sealed record AppSettingsSnapshot(
         }
 
         return Math.Clamp(value, 0d, 100d);
+    }
+
+    private static ContentTypeAnnouncementPlacement NormalizeContentTypeAnnouncementPlacement(
+        ContentTypeAnnouncementPlacement value
+    )
+    {
+        return Enum.IsDefined(value) ? value : ContentTypeAnnouncementPlacement.None;
     }
 }

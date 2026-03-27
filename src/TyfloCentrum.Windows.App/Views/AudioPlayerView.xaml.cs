@@ -12,6 +12,7 @@ using Windows.System;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Domain.Text;
+using TyfloCentrum.Windows.UI.ViewModels;
 
 namespace TyfloCentrum.Windows.App.Views;
 
@@ -28,13 +29,16 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly IWordPressCommentsService _wordPressCommentsService;
     private readonly PlaybackRateOption[] _playbackRates;
     private CancellationTokenSource? _showNotesLoadCts;
-    private ChapterMarkerItem[] _chapterMarkers = [];
-    private RelatedLinkItem[] _relatedLinks = [];
+    private PodcastChapterMarkerItemViewModel[] _chapterMarkers = [];
+    private CommentItemViewModel[] _comments = [];
+    private PodcastRelatedLinkItemViewModel[] _relatedLinks = [];
     private ListView? _chapterMarkersListView;
+    private ListView? _commentsListView;
     private ListView? _relatedLinksListView;
     private MediaPlayer? _mediaPlayer;
     private AppSettingsSnapshot _currentSettings = AppSettingsSnapshot.Defaults;
     private bool _isChapterMarkersVisible;
+    private bool _isCommentsVisible;
     private bool _isLoadingShowNotes;
     private bool _isRelatedLinksVisible;
     private bool _hasPlaybackEnded;
@@ -225,6 +229,7 @@ public sealed partial class AudioPlayerView : UserControl
     private void ConfigureTransportControls(AudioPlaybackRequest request)
     {
         var transportControls = PlayerElement.TransportControls;
+        transportControls.ShowAndHideAutomatically = false;
         transportControls.IsNextTrackButtonVisible = false;
         transportControls.IsPreviousTrackButtonVisible = false;
         transportControls.IsRepeatButtonVisible = false;
@@ -658,7 +663,7 @@ public sealed partial class AudioPlayerView : UserControl
     private async Task LoadShowNotesAsync(int podcastPostId, CancellationToken cancellationToken)
     {
         _isLoadingShowNotes = true;
-        UpdateShowNotesUi("Ładowanie znaczników czasu i odnośników…");
+        UpdateShowNotesUi("Ładowanie komentarzy, znaczników czasu i odnośników…");
 
         try
         {
@@ -668,16 +673,17 @@ public sealed partial class AudioPlayerView : UserControl
             );
             cancellationToken.ThrowIfCancellationRequested();
 
+            var commentItems = PodcastCommentThreadBuilder.Build(comments);
             var parsed = ShowNotesParser.Parse(comments);
             var chapterMarkers = parsed.Markers
-                .Select(marker => new ChapterMarkerItem(
+                .Select(marker => new PodcastChapterMarkerItemViewModel(
                     marker.Title,
                     marker.Seconds,
                     FormatTime(marker.Seconds)
                 ))
                 .ToArray();
             var relatedLinks = parsed.Links
-                .Select(link => new RelatedLinkItem(
+                .Select(link => new PodcastRelatedLinkItemViewModel(
                     link.Title,
                     link.Url,
                     GetHostLabel(link.Url)
@@ -698,17 +704,19 @@ public sealed partial class AudioPlayerView : UserControl
                 );
             }
 
+            _comments = commentItems;
             _chapterMarkers = chapterMarkers;
             _relatedLinks = relatedLinks;
 
+            _isCommentsVisible = false;
             _isChapterMarkersVisible = false;
             _isRelatedLinksVisible = false;
             _isLoadingShowNotes = false;
 
             UpdateShowNotesUi(
-                _chapterMarkers.Length == 0 && _relatedLinks.Length == 0
+                _comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0
                     ? null
-                    : "Dodatki do odcinka są gotowe."
+                    : BuildShowNotesReadyMessage()
             );
         }
         catch (OperationCanceledException)
@@ -716,10 +724,11 @@ public sealed partial class AudioPlayerView : UserControl
         }
         catch
         {
+            _comments = [];
             _chapterMarkers = [];
             _relatedLinks = [];
             _isLoadingShowNotes = false;
-            UpdateShowNotesUi("Nie udało się wczytać dodatków do odcinka.");
+            UpdateShowNotesUi("Nie udało się wczytać komentarzy i dodatków do odcinka.");
         }
     }
 
@@ -787,6 +796,7 @@ public sealed partial class AudioPlayerView : UserControl
         _isChapterMarkersVisible = !_isChapterMarkersVisible;
         if (_isChapterMarkersVisible)
         {
+            _isCommentsVisible = false;
             _isRelatedLinksVisible = false;
         }
 
@@ -803,6 +813,7 @@ public sealed partial class AudioPlayerView : UserControl
         _isRelatedLinksVisible = !_isRelatedLinksVisible;
         if (_isRelatedLinksVisible)
         {
+            _isCommentsVisible = false;
             _isChapterMarkersVisible = false;
         }
 
@@ -814,9 +825,26 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
+    private void OnToggleCommentsClick(object sender, RoutedEventArgs e)
+    {
+        _isCommentsVisible = !_isCommentsVisible;
+        if (_isCommentsVisible)
+        {
+            _isChapterMarkersVisible = false;
+            _isRelatedLinksVisible = false;
+        }
+
+        UpdateShowNotesUi("Widok komentarzy został zaktualizowany.");
+
+        if (_isCommentsVisible)
+        {
+            FocusCommentsList();
+        }
+    }
+
     private void OnChapterMarkersListItemClick(object sender, ItemClickEventArgs e)
     {
-        if (e.ClickedItem is ChapterMarkerItem item)
+        if (e.ClickedItem is PodcastChapterMarkerItemViewModel item)
         {
             SeekToMarker(item);
         }
@@ -829,7 +857,7 @@ public sealed partial class AudioPlayerView : UserControl
             return;
         }
 
-        if (sender is ListView { SelectedItem: ChapterMarkerItem item })
+        if (sender is ListView { SelectedItem: PodcastChapterMarkerItemViewModel item })
         {
             e.Handled = true;
             SeekToMarker(item);
@@ -844,8 +872,8 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         var item =
-            ItemContextResolver.Resolve<ChapterMarkerItem>(e.OriginalSource)
-            ?? listView.SelectedItem as ChapterMarkerItem;
+            ItemContextResolver.Resolve<PodcastChapterMarkerItemViewModel>(e.OriginalSource)
+            ?? listView.SelectedItem as PodcastChapterMarkerItemViewModel;
         if (item is null)
         {
             return;
@@ -875,9 +903,39 @@ public sealed partial class AudioPlayerView : UserControl
 
     private async void OnRelatedLinksListItemClick(object sender, ItemClickEventArgs e)
     {
-        if (e.ClickedItem is RelatedLinkItem item)
+        if (e.ClickedItem is PodcastRelatedLinkItemViewModel item)
         {
             await OpenRelatedLinkAsync(item);
+        }
+    }
+
+    private void OnCommentsListItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is CommentItemViewModel item)
+        {
+            ToggleCommentDetails(item);
+        }
+    }
+
+    private void OnCommentsListKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Enter)
+        {
+            return;
+        }
+
+        if (sender is ListView { SelectedItem: CommentItemViewModel item })
+        {
+            e.Handled = true;
+            ToggleCommentDetails(item);
+        }
+    }
+
+    private void OnCommentDetailsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: CommentItemViewModel item })
+        {
+            ToggleCommentDetails(item);
         }
     }
 
@@ -885,7 +943,7 @@ public sealed partial class AudioPlayerView : UserControl
     {
         if (
             KeyboardShortcutHelper.IsControlPressed()
-            && sender is ListView { SelectedItem: RelatedLinkItem selectedItem }
+            && sender is ListView { SelectedItem: PodcastRelatedLinkItemViewModel selectedItem }
             && e.Key == VirtualKey.U
         )
         {
@@ -899,7 +957,7 @@ public sealed partial class AudioPlayerView : UserControl
             return;
         }
 
-        if (sender is ListView { SelectedItem: RelatedLinkItem item })
+        if (sender is ListView { SelectedItem: PodcastRelatedLinkItemViewModel item })
         {
             e.Handled = true;
             await OpenRelatedLinkAsync(item);
@@ -914,8 +972,8 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         var item =
-            ItemContextResolver.Resolve<RelatedLinkItem>(e.OriginalSource)
-            ?? listView.SelectedItem as RelatedLinkItem;
+            ItemContextResolver.Resolve<PodcastRelatedLinkItemViewModel>(e.OriginalSource)
+            ?? listView.SelectedItem as PodcastRelatedLinkItemViewModel;
         if (item is null)
         {
             return;
@@ -953,7 +1011,7 @@ public sealed partial class AudioPlayerView : UserControl
         flyout.ShowAt(e.OriginalSource as FrameworkElement ?? listView);
     }
 
-    private void SeekToMarker(ChapterMarkerItem item)
+    private void SeekToMarker(PodcastChapterMarkerItemViewModel item)
     {
         if (_mediaPlayer?.PlaybackSession is not { } session)
         {
@@ -966,7 +1024,7 @@ public sealed partial class AudioPlayerView : UserControl
         RestoreChapterMarkerSelection(item);
     }
 
-    private async Task OpenRelatedLinkAsync(RelatedLinkItem item)
+    private async Task OpenRelatedLinkAsync(PodcastRelatedLinkItemViewModel item)
     {
         var launched = await _externalLinkLauncher.LaunchAsync(item.Url.AbsoluteUri);
         if (!launched)
@@ -982,7 +1040,7 @@ public sealed partial class AudioPlayerView : UserControl
         RestoreRelatedLinkSelection(item);
     }
 
-    private async Task CopyRelatedLinkAsync(RelatedLinkItem item)
+    private async Task CopyRelatedLinkAsync(PodcastRelatedLinkItemViewModel item)
     {
         var copied = await _clipboardService.SetTextAsync(item.Url.AbsoluteUri);
         if (!copied)
@@ -998,7 +1056,7 @@ public sealed partial class AudioPlayerView : UserControl
         RestoreRelatedLinkSelection(item);
     }
 
-    private async Task ShareRelatedLinkAsync(RelatedLinkItem item)
+    private async Task ShareRelatedLinkAsync(PodcastRelatedLinkItemViewModel item)
     {
         var shared = await _shareService.ShareLinkAsync(
             item.Title,
@@ -1018,7 +1076,23 @@ public sealed partial class AudioPlayerView : UserControl
         RestoreRelatedLinkSelection(item);
     }
 
-    private async Task ToggleChapterMarkerFavoriteAsync(ChapterMarkerItem item)
+    private void ToggleCommentDetails(CommentItemViewModel item)
+    {
+        var shouldExpand = !item.IsExpanded;
+        foreach (var candidate in _comments)
+        {
+            candidate.IsExpanded = ReferenceEquals(candidate, item) && shouldExpand;
+        }
+
+        SetStatusMessage(
+            shouldExpand
+                ? $"Pokazano szczegóły komentarza: {item.AuthorName}."
+                : $"Ukryto szczegóły komentarza: {item.AuthorName}."
+        );
+        RestoreCommentSelection(item);
+    }
+
+    private async Task ToggleChapterMarkerFavoriteAsync(PodcastChapterMarkerItemViewModel item)
     {
         if (_currentRequest?.PodcastPostId is not int podcastPostId)
         {
@@ -1064,7 +1138,7 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
-    private async Task ToggleRelatedLinkFavoriteAsync(RelatedLinkItem item)
+    private async Task ToggleRelatedLinkFavoriteAsync(PodcastRelatedLinkItemViewModel item)
     {
         if (_currentRequest?.PodcastPostId is not int podcastPostId)
         {
@@ -1128,6 +1202,7 @@ public sealed partial class AudioPlayerView : UserControl
     {
         ShowNotesPanel.Children.Clear();
         _chapterMarkersListView = null;
+        _commentsListView = null;
         _relatedLinksListView = null;
 
         if (_isLoadingShowNotes)
@@ -1151,7 +1226,7 @@ public sealed partial class AudioPlayerView : UserControl
             });
         }
 
-        if (_chapterMarkers.Length == 0 && _relatedLinks.Length == 0)
+        if (_comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0)
         {
             if (!_isLoadingShowNotes && string.IsNullOrWhiteSpace(statusMessage))
             {
@@ -1168,6 +1243,26 @@ public sealed partial class AudioPlayerView : UserControl
             Orientation = Orientation.Horizontal,
             Spacing = 8,
         };
+
+        if (_comments.Length > 0)
+        {
+            ShowNotesPanel.Children.Add(new TextBlock
+            {
+                Text = _comments.Length == 1 ? "Komentarze: 1" : $"Komentarze: {_comments.Length}",
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            });
+
+            var button = new Button
+            {
+                Content = _isCommentsVisible ? "Ukryj komentarze" : "Pokaż komentarze",
+            };
+            AutomationProperties.SetName(
+                button,
+                _isCommentsVisible ? "Ukryj komentarze" : "Pokaż komentarze"
+            );
+            button.Click += OnToggleCommentsClick;
+            actionsPanel.Children.Add(button);
+        }
 
         if (_chapterMarkers.Length > 0)
         {
@@ -1199,6 +1294,27 @@ public sealed partial class AudioPlayerView : UserControl
 
         ShowNotesPanel.Children.Add(actionsPanel);
 
+        if (_isCommentsVisible && _comments.Length > 0)
+        {
+            ShowNotesPanel.Children.Add(new TextBlock
+            {
+                Text = "Komentarze",
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            });
+            var listView = new ListView
+            {
+                ItemsSource = _comments,
+                ItemTemplate = (DataTemplate)Resources["CommentItemTemplate"],
+                IsItemClickEnabled = true,
+                SelectionMode = ListViewSelectionMode.Single,
+            };
+            AutomationProperties.SetName(listView, "Komentarze podcastu");
+            listView.ItemClick += OnCommentsListItemClick;
+            listView.KeyDown += OnCommentsListKeyDown;
+            _commentsListView = listView;
+            ShowNotesPanel.Children.Add(listView);
+        }
+
         if (_isChapterMarkersVisible && _chapterMarkers.Length > 0)
         {
             ShowNotesPanel.Children.Add(new TextBlock
@@ -1213,7 +1329,7 @@ public sealed partial class AudioPlayerView : UserControl
                 IsItemClickEnabled = true,
                 SelectionMode = ListViewSelectionMode.Single,
             };
-            AutomationProperties.SetName(listView, "Lista znaczników czasu");
+            AutomationProperties.SetName(listView, "Znaczniki czasu");
             listView.ItemClick += OnChapterMarkersListItemClick;
             listView.KeyDown += OnChapterMarkersListKeyDown;
             listView.ContextRequested += OnChapterMarkersListContextRequested;
@@ -1235,7 +1351,7 @@ public sealed partial class AudioPlayerView : UserControl
                 IsItemClickEnabled = true,
                 SelectionMode = ListViewSelectionMode.Single,
             };
-            AutomationProperties.SetName(listView, "Lista odnośników");
+            AutomationProperties.SetName(listView, "Odnośniki");
             listView.ItemClick += OnRelatedLinksListItemClick;
             listView.KeyDown += OnRelatedLinksListKeyDown;
             listView.ContextRequested += OnRelatedLinksListContextRequested;
@@ -1244,12 +1360,12 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
-    private bool TryGetFocusedChapterMarker(out ChapterMarkerItem item)
+    private bool TryGetFocusedChapterMarker(out PodcastChapterMarkerItemViewModel item)
     {
         item = default!;
 
         if (
-            _chapterMarkersListView?.SelectedItem is not ChapterMarkerItem selectedItem
+            _chapterMarkersListView?.SelectedItem is not PodcastChapterMarkerItemViewModel selectedItem
             || !IsFocusWithinList(_chapterMarkersListView)
         )
         {
@@ -1260,12 +1376,12 @@ public sealed partial class AudioPlayerView : UserControl
         return true;
     }
 
-    private bool TryGetFocusedRelatedLink(out RelatedLinkItem item)
+    private bool TryGetFocusedRelatedLink(out PodcastRelatedLinkItemViewModel item)
     {
         item = default!;
 
         if (
-            _relatedLinksListView?.SelectedItem is not RelatedLinkItem selectedItem
+            _relatedLinksListView?.SelectedItem is not PodcastRelatedLinkItemViewModel selectedItem
             || !IsFocusWithinList(_relatedLinksListView)
         )
         {
@@ -1292,7 +1408,7 @@ public sealed partial class AudioPlayerView : UserControl
         return false;
     }
 
-    private void RestoreChapterMarkerSelection(ChapterMarkerItem item)
+    private void RestoreChapterMarkerSelection(PodcastChapterMarkerItemViewModel item)
     {
         if (_chapterMarkersListView is null)
         {
@@ -1312,6 +1428,25 @@ public sealed partial class AudioPlayerView : UserControl
         _chapterMarkersListView.ScrollIntoView(selectedItem);
         _chapterMarkersListView.UpdateLayout();
         _chapterMarkersListView.Focus(FocusState.Programmatic);
+    }
+
+    private void RestoreCommentSelection(CommentItemViewModel item)
+    {
+        if (_commentsListView is null)
+        {
+            return;
+        }
+
+        var selectedItem = _comments.FirstOrDefault(candidate => candidate.Id == item.Id);
+        if (selectedItem is null)
+        {
+            return;
+        }
+
+        _commentsListView.SelectedItem = selectedItem;
+        _commentsListView.ScrollIntoView(selectedItem);
+        _commentsListView.UpdateLayout();
+        _commentsListView.Focus(FocusState.Programmatic);
     }
 
     private void FocusChapterMarkersList()
@@ -1334,7 +1469,27 @@ public sealed partial class AudioPlayerView : UserControl
         });
     }
 
-    private void RestoreRelatedLinkSelection(RelatedLinkItem item)
+    private void FocusCommentsList()
+    {
+        if (_commentsListView is null)
+        {
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _commentsListView.UpdateLayout();
+            if (_commentsListView.SelectedItem is null && _comments.Length > 0)
+            {
+                _commentsListView.SelectedItem = _comments[0];
+                _commentsListView.ScrollIntoView(_comments[0]);
+            }
+
+            _commentsListView.Focus(FocusState.Programmatic);
+        });
+    }
+
+    private void RestoreRelatedLinkSelection(PodcastRelatedLinkItemViewModel item)
     {
         if (_relatedLinksListView is null)
         {
@@ -1379,11 +1534,14 @@ public sealed partial class AudioPlayerView : UserControl
     private void ResetShowNotesState()
     {
         CancelShowNotesLoad();
+        _comments = [];
         _chapterMarkers = [];
         _relatedLinks = [];
+        _commentsListView = null;
         _chapterMarkersListView = null;
         _relatedLinksListView = null;
         _isLoadingShowNotes = false;
+        _isCommentsVisible = false;
         _isChapterMarkersVisible = false;
         _isRelatedLinksVisible = false;
         ShowNotesPanel.Children.Clear();
@@ -1397,8 +1555,8 @@ public sealed partial class AudioPlayerView : UserControl
         _showNotesLoadCts = null;
     }
 
-    private async Task<ChapterMarkerItem[]> LoadChapterMarkerFavoritesAsync(
-        ChapterMarkerItem[] items,
+    private async Task<PodcastChapterMarkerItemViewModel[]> LoadChapterMarkerFavoritesAsync(
+        PodcastChapterMarkerItemViewModel[] items,
         int podcastPostId,
         CancellationToken cancellationToken
     )
@@ -1413,8 +1571,8 @@ public sealed partial class AudioPlayerView : UserControl
         return await Task.WhenAll(favoriteTasks);
     }
 
-    private async Task<RelatedLinkItem[]> LoadRelatedLinkFavoritesAsync(
-        RelatedLinkItem[] items,
+    private async Task<PodcastRelatedLinkItemViewModel[]> LoadRelatedLinkFavoritesAsync(
+        PodcastRelatedLinkItemViewModel[] items,
         int podcastPostId,
         CancellationToken cancellationToken
     )
@@ -1487,7 +1645,7 @@ public sealed partial class AudioPlayerView : UserControl
             : url.Scheme;
     }
 
-    private FavoriteItem CreateTopicFavoriteItem(ChapterMarkerItem item, int podcastPostId)
+    private FavoriteItem CreateTopicFavoriteItem(PodcastChapterMarkerItemViewModel item, int podcastPostId)
     {
         return new FavoriteItem
         {
@@ -1505,7 +1663,7 @@ public sealed partial class AudioPlayerView : UserControl
         };
     }
 
-    private FavoriteItem CreateRelatedLinkFavoriteItem(RelatedLinkItem item, int podcastPostId)
+    private FavoriteItem CreateRelatedLinkFavoriteItem(PodcastRelatedLinkItemViewModel item, int podcastPostId)
     {
         return new FavoriteItem
         {
@@ -1523,42 +1681,17 @@ public sealed partial class AudioPlayerView : UserControl
         };
     }
 
+    private string BuildShowNotesReadyMessage()
+    {
+        if (_comments.Length > 0)
+        {
+            return _comments.Length == 1
+                ? "Dodatki do odcinka są gotowe. Komentarze: 1."
+                : $"Dodatki do odcinka są gotowe. Komentarze: {_comments.Length}.";
+        }
+
+        return "Dodatki do odcinka są gotowe.";
+    }
+
     private sealed record PlaybackRateOption(string Label, double Value);
-
-    private sealed record ChapterMarkerItem(
-        string Title,
-        double Seconds,
-        string TimeLabel,
-        bool IsFavorite = false
-    )
-    {
-        public string AccessibleLabel => $"{Title}. {TimeLabel}.";
-
-        public string FavoriteMenuLabel =>
-            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")} (Ctrl+D): temat {Title}";
-
-        public override string ToString() => AccessibleLabel;
-    }
-
-    private sealed record RelatedLinkItem(
-        string Title,
-        Uri Url,
-        string HostLabel,
-        bool IsFavorite = false
-    )
-    {
-        public string AccessibleLabel =>
-            string.IsNullOrWhiteSpace(HostLabel) ? Title : $"{Title}. {HostLabel}.";
-
-        public string OpenMenuLabel => $"Otwórz odnośnik: {Title}";
-
-        public string CopyMenuLabel => $"Kopiuj odnośnik: {Title}";
-
-        public string ShareMenuLabel => $"Udostępnij odnośnik (Ctrl+U): {Title}";
-
-        public string FavoriteMenuLabel =>
-            $"{(IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych")} (Ctrl+D): odnośnik {Title}";
-
-        public override string ToString() => AccessibleLabel;
-    }
 }

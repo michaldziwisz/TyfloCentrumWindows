@@ -7,15 +7,23 @@ namespace TyfloCentrum.Windows.Infrastructure.Http;
 
 public sealed class WordPressCatalogService : IWordPressCatalogService
 {
+    private static readonly TimeSpan CategoriesCacheTtl = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan ItemsCacheTtl = TimeSpan.FromMinutes(5);
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly ITransientContentCache _cache;
     private readonly HttpClient _httpClient;
     private readonly TyfloCentrumEndpointsOptions _options;
 
-    public WordPressCatalogService(HttpClient httpClient, TyfloCentrumEndpointsOptions options)
+    public WordPressCatalogService(
+        HttpClient httpClient,
+        TyfloCentrumEndpointsOptions options,
+        ITransientContentCache cache
+    )
     {
         _httpClient = httpClient;
         _options = options;
+        _cache = cache;
     }
 
     public async Task<IReadOnlyList<WpCategorySummary>> GetCategoriesAsync(
@@ -26,19 +34,27 @@ public sealed class WordPressCatalogService : IWordPressCatalogService
         var builder = new UriBuilder(new Uri(GetBaseUri(source), "wp/v2/categories"));
         builder.Query = "per_page=100&orderby=name&order=asc&_fields=id,name,count";
 
-        using var response = await _httpClient.GetAsync(
-            builder.Uri,
-            HttpCompletionOption.ResponseHeadersRead,
+        return await _cache.GetOrCreateAsync(
+            $"wp-categories:{builder.Uri.AbsoluteUri}",
+            CategoriesCacheTtl,
+            async requestCancellationToken =>
+            {
+                using var response = await _httpClient.GetAsync(
+                    builder.Uri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    requestCancellationToken
+                );
+                response.EnsureSuccessStatusCode();
+
+                var items = await response.Content.ReadFromJsonAsync<List<WpCategorySummary>>(
+                    SerializerOptions,
+                    requestCancellationToken
+                );
+
+                return (IReadOnlyList<WpCategorySummary>)(items ?? []);
+            },
             cancellationToken
         );
-        response.EnsureSuccessStatusCode();
-
-        var items = await response.Content.ReadFromJsonAsync<List<WpCategorySummary>>(
-            SerializerOptions,
-            cancellationToken
-        );
-
-        return items ?? [];
     }
 
     public async Task<IReadOnlyList<WpPostSummary>> GetItemsAsync(
@@ -87,21 +103,29 @@ public sealed class WordPressCatalogService : IWordPressCatalogService
 
         builder.Query = string.Join("&", queryParts);
 
-        using var response = await _httpClient.GetAsync(
-            builder.Uri,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken
-        );
-        response.EnsureSuccessStatusCode();
+        return await _cache.GetOrCreateAsync(
+            $"wp-catalog-page:{builder.Uri.AbsoluteUri}",
+            ItemsCacheTtl,
+            async requestCancellationToken =>
+            {
+                using var response = await _httpClient.GetAsync(
+                    builder.Uri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    requestCancellationToken
+                );
+                response.EnsureSuccessStatusCode();
 
-        var items = await response.Content.ReadFromJsonAsync<List<WpPostSummary>>(
-            SerializerOptions,
-            cancellationToken
-        );
+                var items = await response.Content.ReadFromJsonAsync<List<WpPostSummary>>(
+                    SerializerOptions,
+                    requestCancellationToken
+                );
 
-        return new PagedResult<WpPostSummary>(
-            items ?? [],
-            HasMorePages(response, normalizedPageNumber, normalizedPageSize, items?.Count ?? 0)
+                return new PagedResult<WpPostSummary>(
+                    items ?? [],
+                    HasMorePages(response, normalizedPageNumber, normalizedPageSize, items?.Count ?? 0)
+                );
+            },
+            cancellationToken
         );
     }
 

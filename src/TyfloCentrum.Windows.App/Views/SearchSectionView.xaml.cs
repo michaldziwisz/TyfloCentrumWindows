@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using TyfloCentrum.Windows.App.Services;
+using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
@@ -19,6 +20,8 @@ public sealed partial class SearchSectionView : UserControl
     private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly ContentFavoriteService _contentFavoriteService;
+    private readonly PodcastShowNotesDialogService _podcastShowNotesDialogService;
+    private readonly IPodcastShowNotesService _podcastShowNotesService;
     private readonly IShareService _shareService;
     private bool _focusResultsAfterSearch;
 
@@ -31,6 +34,8 @@ public sealed partial class SearchSectionView : UserControl
         IContentDownloadService contentDownloadService,
         ContentEntryActionService contentEntryActionService,
         ContentFavoriteService contentFavoriteService,
+        IPodcastShowNotesService podcastShowNotesService,
+        PodcastShowNotesDialogService podcastShowNotesDialogService,
         IShareService shareService
     )
     {
@@ -40,6 +45,8 @@ public sealed partial class SearchSectionView : UserControl
         _contentDownloadService = contentDownloadService;
         _contentEntryActionService = contentEntryActionService;
         _contentFavoriteService = contentFavoriteService;
+        _podcastShowNotesService = podcastShowNotesService;
+        _podcastShowNotesDialogService = podcastShowNotesDialogService;
         _shareService = shareService;
         InitializeComponent();
         DataContext = ViewModel;
@@ -91,6 +98,38 @@ public sealed partial class SearchSectionView : UserControl
 
     private async void OnResultsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (
+            !KeyboardShortcutHelper.IsControlPressed()
+            && !KeyboardShortcutHelper.IsAltPressed()
+            && TryGetLatinLetter(e.Key, out var input)
+            && sender is ListView listView
+        )
+        {
+            var items = ViewModel.Results;
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            var currentIndex = listView.SelectedItem is ContentPostItemViewModel selectedListItem
+                ? items.IndexOf(selectedListItem)
+                : -1;
+            var matchedItem = InitialListNavigationHelper.FindNextByInitial(
+                items,
+                currentIndex,
+                item => item.Title,
+                input
+            );
+
+            if (matchedItem is not null)
+            {
+                e.Handled = true;
+                ListViewFocusHelper.RestoreFocus(listView, matchedItem);
+            }
+
+            return;
+        }
+
         if (
             KeyboardShortcutHelper.IsControlPressed()
             && sender is ListView { SelectedItem: ContentPostItemViewModel selectedItem }
@@ -188,6 +227,11 @@ public sealed partial class SearchSectionView : UserControl
             );
             copyAudioLinkItem.Click += async (_, _) => await CopyPodcastAudioLinkAsync(item);
             flyout.Items.Add(copyAudioLinkItem);
+
+            if (await TryGetPodcastShowNotesAsync(item.PostId) is { } showNotes)
+            {
+                AddPodcastShowNotesMenuItems(flyout, item, showNotes);
+            }
         }
 
         var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
@@ -222,6 +266,101 @@ public sealed partial class SearchSectionView : UserControl
         flyout.Items.Add(favoriteItem);
 
         flyout.ShowAt(e.OriginalSource as FrameworkElement ?? listView);
+    }
+
+    private void AddPodcastShowNotesMenuItems(
+        MenuFlyout flyout,
+        ContentPostItemViewModel item,
+        PodcastShowNotesSnapshot showNotes
+    )
+    {
+        if (showNotes.HasComments)
+        {
+            var commentsItem = new MenuFlyoutItem { Text = "Pokaż komentarze" };
+            AutomationProperties.SetName(commentsItem, $"Pokaż komentarze podcastu: {item.Title}");
+            commentsItem.Click += async (_, _) =>
+                await ShowPodcastShowNotesSectionAsync(PodcastShowNotesSection.Comments, item, showNotes);
+            flyout.Items.Add(commentsItem);
+        }
+
+        if (showNotes.HasChapterMarkers)
+        {
+            var chapterMarkersItem = new MenuFlyoutItem { Text = "Pokaż znaczniki czasu" };
+            AutomationProperties.SetName(
+                chapterMarkersItem,
+                $"Pokaż znaczniki czasu podcastu: {item.Title}"
+            );
+            chapterMarkersItem.Click += async (_, _) =>
+                await ShowPodcastShowNotesSectionAsync(
+                    PodcastShowNotesSection.ChapterMarkers,
+                    item,
+                    showNotes
+                );
+            flyout.Items.Add(chapterMarkersItem);
+        }
+
+        if (showNotes.HasRelatedLinks)
+        {
+            var relatedLinksItem = new MenuFlyoutItem { Text = "Pokaż odnośniki" };
+            AutomationProperties.SetName(
+                relatedLinksItem,
+                $"Pokaż odnośniki podcastu: {item.Title}"
+            );
+            relatedLinksItem.Click += async (_, _) =>
+                await ShowPodcastShowNotesSectionAsync(
+                    PodcastShowNotesSection.RelatedLinks,
+                    item,
+                    showNotes
+                );
+            flyout.Items.Add(relatedLinksItem);
+        }
+    }
+
+    private async Task<PodcastShowNotesSnapshot?> TryGetPodcastShowNotesAsync(int postId)
+    {
+        try
+        {
+            return await _podcastShowNotesService.GetAsync(postId);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task ShowPodcastShowNotesSectionAsync(
+        PodcastShowNotesSection section,
+        ContentPostItemViewModel item,
+        PodcastShowNotesSnapshot showNotes
+    )
+    {
+        var shown = await _podcastShowNotesDialogService.ShowAsync(
+            section,
+            item.PostId,
+            item.Title,
+            item.PublishedDate,
+            showNotes,
+            XamlRoot
+        );
+
+        if (!shown)
+        {
+            await DialogHelpers.ShowErrorAsync(
+                XamlRoot,
+                section switch
+                {
+                    PodcastShowNotesSection.Comments =>
+                        "Nie udało się wyświetlić komentarzy podcastu.",
+                    PodcastShowNotesSection.ChapterMarkers =>
+                        "Nie udało się wyświetlić znaczników czasu podcastu.",
+                    PodcastShowNotesSection.RelatedLinks =>
+                        "Nie udało się wyświetlić odnośników podcastu.",
+                    _ => "Nie udało się wyświetlić dodatków podcastu.",
+                }
+            );
+        }
+
+        ListViewFocusHelper.RestoreFocus(ResultsList, item);
     }
 
     private async Task CopyPageLinkAsync(ContentPostItemViewModel item)
@@ -419,5 +558,17 @@ public sealed partial class SearchSectionView : UserControl
             e.Handled = true;
             ExitToSectionListRequested?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private static bool TryGetLatinLetter(VirtualKey key, out char value)
+    {
+        if (key is >= VirtualKey.A and <= VirtualKey.Z)
+        {
+            value = (char)('A' + (key - VirtualKey.A));
+            return true;
+        }
+
+        value = '\0';
+        return false;
     }
 }

@@ -25,7 +25,7 @@ public sealed partial class FeedbackSectionView : UserControl
 
     public void FocusPrimaryContent()
     {
-        TitleTextBox.Focus(FocusState.Programmatic);
+        KindComboBox.Focus(FocusState.Programmatic);
     }
 
     private async void OnSubmitClick(object sender, RoutedEventArgs e)

@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Xunit;
 
@@ -41,7 +42,8 @@ public sealed class SettingsViewModelTests
         var viewModel = new SettingsViewModel(
             settingsService,
             deviceCatalogService,
-            new FakeDownloadDirectoryService()
+            new FakeDownloadDirectoryService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
 
         await viewModel.LoadIfNeededAsync();
@@ -54,6 +56,10 @@ public sealed class SettingsViewModelTests
         Assert.True(viewModel.RememberLastPlaybackVolume);
         Assert.False(viewModel.NotifyAboutNewPodcasts);
         Assert.True(viewModel.NotifyAboutNewArticles);
+        Assert.Equal(
+            ContentTypeAnnouncementPlacement.None,
+            viewModel.SelectedContentTypeAnnouncementPlacement?.Value
+        );
         Assert.Equal("Ostatnio zapamiętana prędkość: 1,5x.", viewModel.RememberedPlaybackRateDescription);
         Assert.Equal("Ostatnio zapamiętana głośność: 65%.", viewModel.RememberedPlaybackVolumeDescription);
         Assert.Equal(3, viewModel.InputDevices.Count);
@@ -87,7 +93,8 @@ public sealed class SettingsViewModelTests
         var viewModel = new SettingsViewModel(
             settingsService,
             deviceCatalogService,
-            new FakeDownloadDirectoryService()
+            new FakeDownloadDirectoryService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
         await viewModel.LoadIfNeededAsync();
 
@@ -137,7 +144,8 @@ public sealed class SettingsViewModelTests
         var viewModel = new SettingsViewModel(
             settingsService,
             deviceCatalogService,
-            new FakeDownloadDirectoryService()
+            new FakeDownloadDirectoryService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
         await viewModel.LoadIfNeededAsync();
 
@@ -146,6 +154,34 @@ public sealed class SettingsViewModelTests
         Assert.Null(settingsService.LastSavedSnapshot?.LastPlaybackVolumePercent);
         Assert.Equal("Wyczyszczono zapamiętaną głośność odtwarzania.", viewModel.StatusMessage);
         Assert.False(viewModel.HasRememberedPlaybackVolume);
+    }
+
+    [Fact]
+    public async Task SaveAsync_persists_content_type_announcement_placement()
+    {
+        var settingsService = new FakeAppSettingsService();
+        var viewModel = new SettingsViewModel(
+            settingsService,
+            new FakeAudioDeviceCatalogService
+            {
+                InputDevices = [new AudioDeviceInfo("mic-1", "Mikrofon 1")],
+                OutputDevices = [new AudioDeviceInfo("speaker-1", "Głośnik 1")],
+            },
+            new FakeDownloadDirectoryService(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
+        await viewModel.LoadIfNeededAsync();
+
+        viewModel.SelectedContentTypeAnnouncementPlacement = viewModel
+            .ContentTypeAnnouncementPlacements
+            .First(option => option.Value == ContentTypeAnnouncementPlacement.AfterTitle);
+
+        await viewModel.SaveAsync();
+
+        Assert.Equal(
+            ContentTypeAnnouncementPlacement.AfterTitle,
+            settingsService.LastSavedSnapshot?.ContentTypeAnnouncementPlacement
+        );
     }
 
     private sealed class FakeAppSettingsService : IAppSettingsService

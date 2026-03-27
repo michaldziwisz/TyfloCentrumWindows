@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
@@ -7,15 +8,21 @@ public sealed class PodcastCatalogViewModel : ContentCatalogViewModelBase
 {
     public PodcastCatalogViewModel(
         IWordPressCatalogService catalogService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
-        : base(ContentSource.Podcast, catalogService, externalLinkLauncher) { }
+        : base(
+            ContentSource.Podcast,
+            catalogService,
+            externalLinkLauncher,
+            contentTypeAnnouncementPreferenceService
+        ) { }
 
     public override string LeadText => "Przeglądaj kategorie i listę podcastów z Tyflopodcast.";
 
-    public override string ListAutomationName => "Lista podcastów";
+    public override string ListAutomationName => "Podcasty";
 
-    public override string CategoriesAutomationName => "Lista kategorii podcastów";
+    public override string CategoriesAutomationName => "Kategorie podcastów";
 
     protected override string EmptyStateMessage => "Brak podcastów do wyświetlenia w tej kategorii.";
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
@@ -9,6 +10,7 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
+    private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IDownloadDirectoryService _downloadDirectoryService;
     private bool _hasLoaded;
     private double? _lastPlaybackRate;
@@ -17,17 +19,38 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(
         IAppSettingsService appSettingsService,
         IAudioDeviceCatalogService audioDeviceCatalogService,
-        IDownloadDirectoryService downloadDirectoryService
+        IDownloadDirectoryService downloadDirectoryService,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
     {
         _appSettingsService = appSettingsService;
         _audioDeviceCatalogService = audioDeviceCatalogService;
         _downloadDirectoryService = downloadDirectoryService;
+        _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
 
         foreach (var value in PlaybackRateCatalog.SupportedValues)
         {
             PlaybackRates.Add(new PlaybackRateOptionViewModel(value, PlaybackRateCatalog.FormatLabel(value)));
         }
+
+        ContentTypeAnnouncementPlacements.Add(
+            new ContentTypeAnnouncementPlacementOptionViewModel(
+                ContentTypeAnnouncementPlacement.None,
+                "Nie wskazuj typu treści"
+            )
+        );
+        ContentTypeAnnouncementPlacements.Add(
+            new ContentTypeAnnouncementPlacementOptionViewModel(
+                ContentTypeAnnouncementPlacement.BeforeTitle,
+                "Wskazuj typ treści przed nazwą"
+            )
+        );
+        ContentTypeAnnouncementPlacements.Add(
+            new ContentTypeAnnouncementPlacementOptionViewModel(
+                ContentTypeAnnouncementPlacement.AfterTitle,
+                "Wskazuj typ treści po nazwie"
+            )
+        );
     }
 
     public ObservableCollection<AudioDeviceOptionViewModel> InputDevices { get; } = [];
@@ -35,6 +58,9 @@ public partial class SettingsViewModel : ObservableObject
     public ObservableCollection<AudioDeviceOptionViewModel> OutputDevices { get; } = [];
 
     public ObservableCollection<PlaybackRateOptionViewModel> PlaybackRates { get; } = [];
+
+    public ObservableCollection<ContentTypeAnnouncementPlacementOptionViewModel>
+        ContentTypeAnnouncementPlacements { get; } = [];
 
     [ObservableProperty]
     private bool isLoading;
@@ -75,6 +101,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool notifyAboutNewArticles;
 
+    [ObservableProperty]
+    private ContentTypeAnnouncementPlacementOptionViewModel? selectedContentTypeAnnouncementPlacement;
+
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
     public bool CanSave =>
@@ -82,7 +111,8 @@ public partial class SettingsViewModel : ObservableObject
         && !IsSaving
         && SelectedInputDevice is not null
         && SelectedOutputDevice is not null
-        && SelectedDefaultPlaybackRate is not null;
+        && SelectedDefaultPlaybackRate is not null
+        && SelectedContentTypeAnnouncementPlacement is not null;
 
     public bool CanRefreshDevices => !IsLoading && !IsSaving;
 
@@ -122,6 +152,9 @@ public partial class SettingsViewModel : ObservableObject
 
     public string NotificationsDescription =>
         "Powiadomienia o nowych artykułach i podcastach pojawiają się, gdy aplikacja jest uruchomiona na tym komputerze.";
+
+    public string ContentTypeAnnouncementDescription =>
+        "To ustawienie wpływa na sposób, w jaki czytnik ekranu odczytuje pozycje na listach nowości, podcastów, artykułów i wyników wyszukiwania.";
 
     public async Task LoadIfNeededAsync(CancellationToken cancellationToken = default)
     {
@@ -169,12 +202,17 @@ public partial class SettingsViewModel : ObservableObject
             RememberLastPlaybackVolume = settings.RememberLastPlaybackVolume;
             NotifyAboutNewPodcasts = settings.NotifyAboutNewPodcasts;
             NotifyAboutNewArticles = settings.NotifyAboutNewArticles;
+            SelectedContentTypeAnnouncementPlacement =
+                SelectContentTypeAnnouncementPlacement(settings.ContentTypeAnnouncementPlacement);
             _lastPlaybackRate = settings.LastPlaybackRate is null
                 ? null
                 : PlaybackRateCatalog.Coerce(settings.LastPlaybackRate.Value);
             _lastPlaybackVolumePercent = settings.LastPlaybackVolumePercent is null
                 ? null
                 : Math.Clamp(settings.LastPlaybackVolumePercent.Value, 0d, 100d);
+            _contentTypeAnnouncementPreferenceService.SetPlacement(
+                settings.ContentTypeAnnouncementPlacement
+            );
 
             HasLoadedOnce = true;
             StatusMessage = BuildLoadStatusMessage(settings);
@@ -210,7 +248,11 @@ public partial class SettingsViewModel : ObservableObject
 
         try
         {
-            await _appSettingsService.SaveAsync(CreateSnapshot(), cancellationToken);
+            var snapshot = CreateSnapshot();
+            await _appSettingsService.SaveAsync(snapshot, cancellationToken);
+            _contentTypeAnnouncementPreferenceService.SetPlacement(
+                snapshot.ContentTypeAnnouncementPlacement
+            );
             StatusMessage =
                 "Ustawienia zapisane. Nowe urządzenia będą użyte przy kolejnym nagraniu lub otwarciu odtwarzacza.";
         }
@@ -337,6 +379,13 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSave));
     }
 
+    partial void OnSelectedContentTypeAnnouncementPlacementChanged(
+        ContentTypeAnnouncementPlacementOptionViewModel? value
+    )
+    {
+        OnPropertyChanged(nameof(CanSave));
+    }
+
     private AppSettingsSnapshot CreateSnapshot()
     {
         return new AppSettingsSnapshot(
@@ -349,7 +398,8 @@ public partial class SettingsViewModel : ObservableObject
             NotifyAboutNewPodcasts,
             NotifyAboutNewArticles,
             RememberLastPlaybackVolume,
-            _lastPlaybackVolumePercent
+            _lastPlaybackVolumePercent,
+            SelectedContentTypeAnnouncementPlacement?.Value ?? ContentTypeAnnouncementPlacement.None
         ).Normalize();
     }
 
@@ -420,6 +470,14 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         return options.First();
+    }
+
+    private ContentTypeAnnouncementPlacementOptionViewModel SelectContentTypeAnnouncementPlacement(
+        ContentTypeAnnouncementPlacement value
+    )
+    {
+        return ContentTypeAnnouncementPlacements.FirstOrDefault(option => option.Value == value)
+            ?? ContentTypeAnnouncementPlacements[0];
     }
 
     private PlaybackRateOptionViewModel SelectPlaybackRate(double value)

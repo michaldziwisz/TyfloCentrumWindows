@@ -144,7 +144,7 @@
             <ListView
                 x:Name="ItemsList"
                 AutomationProperties.AutomationId="favorites.list"
-                AutomationProperties.Name="Lista ulubionych pozycji"
+                AutomationProperties.Name="Ulubione pozycje"
                 IsItemClickEnabled="True"
                 ItemClick="OnItemsListItemClick"
                 ItemTemplate="{StaticResource FavoriteItemTemplate}"

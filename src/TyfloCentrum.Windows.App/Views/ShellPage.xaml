@@ -75,7 +75,7 @@
             <ListView
                 x:Name="SectionList"
                 AutomationProperties.AutomationId="Shell.Navigation"
-                AutomationProperties.Name="Lista sekcji głównych"
+                AutomationProperties.Name="Sekcje główne"
                 ItemTemplate="{StaticResource SectionItemTemplate}"
                 ItemsSource="{Binding Sections}"
                 KeyDown="OnSectionListKeyDown"

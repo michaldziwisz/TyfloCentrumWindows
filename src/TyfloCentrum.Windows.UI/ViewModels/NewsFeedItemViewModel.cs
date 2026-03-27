@@ -1,11 +1,18 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.UI.Formatting;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
-public sealed class NewsFeedItemViewModel
+public sealed class NewsFeedItemViewModel : ObservableObject
 {
-    public NewsFeedItemViewModel(NewsFeedItem item)
+    private ContentTypeAnnouncementPlacement _contentTypeAnnouncementPlacement;
+
+    public NewsFeedItemViewModel(
+        NewsFeedItem item,
+        ContentTypeAnnouncementPlacement contentTypeAnnouncementPlacement =
+            ContentTypeAnnouncementPlacement.None
+    )
     {
         Kind = item.Kind;
         PostId = item.Post.Id;
@@ -13,6 +20,7 @@ public sealed class NewsFeedItemViewModel
         Excerpt = WordPressTextFormatter.NormalizeHtml(item.Post.Excerpt?.Rendered ?? string.Empty);
         Link = item.Post.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Post.Date);
+        _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }
 
     public NewsItemKind Kind { get; }
@@ -45,24 +53,41 @@ public sealed class NewsFeedItemViewModel
     {
         get
         {
-            var parts = new List<string>
+            var parts = new List<string>();
+
+            switch (_contentTypeAnnouncementPlacement)
             {
-                KindLabel,
-                Title,
-            };
+                case ContentTypeAnnouncementPlacement.BeforeTitle:
+                    parts.Add(KindLabel);
+                    parts.Add(Title);
+                    break;
+                case ContentTypeAnnouncementPlacement.AfterTitle:
+                    parts.Add(Title);
+                    parts.Add(KindLabel);
+                    break;
+                default:
+                    parts.Add(Title);
+                    break;
+            }
 
             if (!string.IsNullOrWhiteSpace(PublishedDate))
             {
                 parts.Add(PublishedDate);
             }
 
-            if (!string.IsNullOrWhiteSpace(Excerpt))
-            {
-                parts.Add(Excerpt);
-            }
-
             return string.Join(". ", parts);
         }
+    }
+
+    public void SetContentTypeAnnouncementPlacement(ContentTypeAnnouncementPlacement placement)
+    {
+        if (_contentTypeAnnouncementPlacement == placement)
+        {
+            return;
+        }
+
+        _contentTypeAnnouncementPlacement = placement;
+        OnPropertyChanged(nameof(AccessibleLabel));
     }
 
     public override string ToString() => AccessibleLabel;

@@ -237,6 +237,32 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8">
+                    <StackPanel Spacing="12">
+                        <TextBlock
+                            AutomationProperties.HeadingLevel="Level2"
+                            FontWeight="SemiBold"
+                            Text="Dostępność i czytniki ekranu" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding ContentTypeAnnouncementDescription}"
+                            TextWrapping="WrapWholeWords" />
+                        <ComboBox
+                            x:Name="ContentTypeAnnouncementPlacementComboBox"
+                            AutomationProperties.Name="Sposób ogłaszania typu treści na listach"
+                            DisplayMemberPath="Label"
+                            Header="Typ treści na listach"
+                            ItemsSource="{Binding ContentTypeAnnouncementPlacements}"
+                            MinWidth="360"
+                            SelectedItem="{Binding SelectedContentTypeAnnouncementPlacement, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <StackPanel Spacing="8">
                         <TextBlock
                             AutomationProperties.HeadingLevel="Level2"

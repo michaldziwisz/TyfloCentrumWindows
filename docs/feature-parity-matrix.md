@@ -23,7 +23,7 @@
 | Player | linki powiazane | related links | sredni | in_progress | działa pierwszy wariant: parser z komentarzy, otwieranie odnośników w systemowej przeglądarce oraz kopiowanie i udostępnianie linków |
 | Ulubione | podcasty, artykuly, tematy, linki | to samo | wysoki | in_progress | działa rozszerzona wersja: podcasty, artykuły, strony TyfloŚwiata, tematy z timestampów i linki powiązane; działa też kopiowanie i udostępnianie linków, pozostaje dalsze dopracowanie UX |
 | Ustawienia | typ tresci, predkosc, push | to samo | wysoki | in_progress | działa wybór urządzenia wejściowego i wyjściowego, domyślna prędkość odtwarzania, zapamiętywanie ostatniej prędkości, wybór folderu pobierania oraz lokalne przełączniki powiadomień o nowych artykułach i podcastach |
-| Komentarze | lista i szczegoly | lista i szczegoly | sredni | in_progress | działa lista komentarzy podcastu, licznik komentarzy i szczegóły pojedynczego komentarza |
+| Komentarze | lista i szczegoly | lista i szczegoly | sredni | in_progress | działa lista komentarzy podcastu w odtwarzaczu, licznik komentarzy i szczegóły pojedynczego komentarza |
 | Kontakt | formularz tekstowy | formularz tekstowy | wysoki | in_progress | formularz tekstowy, walidacja, wysyłka i szkic lokalny są gotowe |
 | Kontakt | glosowka | glosowka | wysoki | in_progress | pierwsza wersja działa: preferowany `RAW` capture z cichym fallbackiem, append, `przytrzymaj i mów`, komunikaty przerwań, odsłuch, usunięcie i upload; do domknięcia pozostaje tryb ucha |
 | Dostepnosc | komunikaty VoiceOver | UIA + status announcements | wysoki | planned | kluczowe dla `1.0` |

@@ -25,6 +25,7 @@ public sealed partial class ArticleSectionView : UserControl
         -1,
         "Czasopismo Tyfloświat"
     );
+    private bool _loadMoreRequestPending;
     private readonly ObservableCollection<ContentCategoryItemViewModel> _navigationItems = [];
     private ContentCategoryItemViewModel? _pendingFocusedNavigationItem;
     private bool _focusSelectedContentWhenReady;
@@ -254,6 +255,38 @@ public sealed partial class ArticleSectionView : UserControl
     private async void OnItemsListKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (
+            !KeyboardShortcutHelper.IsControlPressed()
+            && !KeyboardShortcutHelper.IsAltPressed()
+            && TryGetLatinLetter(e.Key, out var input)
+            && sender is ListView listView
+        )
+        {
+            var items = ViewModel.Items;
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            var currentIndex = listView.SelectedItem is ContentPostItemViewModel selectedListItem
+                ? items.IndexOf(selectedListItem)
+                : -1;
+            var matchedItem = InitialListNavigationHelper.FindNextByInitial(
+                items,
+                currentIndex,
+                item => item.Title,
+                input
+            );
+
+            if (matchedItem is not null)
+            {
+                e.Handled = true;
+                ListViewFocusHelper.RestoreFocus(listView, matchedItem);
+            }
+
+            return;
+        }
+
+        if (
             KeyboardShortcutHelper.IsControlPressed()
             && sender is ListView { SelectedItem: ContentPostItemViewModel selectedItem }
         )
@@ -291,7 +324,7 @@ public sealed partial class ArticleSectionView : UserControl
         }
     }
 
-    private async void OnItemsListContainerContentChanging(
+    private void OnItemsListContainerContentChanging(
         ListViewBase sender,
         ContainerContentChangingEventArgs args
     )
@@ -303,7 +336,33 @@ public sealed partial class ArticleSectionView : UserControl
 
         if (args.ItemIndex >= ViewModel.Items.Count - 5)
         {
-            await ViewModel.LoadMoreAsync();
+            QueueLoadMore();
+        }
+    }
+
+    private void QueueLoadMore()
+    {
+        if (_loadMoreRequestPending)
+        {
+            return;
+        }
+
+        _loadMoreRequestPending = true;
+        if (
+            !DispatcherQueue.TryEnqueue(async () =>
+            {
+                try
+                {
+                    await ViewModel.LoadMoreAsync();
+                }
+                finally
+                {
+                    _loadMoreRequestPending = false;
+                }
+            })
+        )
+        {
+            _loadMoreRequestPending = false;
         }
     }
 

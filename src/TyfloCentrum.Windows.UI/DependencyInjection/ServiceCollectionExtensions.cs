@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddTyfloCentrumUi(this IServiceCollection services)
     {
         services.AddSingleton<ContentFavoriteService>();
+        services.AddSingleton<ContentTypeAnnouncementPreferenceService>();
         services.AddSingleton<ShellViewModel>();
         services.AddTransient<PodcastCatalogViewModel>();
         services.AddTransient<ArticleCatalogViewModel>();

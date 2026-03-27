@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Infrastructure.Http;
+using TyfloCentrum.Windows.Infrastructure.Storage;
 using Xunit;
 
 namespace TyfloCentrum.Windows.Tests.Infrastructure;
@@ -36,7 +37,8 @@ public sealed class WordPressCatalogServiceTests
             {
                 TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
                 TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var categories = await service.GetCategoriesAsync(ContentSource.Podcast);
@@ -87,7 +89,8 @@ public sealed class WordPressCatalogServiceTests
             {
                 TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
                 TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var items = await service.GetItemsAsync(ContentSource.Article, 25, 9);
@@ -125,7 +128,8 @@ public sealed class WordPressCatalogServiceTests
             {
                 TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
                 TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var result = await service.GetItemsPageAsync(ContentSource.Podcast, 25, 2);
@@ -133,6 +137,70 @@ public sealed class WordPressCatalogServiceTests
         Assert.NotNull(requestedUri);
         Assert.Contains("page=2", requestedUri!.Query);
         Assert.True(result.HasMoreItems);
+    }
+
+    [Fact]
+    public async Task GetCategoriesAsync_uses_cache_for_repeated_identical_request()
+    {
+        var requestCount = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            requestCount++;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            };
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var service = new WordPressCatalogService(
+            httpClient,
+            new TyfloCentrumEndpointsOptions
+            {
+                TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
+                TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
+            },
+            new InMemoryTransientContentCache()
+        );
+
+        await service.GetCategoriesAsync(ContentSource.Podcast);
+        await service.GetCategoriesAsync(ContentSource.Podcast);
+
+        Assert.Equal(1, requestCount);
+    }
+
+    [Fact]
+    public async Task GetItemsPageAsync_uses_cache_for_repeated_identical_request()
+    {
+        var requestCount = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            requestCount++;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Headers =
+                {
+                    { "X-WP-TotalPages", "1" },
+                },
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            };
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var service = new WordPressCatalogService(
+            httpClient,
+            new TyfloCentrumEndpointsOptions
+            {
+                TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
+                TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
+            },
+            new InMemoryTransientContentCache()
+        );
+
+        await service.GetItemsPageAsync(ContentSource.Article, 25, 1, 9);
+        await service.GetItemsPageAsync(ContentSource.Article, 25, 1, 9);
+
+        Assert.Equal(1, requestCount);
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)

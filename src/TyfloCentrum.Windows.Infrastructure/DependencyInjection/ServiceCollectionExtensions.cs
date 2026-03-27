@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton(endpoints);
         services.AddSingleton<ILocalSettingsStore, FileLocalSettingsStore>();
+        services.AddSingleton<ITransientContentCache, FileBackedTransientContentCache>();
         services.AddSingleton<IAppSettingsService, LocalAppSettingsService>();
         services.AddSingleton<IContentNotificationStateStore, LocalContentNotificationStateStore>();
         services.AddSingleton<IContentNotificationMonitor, ContentNotificationMonitor>();
@@ -66,6 +67,7 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         });
+        services.AddTransient<IPodcastShowNotesService, PodcastShowNotesService>();
         services.AddHttpClient<IRadioService, ContactPanelRadioService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);

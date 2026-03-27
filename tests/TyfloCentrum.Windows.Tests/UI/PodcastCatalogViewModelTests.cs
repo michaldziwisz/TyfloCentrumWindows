@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Xunit;
 
@@ -30,7 +31,11 @@ public sealed class PodcastCatalogViewModelTests
             ],
         };
 
-        var viewModel = new PodcastCatalogViewModel(service, new FakeExternalLinkLauncher());
+        var viewModel = new PodcastCatalogViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
 
         await viewModel.LoadIfNeededAsync();
 
@@ -66,7 +71,11 @@ public sealed class PodcastCatalogViewModelTests
             ],
         };
 
-        var viewModel = new PodcastCatalogViewModel(service, new FakeExternalLinkLauncher());
+        var viewModel = new PodcastCatalogViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
         await viewModel.LoadIfNeededAsync();
 
         await viewModel.SelectCategoryAsync(viewModel.Categories[1]);
@@ -117,7 +126,11 @@ public sealed class PodcastCatalogViewModelTests
             },
         };
 
-        var viewModel = new PodcastCatalogViewModel(service, new FakeExternalLinkLauncher());
+        var viewModel = new PodcastCatalogViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
         await viewModel.LoadIfNeededAsync();
         await viewModel.LoadMoreAsync();
 
@@ -168,7 +181,11 @@ public sealed class PodcastCatalogViewModelTests
             },
         ];
 
-        var viewModel = new PodcastCatalogViewModel(service, new FakeExternalLinkLauncher());
+        var viewModel = new PodcastCatalogViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
         await viewModel.LoadIfNeededAsync();
 
         var firstSelectionTask = viewModel.SelectCategoryAsync(viewModel.Categories[1]);

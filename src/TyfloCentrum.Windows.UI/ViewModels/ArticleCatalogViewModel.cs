@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
@@ -7,16 +8,22 @@ public sealed class ArticleCatalogViewModel : ContentCatalogViewModelBase
 {
     public ArticleCatalogViewModel(
         IWordPressCatalogService catalogService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
-        : base(ContentSource.Article, catalogService, externalLinkLauncher) { }
+        : base(
+            ContentSource.Article,
+            catalogService,
+            externalLinkLauncher,
+            contentTypeAnnouncementPreferenceService
+        ) { }
 
     public override string LeadText =>
         "Przeglądaj kategorie, listę artykułów i czasopismo TyfloŚwiat.";
 
-    public override string ListAutomationName => "Lista artykułów";
+    public override string ListAutomationName => "Artykuły";
 
-    public override string CategoriesAutomationName => "Lista kategorii artykułów";
+    public override string CategoriesAutomationName => "Kategorie artykułów";
 
     protected override string EmptyStateMessage => "Brak artykułów do wyświetlenia w tej kategorii.";
 

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Infrastructure.Http;
+using TyfloCentrum.Windows.Infrastructure.Storage;
 using Xunit;
 
 namespace TyfloCentrum.Windows.Tests.Infrastructure;
@@ -59,7 +60,8 @@ public sealed class WordPressTyfloSwiatMagazineServiceTests
             new TyfloCentrumEndpointsOptions
             {
                 TyfloswiatApiBaseUrl = new Uri("https://tyfloswiat.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var issues = await service.GetIssuesAsync();
@@ -123,7 +125,8 @@ public sealed class WordPressTyfloSwiatMagazineServiceTests
             new TyfloCentrumEndpointsOptions
             {
                 TyfloswiatApiBaseUrl = new Uri("https://tyfloswiat.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var issue = await service.GetIssueAsync(7772);
@@ -137,6 +140,55 @@ public sealed class WordPressTyfloSwiatMagazineServiceTests
             item => Assert.Equal(1002, item.Id),
             item => Assert.Equal(1001, item.Id)
         );
+    }
+
+    [Fact]
+    public async Task GetIssueAsync_uses_cache_for_repeated_identical_request()
+    {
+        var requests = new List<Uri>();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            requests.Add(request.RequestUri!);
+
+            if (request.RequestUri!.AbsolutePath.EndsWith("/wp/v2/pages/7772", StringComparison.Ordinal))
+            {
+                return JsonResponse(
+                    """
+                    {
+                      "id": 7772,
+                      "date": "2026-03-20T12:00:00",
+                      "link": "https://tyfloswiat.pl/czasopismo/tyfloswiat-1-2026/",
+                      "title": { "rendered": "Tyfloświat 1/2026" },
+                      "excerpt": { "rendered": "" },
+                      "content": { "rendered": "<p>Treść</p>" },
+                      "guid": { "rendered": "https://tyfloswiat.pl/?page_id=7772" }
+                    }
+                    """
+                );
+            }
+
+            return JsonResponse("[]");
+        });
+
+        using var client = new HttpClient(handler);
+        var service = new WordPressTyfloSwiatMagazineService(
+            client,
+            new TyfloCentrumEndpointsOptions
+            {
+                TyfloswiatApiBaseUrl = new Uri("https://tyfloswiat.example/wp-json/"),
+            },
+            new InMemoryTransientContentCache()
+        );
+
+        await service.GetIssueAsync(7772);
+        await service.GetIssueAsync(7772);
+
+        Assert.Equal(2, requests.Count);
+        Assert.Equal(
+            1,
+            requests.Count(uri => uri.AbsolutePath.EndsWith("/wp/v2/pages/7772", StringComparison.Ordinal))
+        );
+        Assert.Equal(1, requests.Count(uri => uri.Query.Contains("parent=7772", StringComparison.Ordinal)));
     }
 
     private static HttpResponseMessage JsonResponse(string json)

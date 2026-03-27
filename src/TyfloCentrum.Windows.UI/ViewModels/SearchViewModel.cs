@@ -2,21 +2,26 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class SearchViewModel : ObservableObject
 {
+    private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressSearchService _searchService;
 
     public SearchViewModel(
         IWordPressSearchService searchService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
     {
         _searchService = searchService;
         _externalLinkLauncher = externalLinkLauncher;
+        _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
+        _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         ScopeOptions = SearchScopeOptionViewModel.All;
         SelectedScope = ScopeOptions[0];
     }
@@ -146,7 +151,13 @@ public partial class SearchViewModel : ObservableObject
             Results.Clear();
             foreach (var item in items)
             {
-                Results.Add(new ContentPostItemViewModel(item.Source, item.Post));
+                Results.Add(
+                    new ContentPostItemViewModel(
+                        item.Source,
+                        item.Post,
+                        _contentTypeAnnouncementPreferenceService.Placement
+                    )
+                );
             }
 
             HasLoaded = true;
@@ -190,5 +201,13 @@ public partial class SearchViewModel : ObservableObject
             > 1 and < 5 => $"Znaleziono {count} wyniki.",
             _ => $"Znaleziono {count} wyników.",
         };
+    }
+
+    private void OnContentTypeAnnouncementPlacementChanged(object? sender, EventArgs e)
+    {
+        foreach (var item in Results)
+        {
+            item.SetContentTypeAnnouncementPlacement(_contentTypeAnnouncementPreferenceService.Placement);
+        }
     }
 }

@@ -1,0 +1,128 @@
+<UserControl
+    x:Class="TyfloCentrum.Windows.App.Views.PodcastShowNotesDialogView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="CommentItemTemplate">
+            <Border
+                Padding="12"
+                Margin="{Binding ContainerMarginValue}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Border
+                    Padding="{Binding ReplyAccentPaddingValue}"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="{Binding ReplyAccentBorderThicknessValue}">
+                    <StackPanel
+                        AutomationProperties.Name="{Binding AccessibleLabel}"
+                        Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{Binding AuthorName}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding ReplyContextText}"
+                            TextWrapping="WrapWholeWords"
+                            Visibility="{Binding ReplyContextVisibilityValue}" />
+                        <TextBlock
+                            Text="{Binding BodyDisplayText}"
+                            TextWrapping="WrapWholeWords" />
+                        <Button
+                            HorizontalAlignment="Left"
+                            AutomationProperties.Name="{Binding DetailsButtonLabel}"
+                            Click="OnCommentDetailsClick"
+                            Content="{Binding DetailsButtonText}"
+                            Tag="{Binding}" />
+                    </StackPanel>
+                </Border>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ChapterMarkerItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding TimeLabel}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RelatedLinkItemTemplate">
+            <Border
+                Padding="12"
+                Margin="0,0,0,8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel
+                    AutomationProperties.Name="{Binding AccessibleLabel}"
+                    Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}"
+                        TextWrapping="WrapWholeWords" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{Binding HostLabel}"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid RowSpacing="12" MaxWidth="820">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            x:Name="PodcastTitleTextBlock"
+            AutomationProperties.HeadingLevel="Level2"
+            Style="{ThemeResource TitleTextBlockStyle}"
+            TextWrapping="WrapWholeWords" />
+
+        <TextBlock
+            x:Name="SectionHintTextBlock"
+            Grid.Row="1"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="WrapWholeWords" />
+
+        <TextBlock
+            x:Name="StatusTextBlock"
+            Grid.Row="2"
+            AutomationProperties.LiveSetting="Polite"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <ListView
+            x:Name="ItemsList"
+            Grid.Row="3"
+            IsItemClickEnabled="True"
+            ItemClick="OnItemsListItemClick"
+            KeyDown="OnItemsListKeyDown"
+            SelectionMode="Single" />
+    </Grid>
+</UserControl>

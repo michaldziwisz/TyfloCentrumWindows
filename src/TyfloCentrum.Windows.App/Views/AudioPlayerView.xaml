@@ -85,6 +85,44 @@
                 </StackPanel>
             </Border>
         </DataTemplate>
+
+        <DataTemplate x:Key="CommentItemTemplate">
+            <Border
+                Padding="12"
+                Margin="{Binding ContainerMarginValue}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Border
+                    Padding="{Binding ReplyAccentPaddingValue}"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="{Binding ReplyAccentBorderThicknessValue}">
+                    <StackPanel
+                        AutomationProperties.Name="{Binding AccessibleLabel}"
+                        Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{Binding AuthorName}"
+                            TextWrapping="WrapWholeWords" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{Binding ReplyContextText}"
+                            TextWrapping="WrapWholeWords"
+                            Visibility="{Binding ReplyContextVisibilityValue}" />
+                        <TextBlock
+                            Text="{Binding BodyDisplayText}"
+                            TextWrapping="WrapWholeWords" />
+                        <Button
+                            HorizontalAlignment="Left"
+                            AutomationProperties.Name="{Binding DetailsButtonLabel}"
+                            Click="OnCommentDetailsClick"
+                            Content="{Binding DetailsButtonText}"
+                            Tag="{Binding}" />
+                    </StackPanel>
+                </Border>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
     <Grid RowSpacing="12" MaxWidth="760">
         <Grid.RowDefinitions>

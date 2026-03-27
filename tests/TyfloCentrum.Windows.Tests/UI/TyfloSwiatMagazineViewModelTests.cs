@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Xunit;
 
@@ -30,7 +31,8 @@ public sealed class TyfloSwiatMagazineViewModelTests
         var viewModel = new TyfloSwiatMagazineViewModel(
             service,
             new FakeExternalLinkLauncher(),
-            new FakeFavoritesService()
+            new FakeFavoritesService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
 
         await viewModel.LoadIfNeededAsync();
@@ -61,7 +63,8 @@ public sealed class TyfloSwiatMagazineViewModelTests
         var viewModel = new TyfloSwiatMagazineViewModel(
             service,
             new FakeExternalLinkLauncher(),
-            new FakeFavoritesService()
+            new FakeFavoritesService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
 
         await viewModel.LoadIfNeededAsync();
@@ -93,7 +96,8 @@ public sealed class TyfloSwiatMagazineViewModelTests
         var viewModel = new TyfloSwiatMagazineViewModel(
             service,
             launcher,
-            new FakeFavoritesService()
+            new FakeFavoritesService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
         await viewModel.LoadIfNeededAsync();
         await viewModel.OpenSelectedYearAsync(viewModel.SelectedYear);
@@ -125,7 +129,8 @@ public sealed class TyfloSwiatMagazineViewModelTests
         var viewModel = new TyfloSwiatMagazineViewModel(
             service,
             new FakeExternalLinkLauncher(),
-            favoritesService
+            favoritesService,
+            new ContentTypeAnnouncementPreferenceService()
         );
         await viewModel.LoadIfNeededAsync();
         await viewModel.OpenSelectedYearAsync(viewModel.SelectedYear);
@@ -174,7 +179,8 @@ public sealed class TyfloSwiatMagazineViewModelTests
         var viewModel = new TyfloSwiatMagazineViewModel(
             service,
             new FakeExternalLinkLauncher(),
-            new FakeFavoritesService()
+            new FakeFavoritesService(),
+            new ContentTypeAnnouncementPreferenceService()
         );
         await viewModel.LoadIfNeededAsync();
         await viewModel.OpenSelectedYearAsync(viewModel.SelectedYear);

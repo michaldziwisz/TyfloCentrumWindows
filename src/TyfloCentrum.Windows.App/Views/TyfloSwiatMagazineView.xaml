@@ -129,7 +129,7 @@
                     <ListView
                         x:Name="YearsList"
                         AutomationProperties.AutomationId="TyfloSwiat.Years"
-                        AutomationProperties.Name="Lista roczników czasopisma TyfloŚwiat"
+                        AutomationProperties.Name="Roczniki czasopisma TyfloŚwiat"
                         ItemTemplate="{StaticResource YearItemTemplate}"
                         ItemsSource="{Binding Years}"
                         KeyDown="OnYearsListKeyDown"
@@ -147,7 +147,7 @@
                     <ListView
                         x:Name="IssuesList"
                         AutomationProperties.AutomationId="TyfloSwiat.Issues"
-                        AutomationProperties.Name="Lista numerów czasopisma"
+                        AutomationProperties.Name="Numery czasopisma"
                         ContextRequested="OnIssuesListContextRequested"
                         ItemTemplate="{StaticResource IssueItemTemplate}"
                         ItemsSource="{Binding Issues}"
@@ -225,7 +225,7 @@
                             <ListView
                                 x:Name="TocItemsList"
                                 AutomationProperties.AutomationId="TyfloSwiat.Toc"
-                                AutomationProperties.Name="Lista artykułów numeru"
+                                AutomationProperties.Name="Artykuły numeru"
                                 ContextRequested="OnTocItemsListContextRequested"
                                 IsItemClickEnabled="True"
                                 ItemClick="OnTocItemsListItemClick"

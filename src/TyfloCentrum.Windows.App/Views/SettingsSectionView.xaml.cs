@@ -121,6 +121,7 @@ public sealed partial class SettingsSectionView : UserControl
         DefaultPlaybackRateComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         RememberLastRateToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         RememberLastVolumeToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
+        ContentTypeAnnouncementPlacementComboBox.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         ClearRememberedVolumeButton.IsEnabled = ViewModel.CanClearRememberedPlaybackVolume;
         NotifyNewPodcastsToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;
         NotifyNewArticlesToggle.IsEnabled = !ViewModel.IsLoading && !ViewModel.IsSaving;

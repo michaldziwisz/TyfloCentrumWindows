@@ -8,15 +8,22 @@ namespace TyfloCentrum.Windows.Infrastructure.Http;
 
 public sealed class WordPressSearchService : IWordPressSearchService
 {
+    private static readonly TimeSpan SearchCacheTtl = TimeSpan.FromMinutes(2);
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly ITransientContentCache _cache;
     private readonly HttpClient _httpClient;
     private readonly TyfloCentrumEndpointsOptions _options;
 
-    public WordPressSearchService(HttpClient httpClient, TyfloCentrumEndpointsOptions options)
+    public WordPressSearchService(
+        HttpClient httpClient,
+        TyfloCentrumEndpointsOptions options,
+        ITransientContentCache cache
+    )
     {
         _httpClient = httpClient;
         _options = options;
+        _cache = cache;
     }
 
     public async Task<IReadOnlyList<SearchResultItem>> SearchAsync(
@@ -89,19 +96,27 @@ public sealed class WordPressSearchService : IWordPressSearchService
         builder.Query =
             $"context=embed&per_page={pageSize}&search={Uri.EscapeDataString(query)}&orderby=date&order=desc&_fields=id,date,link,title,excerpt";
 
-        using var response = await _httpClient.GetAsync(
-            builder.Uri,
-            HttpCompletionOption.ResponseHeadersRead,
+        return await _cache.GetOrCreateAsync(
+            $"wp-search:{builder.Uri.AbsoluteUri}",
+            SearchCacheTtl,
+            async requestCancellationToken =>
+            {
+                using var response = await _httpClient.GetAsync(
+                    builder.Uri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    requestCancellationToken
+                );
+                response.EnsureSuccessStatusCode();
+
+                var items = await response.Content.ReadFromJsonAsync<List<WpPostSummary>>(
+                    SerializerOptions,
+                    requestCancellationToken
+                );
+
+                return (IReadOnlyList<WpPostSummary>)(items ?? []);
+            },
             cancellationToken
         );
-        response.EnsureSuccessStatusCode();
-
-        var items = await response.Content.ReadFromJsonAsync<List<WpPostSummary>>(
-            SerializerOptions,
-            cancellationToken
-        );
-
-        return items ?? [];
     }
 
     private static IEnumerable<SearchResultItem> SortByRelevance(

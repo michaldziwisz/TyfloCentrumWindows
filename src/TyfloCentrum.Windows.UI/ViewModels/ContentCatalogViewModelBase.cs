@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
@@ -10,6 +11,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
 {
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressCatalogService _catalogService;
+    private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly ContentSource _source;
     private int _currentPageNumber;
     private bool _hasRequestedInitialLoad;
@@ -21,12 +23,15 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
     protected ContentCatalogViewModelBase(
         ContentSource source,
         IWordPressCatalogService catalogService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
     {
         _source = source;
         _catalogService = catalogService;
         _externalLinkLauncher = externalLinkLauncher;
+        _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
+        _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         RetryCommand = new AsyncRelayCommand(RetryAsync, () => !IsLoading);
     }
 
@@ -284,7 +289,21 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
     {
         foreach (var item in items)
         {
-            Items.Add(new ContentPostItemViewModel(_source, item));
+            Items.Add(
+                new ContentPostItemViewModel(
+                    _source,
+                    item,
+                    _contentTypeAnnouncementPreferenceService.Placement
+                )
+            );
+        }
+    }
+
+    private void OnContentTypeAnnouncementPlacementChanged(object? sender, EventArgs e)
+    {
+        foreach (var item in Items)
+        {
+            item.SetContentTypeAnnouncementPlacement(_contentTypeAnnouncementPreferenceService.Placement);
         }
     }
 

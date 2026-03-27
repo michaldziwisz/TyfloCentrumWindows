@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Xunit;
 
@@ -49,7 +50,11 @@ public sealed class NewsFeedViewModelTests
             },
         };
 
-        var viewModel = new NewsFeedViewModel(service, new FakeExternalLinkLauncher());
+        var viewModel = new NewsFeedViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
 
         await viewModel.LoadIfNeededAsync();
         await viewModel.LoadMoreAsync();

@@ -1,5 +1,6 @@
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Xunit;
 
@@ -28,7 +29,11 @@ public sealed class SearchViewModelTests
             ],
         };
 
-        var viewModel = new SearchViewModel(service, new FakeExternalLinkLauncher())
+        var viewModel = new SearchViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        )
         {
             SearchText = "  test  ",
             SelectedScope = SearchScopeOptionViewModel.All[1],
@@ -47,7 +52,11 @@ public sealed class SearchViewModelTests
     public async Task RetryAsync_uses_last_search_query()
     {
         var service = new FakeSearchService();
-        var viewModel = new SearchViewModel(service, new FakeExternalLinkLauncher())
+        var viewModel = new SearchViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        )
         {
             SearchText = "pierwsza fraza",
         };
@@ -68,7 +77,11 @@ public sealed class SearchViewModelTests
         {
             ExceptionToThrow = new HttpRequestException("boom"),
         };
-        var viewModel = new SearchViewModel(service, new FakeExternalLinkLauncher())
+        var viewModel = new SearchViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        )
         {
             SearchText = "test",
         };

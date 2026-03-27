@@ -3,11 +3,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class NewsFeedViewModel : ObservableObject
 {
+    private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly INewsFeedService _newsFeedService;
     private int _currentPageNumber;
@@ -16,11 +18,14 @@ public partial class NewsFeedViewModel : ObservableObject
 
     public NewsFeedViewModel(
         INewsFeedService newsFeedService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
     {
         _newsFeedService = newsFeedService;
         _externalLinkLauncher = externalLinkLauncher;
+        _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
+        _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         RetryCommand = new AsyncRelayCommand(RetryAsync, () => !IsLoading);
     }
 
@@ -168,7 +173,17 @@ public partial class NewsFeedViewModel : ObservableObject
     {
         foreach (var item in items)
         {
-            Items.Add(new NewsFeedItemViewModel(item));
+            Items.Add(
+                new NewsFeedItemViewModel(item, _contentTypeAnnouncementPreferenceService.Placement)
+            );
+        }
+    }
+
+    private void OnContentTypeAnnouncementPlacementChanged(object? sender, EventArgs e)
+    {
+        foreach (var item in Items)
+        {
+            item.SetContentTypeAnnouncementPlacement(_contentTypeAnnouncementPreferenceService.Placement);
         }
     }
 }

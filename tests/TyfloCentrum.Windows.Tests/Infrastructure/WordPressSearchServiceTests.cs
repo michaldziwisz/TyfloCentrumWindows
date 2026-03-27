@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Infrastructure.Http;
+using TyfloCentrum.Windows.Infrastructure.Storage;
 using Xunit;
 
 namespace TyfloCentrum.Windows.Tests.Infrastructure;
@@ -58,7 +59,8 @@ public sealed class WordPressSearchServiceTests
             {
                 TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
                 TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var items = await service.SearchAsync(SearchScope.All, "  Ala ma kota  ", 100);
@@ -157,7 +159,8 @@ public sealed class WordPressSearchServiceTests
             {
                 TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
                 TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
-            }
+            },
+            new InMemoryTransientContentCache()
         );
 
         var items = await service.SearchAsync(SearchScope.All, "zazolc gesla jazn test", 100);
@@ -185,6 +188,36 @@ public sealed class WordPressSearchServiceTests
                 Assert.Equal(21, item.Post.Id);
             }
         );
+    }
+
+    [Fact]
+    public async Task SearchAsync_uses_cache_for_repeated_identical_request()
+    {
+        var requests = new List<Uri>();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            requests.Add(request.RequestUri!);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json"),
+            };
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var service = new WordPressSearchService(
+            httpClient,
+            new TyfloCentrumEndpointsOptions
+            {
+                TyflopodcastApiBaseUrl = new Uri("https://podcasts.example/wp-json/"),
+                TyfloswiatApiBaseUrl = new Uri("https://articles.example/wp-json/"),
+            },
+            new InMemoryTransientContentCache()
+        );
+
+        await service.SearchAsync(SearchScope.All, "cache test", 50);
+        await service.SearchAsync(SearchScope.All, "cache test", 50);
+
+        Assert.Equal(2, requests.Count);
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)

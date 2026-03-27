@@ -4,6 +4,7 @@ using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Domain.Text;
 using TyfloCentrum.Windows.UI.Formatting;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
@@ -12,6 +13,7 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly ITyfloSwiatMagazineService _magazineService;
+    private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private List<TyfloSwiatMagazineIssueItemViewModel> _allIssues = [];
     private CancellationTokenSource? _issueSelectionCancellationTokenSource;
     private bool _hasLoaded;
@@ -19,12 +21,15 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
     public TyfloSwiatMagazineViewModel(
         ITyfloSwiatMagazineService magazineService,
         IExternalLinkLauncher externalLinkLauncher,
-        IFavoritesService favoritesService
+        IFavoritesService favoritesService,
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
     )
     {
         _magazineService = magazineService;
         _externalLinkLauncher = externalLinkLauncher;
         _favoritesService = favoritesService;
+        _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
+        _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
     }
 
     public ObservableCollection<TyfloSwiatMagazineYearItemViewModel> Years { get; } = [];
@@ -294,7 +299,12 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
             SelectedIssueContentText = WordPressContentText.ToReadablePlainText(detail.Issue.Content.Rendered);
 
             var tocItems = detail.TocItems
-                .Select(item => new TyfloSwiatMagazineTocItemViewModel(item))
+                .Select(item =>
+                    new TyfloSwiatMagazineTocItemViewModel(
+                        item,
+                        _contentTypeAnnouncementPreferenceService.Placement
+                    )
+                )
                 .ToArray();
             await PopulateFavoriteStateAsync(tocItems, cancellationToken);
 
@@ -625,5 +635,13 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(ShowIssuePlaceholder));
         OnPropertyChanged(nameof(IssuesPlaceholderText));
+    }
+
+    private void OnContentTypeAnnouncementPlacementChanged(object? sender, EventArgs e)
+    {
+        foreach (var item in TocItems)
+        {
+            item.SetContentTypeAnnouncementPlacement(_contentTypeAnnouncementPreferenceService.Placement);
+        }
     }
 }

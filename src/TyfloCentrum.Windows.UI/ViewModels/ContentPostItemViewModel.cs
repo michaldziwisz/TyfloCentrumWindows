@@ -1,11 +1,19 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.UI.Formatting;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
-public sealed class ContentPostItemViewModel
+public sealed class ContentPostItemViewModel : ObservableObject
 {
-    public ContentPostItemViewModel(ContentSource source, WpPostSummary item)
+    private ContentTypeAnnouncementPlacement _contentTypeAnnouncementPlacement;
+
+    public ContentPostItemViewModel(
+        ContentSource source,
+        WpPostSummary item,
+        ContentTypeAnnouncementPlacement contentTypeAnnouncementPlacement =
+            ContentTypeAnnouncementPlacement.None
+    )
     {
         Source = source;
         PostId = item.Id;
@@ -13,6 +21,7 @@ public sealed class ContentPostItemViewModel
         Excerpt = WordPressTextFormatter.NormalizeHtml(item.Excerpt?.Rendered ?? string.Empty);
         Link = item.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Date);
+        _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }
 
     public ContentSource Source { get; }
@@ -43,24 +52,41 @@ public sealed class ContentPostItemViewModel
     {
         get
         {
-            var parts = new List<string>
+            var parts = new List<string>();
+
+            switch (_contentTypeAnnouncementPlacement)
             {
-                ItemTypeLabel,
-                Title,
-            };
+                case ContentTypeAnnouncementPlacement.BeforeTitle:
+                    parts.Add(ItemTypeLabel);
+                    parts.Add(Title);
+                    break;
+                case ContentTypeAnnouncementPlacement.AfterTitle:
+                    parts.Add(Title);
+                    parts.Add(ItemTypeLabel);
+                    break;
+                default:
+                    parts.Add(Title);
+                    break;
+            }
 
             if (!string.IsNullOrWhiteSpace(PublishedDate))
             {
                 parts.Add(PublishedDate);
             }
 
-            if (!string.IsNullOrWhiteSpace(Excerpt))
-            {
-                parts.Add(Excerpt);
-            }
-
             return string.Join(". ", parts);
         }
+    }
+
+    public void SetContentTypeAnnouncementPlacement(ContentTypeAnnouncementPlacement placement)
+    {
+        if (_contentTypeAnnouncementPlacement == placement)
+        {
+            return;
+        }
+
+        _contentTypeAnnouncementPlacement = placement;
+        OnPropertyChanged(nameof(AccessibleLabel));
     }
 
     public override string ToString() => AccessibleLabel;

@@ -10,27 +10,26 @@
     <UserControl.Resources>
         <DataTemplate x:Key="NewsItemTemplate">
             <Border
+                AutomationProperties.AutomationId="News.Item"
+                AutomationProperties.Name="{Binding AccessibleLabel}"
                 Padding="12"
                 Margin="0,0,0,8"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <StackPanel
-                    AutomationProperties.AutomationId="News.Item"
-                    AutomationProperties.Name="{Binding AccessibleLabel}"
-                    Spacing="4">
+                <StackPanel Spacing="4">
                     <TextBlock
-                        FontWeight="SemiBold"
-                        Text="{Binding KindLabel}" />
-                    <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Style="{ThemeResource SubtitleTextBlockStyle}"
                         Text="{Binding Title}"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{Binding PublishedDate}" />
                     <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{Binding Excerpt}"
                         TextWrapping="WrapWholeWords" />
@@ -92,7 +91,7 @@
                 x:Name="NewsList"
                 Grid.Row="0"
                 AutomationProperties.AutomationId="News.List"
-                AutomationProperties.Name="Lista nowości"
+                AutomationProperties.Name="Nowości"
                 ContainerContentChanging="OnNewsListContainerContentChanging"
                 ContextRequested="OnNewsListContextRequested"
                 IsItemClickEnabled="True"

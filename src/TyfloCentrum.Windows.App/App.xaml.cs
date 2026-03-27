@@ -11,6 +11,7 @@ using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Infrastructure.DependencyInjection;
 using TyfloCentrum.Windows.Infrastructure.Http;
 using TyfloCentrum.Windows.UI.DependencyInjection;
+using TyfloCentrum.Windows.UI.Services;
 using Windows.Globalization;
 
 namespace TyfloCentrum.Windows.App;
@@ -67,6 +68,7 @@ public partial class App : Application
                 services.AddSingleton<ContactVoiceMessageDialogService>();
                 services.AddSingleton<InAppBrowserDialogService>();
                 services.AddSingleton<CommentDetailDialogService>();
+                services.AddTransient<PodcastShowNotesDialogService>();
                 services.AddSingleton<TyfloSwiatMagazineDialogService>();
                 services.AddSingleton<TyfloSwiatPageDetailDialogService>();
                 services.AddTransient<NewsSectionView>();
@@ -84,6 +86,7 @@ public partial class App : Application
                 services.AddTransient<ContactTextMessageView>();
                 services.AddTransient<ContactVoiceMessageView>();
                 services.AddTransient<CommentDetailView>();
+                services.AddTransient<PodcastShowNotesDialogView>();
                 services.AddSingleton<ShellPage>();
                 services.AddSingleton<MainWindow>();
             })
@@ -96,6 +99,7 @@ public partial class App : Application
         _mainWindow.Closed -= OnMainWindowClosed;
         _mainWindow.Closed += OnMainWindowClosed;
         _mainWindow.Activate();
+        InitializeUiPreferences();
         HandleInitialActivation();
         if (TryStartInternalStoreScreenshotMode())
         {
@@ -207,6 +211,22 @@ public partial class App : Application
 
         RunInternalStoreScreenshotModeAsync(mainWindow);
         return true;
+    }
+
+    private async void InitializeUiPreferences()
+    {
+        try
+        {
+            var appSettingsService = _host.Services.GetRequiredService<IAppSettingsService>();
+            var contentTypeAnnouncementPreferenceService =
+                _host.Services.GetRequiredService<ContentTypeAnnouncementPreferenceService>();
+            await contentTypeAnnouncementPreferenceService.InitializeAsync(appSettingsService);
+        }
+        catch (Exception exception)
+        {
+            var logger = _host.Services.GetRequiredService<ILogger<App>>();
+            logger.LogError(exception, "Failed to initialize UI accessibility preferences.");
+        }
     }
 
     private async void RunInternalStoreScreenshotModeAsync(MainWindow mainWindow)

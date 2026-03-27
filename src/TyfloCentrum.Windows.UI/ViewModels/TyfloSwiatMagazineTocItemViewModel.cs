@@ -6,12 +6,19 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
 {
-    public TyfloSwiatMagazineTocItemViewModel(WpPostSummary item)
+    private ContentTypeAnnouncementPlacement _contentTypeAnnouncementPlacement;
+
+    public TyfloSwiatMagazineTocItemViewModel(
+        WpPostSummary item,
+        ContentTypeAnnouncementPlacement contentTypeAnnouncementPlacement =
+            ContentTypeAnnouncementPlacement.None
+    )
     {
         PageId = item.Id;
         Title = WordPressTextFormatter.NormalizeHtml(item.Title.Rendered);
         Link = item.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Date);
+        _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }
 
     public int PageId { get; }
@@ -31,13 +38,13 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
 
     public string FavoriteButtonText => IsFavorite ? "Usuń z ulubionych" : "Dodaj do ulubionych";
 
-    public string FavoriteButtonLabel => $"{FavoriteButtonText}: artykuł {Title}";
+    public string FavoriteButtonLabel => $"{FavoriteButtonText}: {BuildAccessibleTitle()}";
 
     public string AccessibleLabel
     {
         get
         {
-            var parts = new List<string> { "Artykuł", Title };
+            var parts = new List<string> { BuildAccessibleTitle() };
 
             if (!string.IsNullOrWhiteSpace(PublishedDate))
             {
@@ -54,6 +61,28 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
         OnPropertyChanged(nameof(FavoriteButtonText));
         OnPropertyChanged(nameof(FavoriteButtonLabel));
         OnPropertyChanged(nameof(AccessibleLabel));
+    }
+
+    public void SetContentTypeAnnouncementPlacement(ContentTypeAnnouncementPlacement placement)
+    {
+        if (_contentTypeAnnouncementPlacement == placement)
+        {
+            return;
+        }
+
+        _contentTypeAnnouncementPlacement = placement;
+        OnPropertyChanged(nameof(FavoriteButtonLabel));
+        OnPropertyChanged(nameof(AccessibleLabel));
+    }
+
+    private string BuildAccessibleTitle()
+    {
+        return _contentTypeAnnouncementPlacement switch
+        {
+            ContentTypeAnnouncementPlacement.BeforeTitle => $"Artykuł. {Title}",
+            ContentTypeAnnouncementPlacement.AfterTitle => $"{Title}. Artykuł",
+            _ => Title,
+        };
     }
 
     public override string ToString() => AccessibleLabel;

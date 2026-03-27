@@ -9,27 +9,26 @@
     <UserControl.Resources>
         <DataTemplate x:Key="SearchItemTemplate">
             <Border
+                AutomationProperties.AutomationId="search.item"
+                AutomationProperties.Name="{Binding AccessibleLabel}"
                 Padding="12"
                 Margin="0,0,0,8"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <StackPanel
-                    AutomationProperties.AutomationId="search.item"
-                    AutomationProperties.Name="{Binding AccessibleLabel}"
-                    Spacing="4">
+                <StackPanel Spacing="4">
                     <TextBlock
-                        FontWeight="SemiBold"
-                        Text="{Binding ItemTypeLabel}" />
-                    <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Style="{ThemeResource SubtitleTextBlockStyle}"
                         Text="{Binding Title}"
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{Binding PublishedDate}" />
                     <TextBlock
+                        AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{Binding Excerpt}"
                         TextWrapping="WrapWholeWords" />
@@ -141,7 +140,7 @@
             <ListView
                 x:Name="ResultsList"
                 AutomationProperties.AutomationId="search.list"
-                AutomationProperties.Name="Lista wyników wyszukiwania"
+                AutomationProperties.Name="Wyniki wyszukiwania"
                 ContextRequested="OnResultsListContextRequested"
                 IsItemClickEnabled="True"
                 ItemClick="OnResultsListItemClick"

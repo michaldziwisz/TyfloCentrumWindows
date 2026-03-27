@@ -7,15 +7,22 @@ namespace TyfloCentrum.Windows.Infrastructure.Http;
 
 public sealed class WordPressPostDetailsService : IWordPressPostDetailsService
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly ITransientContentCache _cache;
     private readonly HttpClient _httpClient;
     private readonly TyfloCentrumEndpointsOptions _options;
 
-    public WordPressPostDetailsService(HttpClient httpClient, TyfloCentrumEndpointsOptions options)
+    public WordPressPostDetailsService(
+        HttpClient httpClient,
+        TyfloCentrumEndpointsOptions options,
+        ITransientContentCache cache
+    )
     {
         _httpClient = httpClient;
         _options = options;
+        _cache = cache;
     }
 
     public async Task<WpPostDetail> GetPostAsync(
@@ -27,19 +34,27 @@ public sealed class WordPressPostDetailsService : IWordPressPostDetailsService
         var builder = new UriBuilder(new Uri(GetBaseUri(source), $"wp/v2/posts/{postId}"));
         builder.Query = "_fields=id,date,link,title,excerpt,content,guid";
 
-        using var response = await _httpClient.GetAsync(
-            builder.Uri,
-            HttpCompletionOption.ResponseHeadersRead,
+        return await _cache.GetOrCreateAsync(
+            $"wp-post-detail:{builder.Uri.AbsoluteUri}",
+            CacheTtl,
+            async requestCancellationToken =>
+            {
+                using var response = await _httpClient.GetAsync(
+                    builder.Uri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    requestCancellationToken
+                );
+                response.EnsureSuccessStatusCode();
+
+                var item = await response.Content.ReadFromJsonAsync<WpPostDetail>(
+                    SerializerOptions,
+                    requestCancellationToken
+                );
+
+                return item ?? throw new InvalidOperationException("Brak danych szczegółowych wpisu.");
+            },
             cancellationToken
         );
-        response.EnsureSuccessStatusCode();
-
-        var item = await response.Content.ReadFromJsonAsync<WpPostDetail>(
-            SerializerOptions,
-            cancellationToken
-        );
-
-        return item ?? throw new InvalidOperationException("Brak danych szczegółowych wpisu.");
     }
 
     private Uri GetBaseUri(ContentSource source) =>
