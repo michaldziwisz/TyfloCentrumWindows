@@ -19,16 +19,17 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji dodano nową sekcję „Zgłoś błąd lub sugestię”, która pozwala szybko wysłać zgłoszenie bezpośrednio z poziomu aplikacji. Publiczne zgłoszenie trafia do repozytorium projektu, a opcjonalne dane techniczne i adres e-mail są przekazywane wyłącznie do prywatnego kanału diagnostycznego po wyrażeniu zgody.
+W tej wersji rozbudowano pracę z podcastami i dostępność całej aplikacji. Z menu kontekstowego podcastu można teraz otworzyć same komentarze, znaczniki czasu i odnośniki bez wchodzenia do odtwarzacza. W samym playerze poprawiono kolejność komentarzy i odpowiedzi, sposób pokazywania szczegółów komentarza oraz widoczność kontrolek transportu przy obsłudze klawiaturą.
 
-Uproszczono też pracę z treściami i dostępność interfejsu:
-- artykuły otwierają się już bezpośrednio w readerze, bez osobnego widoku szczegółów,
-- dodano zapamiętywanie głośności wspólne dla podcastów i `Tyfloradia`,
-- dodano kopiowanie adresu artykułu, strony podcastu i pliku podcastu,
-- poprawiono komunikaty dla czytników ekranu przy dodawaniu i usuwaniu ulubionych,
-- rozszerzono skróty klawiaturowe o `Ctrl+S` dla pobierania, `Ctrl+U` dla udostępniania, `Ctrl+C` dla kopiowania adresu strony oraz `Ctrl+P` dla kopiowania adresu pliku podcastu,
-- zmieniono skróty w odtwarzaczu tak, aby `Alt+strzałka w górę i dół` zmieniały prędkość, a `Ctrl+strzałka w górę i dół` regulowały głośność,
-- poprawiono informowanie o sprawdzaniu dostępu do mikrofonu przy starcie nagrywania głosówki.
+Usprawniono też nawigację po listach treści:
+- dodano ustawienie określające, czy typ treści ma być pomijany, czytany przed nazwą albo po nazwie,
+- poprawiono nawigację po pierwszej literze na listach nowości, podcastów, artykułów, wyników wyszukiwania i w spisie treści `TyfloŚwiata`,
+- uproszczono etykiety odczytywane przez czytniki ekranu, dzięki czemu poruszanie się po listach jest szybsze i bardziej responsywne.
+
+Poprawiono również pobieranie i prezentację treści:
+- aktualności są teraz wyświetlane w prawidłowej kolejności chronologicznej,
+- szybkie wielokrotne doładowywanie starszych treści nie powoduje już zamknięcia aplikacji,
+- dane z WordPressa są lokalnie cacheowane przez krótki czas, co zmniejsza liczbę zapytań do serwerów i przyspiesza działanie aplikacji.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
