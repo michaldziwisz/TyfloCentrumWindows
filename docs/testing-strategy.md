@@ -329,8 +329,11 @@ Pozniej automatyzowac:
   - listy nie pokazują już osobnego, stałego wiersza `Podcast` albo `Artykuł` nad tytułem
   - menu kontekstowe podcastu pokazuje `Pokaż komentarze`, `Pokaż znaczniki czasu` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
   - `Pokaż znaczniki czasu` otwiera listę samych znaczników bez wchodzenia do playera
+  - lista samych znaczników ma takie samo menu kontekstowe jak w playerze, w tym `Przejdź` i `Dodaj do ulubionych`
   - `Enter` na znaczniku czasu uruchamia player podcastu od wybranej czasówki
   - `Pokaż odnośniki` otwiera listę samych odnośników bez wchodzenia do playera
+  - lista samych odnośników ma takie samo menu kontekstowe jak w playerze, w tym `Otwórz`, `Kopiuj`, `Udostępnij` i `Dodaj do ulubionych`
+  - `Ctrl+D` i `Ctrl+U` działają w liście samych odnośników tak samo jak w playerze
   - `Enter` na odnośniku otwiera go w przeglądarce
   - `Pokaż komentarze` otwiera listę komentarzy bez wchodzenia do playera
   - szybkie wielokrotne dojście do końca listy w `Podcastach` albo `Artykułach`, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie powoduje równoległego dublowania doładowań

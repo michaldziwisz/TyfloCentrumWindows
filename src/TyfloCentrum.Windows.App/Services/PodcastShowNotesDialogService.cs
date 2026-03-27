@@ -12,20 +12,29 @@ public sealed class PodcastShowNotesDialogService
 {
     private readonly AudioPlayerDialogService _audioPlayerDialogService;
     private readonly IAudioPlaybackRequestFactory _audioPlaybackRequestFactory;
+    private readonly IClipboardService _clipboardService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
+    private readonly IFavoritesService _favoritesService;
+    private readonly IShareService _shareService;
     private readonly IServiceProvider _serviceProvider;
 
     public PodcastShowNotesDialogService(
         IServiceProvider serviceProvider,
         AudioPlayerDialogService audioPlayerDialogService,
         IAudioPlaybackRequestFactory audioPlaybackRequestFactory,
-        IExternalLinkLauncher externalLinkLauncher
+        IClipboardService clipboardService,
+        IExternalLinkLauncher externalLinkLauncher,
+        IFavoritesService favoritesService,
+        IShareService shareService
     )
     {
         _serviceProvider = serviceProvider;
         _audioPlayerDialogService = audioPlayerDialogService;
         _audioPlaybackRequestFactory = audioPlaybackRequestFactory;
+        _clipboardService = clipboardService;
         _externalLinkLauncher = externalLinkLauncher;
+        _favoritesService = favoritesService;
+        _shareService = shareService;
     }
 
     public async Task<bool> ShowAsync(
@@ -49,12 +58,24 @@ public sealed class PodcastShowNotesDialogService
         switch (section)
         {
             case PodcastShowNotesSection.Comments:
-                view.InitializeComments(title, PodcastCommentThreadBuilder.Build(snapshot.Comments));
+                view.InitializeComments(
+                    postId,
+                    title,
+                    subtitle,
+                    PodcastCommentThreadBuilder.Build(snapshot.Comments)
+                );
                 break;
             case PodcastShowNotesSection.ChapterMarkers:
+                var chapterMarkers = await LoadChapterMarkerFavoritesAsync(
+                    snapshot.Markers,
+                    postId,
+                    cancellationToken
+                );
                 view.InitializeChapterMarkers(
+                    postId,
                     title,
-                    snapshot.Markers.Select(CreateChapterMarkerItem).ToArray(),
+                    subtitle,
+                    chapterMarkers,
                     async item =>
                     {
                         dialog?.Hide();
@@ -65,14 +86,25 @@ public sealed class PodcastShowNotesDialogService
                             item.Seconds
                         );
                         return await _audioPlayerDialogService.ShowAsync(request, xamlRoot, cancellationToken);
-                    }
+                    },
+                    item => ToggleChapterMarkerFavoriteAsync(item, postId, title, subtitle)
                 );
                 break;
             case PodcastShowNotesSection.RelatedLinks:
+                var relatedLinks = await LoadRelatedLinkFavoritesAsync(
+                    snapshot.Links,
+                    postId,
+                    cancellationToken
+                );
                 view.InitializeRelatedLinks(
+                    postId,
                     title,
-                    snapshot.Links.Select(CreateRelatedLinkItem).ToArray(),
-                    item => _externalLinkLauncher.LaunchAsync(item.Url.AbsoluteUri, cancellationToken)
+                    subtitle,
+                    relatedLinks,
+                    item => _externalLinkLauncher.LaunchAsync(item.Url.AbsoluteUri),
+                    item => _clipboardService.SetTextAsync(item.Url.AbsoluteUri),
+                    item => _shareService.ShareLinkAsync(item.Title, title, item.Url.AbsoluteUri),
+                    item => ToggleRelatedLinkFavoriteAsync(item, postId, title, subtitle)
                 );
                 break;
             default:
@@ -127,18 +159,110 @@ public sealed class PodcastShowNotesDialogService
         };
     }
 
-    private static PodcastChapterMarkerItemViewModel CreateChapterMarkerItem(ChapterMarker marker)
+    private async Task<PodcastChapterMarkerItemViewModel[]> LoadChapterMarkerFavoritesAsync(
+        IReadOnlyList<ChapterMarker> markers,
+        int podcastPostId,
+        CancellationToken cancellationToken
+    )
     {
-        return new PodcastChapterMarkerItemViewModel(
-            marker.Title,
-            marker.Seconds,
-            FormatTime(marker.Seconds)
-        );
+        var tasks = markers.Select(async marker =>
+        {
+            var favoriteId = FavoriteItem.CreateTopicId(podcastPostId, marker.Title, marker.Seconds);
+            var isFavorite = await _favoritesService.IsFavoriteAsync(favoriteId, cancellationToken);
+            return new PodcastChapterMarkerItemViewModel(
+                marker.Title,
+                marker.Seconds,
+                FormatTime(marker.Seconds),
+                isFavorite
+            );
+        });
+
+        return await Task.WhenAll(tasks);
     }
 
-    private static PodcastRelatedLinkItemViewModel CreateRelatedLinkItem(RelatedLink link)
+    private async Task<PodcastRelatedLinkItemViewModel[]> LoadRelatedLinkFavoritesAsync(
+        IReadOnlyList<RelatedLink> links,
+        int podcastPostId,
+        CancellationToken cancellationToken
+    )
     {
-        return new PodcastRelatedLinkItemViewModel(link.Title, link.Url, GetHostLabel(link.Url));
+        var tasks = links.Select(async link =>
+        {
+            var favoriteId = FavoriteItem.CreateLinkId(podcastPostId, link.Url.AbsoluteUri);
+            var isFavorite = await _favoritesService.IsFavoriteAsync(favoriteId, cancellationToken);
+            return new PodcastRelatedLinkItemViewModel(
+                link.Title,
+                link.Url,
+                GetHostLabel(link.Url),
+                isFavorite
+            );
+        });
+
+        return await Task.WhenAll(tasks);
+    }
+
+    private async Task<bool> ToggleChapterMarkerFavoriteAsync(
+        PodcastChapterMarkerItemViewModel item,
+        int podcastPostId,
+        string title,
+        string subtitle
+    )
+    {
+        var favoriteItem = new FavoriteItem
+        {
+            Id = FavoriteItem.CreateTopicId(podcastPostId, item.Title, item.Seconds),
+            Kind = FavoriteKind.Topic,
+            Source = ContentSource.Podcast,
+            PostId = podcastPostId,
+            Title = item.Title,
+            Subtitle = title,
+            PublishedDate = subtitle,
+            ContextTitle = title,
+            ContextSubtitle = subtitle,
+            StartPositionSeconds = item.Seconds,
+            SavedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        if (item.IsFavorite)
+        {
+            await _favoritesService.RemoveAsync(favoriteItem.Id);
+            return true;
+        }
+
+        await _favoritesService.AddOrUpdateAsync(favoriteItem);
+        return true;
+    }
+
+    private async Task<bool> ToggleRelatedLinkFavoriteAsync(
+        PodcastRelatedLinkItemViewModel item,
+        int podcastPostId,
+        string title,
+        string subtitle
+    )
+    {
+        var favoriteItem = new FavoriteItem
+        {
+            Id = FavoriteItem.CreateLinkId(podcastPostId, item.Url.AbsoluteUri),
+            Kind = FavoriteKind.Link,
+            Source = ContentSource.Podcast,
+            PostId = podcastPostId,
+            Title = item.Title,
+            Subtitle = item.HostLabel,
+            PublishedDate = subtitle,
+            Link = item.Url.AbsoluteUri,
+            ContextTitle = title,
+            ContextSubtitle = subtitle,
+            SavedAtUtc = DateTimeOffset.UtcNow,
+        };
+
+        if (item.IsFavorite)
+        {
+            await _favoritesService.RemoveAsync(favoriteItem.Id);
+            return true;
+        }
+
+        await _favoritesService.AddOrUpdateAsync(favoriteItem);
+        return true;
     }
 
     private static string FormatTime(double totalSeconds)

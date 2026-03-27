@@ -120,6 +120,7 @@
         <ListView
             x:Name="ItemsList"
             Grid.Row="3"
+            ContextRequested="OnItemsListContextRequested"
             IsItemClickEnabled="True"
             ItemClick="OnItemsListItemClick"
             KeyDown="OnItemsListKeyDown"

@@ -22,7 +22,7 @@ Resztę opisu skopiuj z:
 
 ## What's new in this version
 ```text
-W tej wersji rozbudowano pracę z podcastami i dostępność całej aplikacji. Z menu kontekstowego podcastu można teraz otworzyć same komentarze, znaczniki czasu i odnośniki bez wchodzenia do odtwarzacza. W samym playerze poprawiono kolejność komentarzy i odpowiedzi, sposób pokazywania szczegółów komentarza oraz widoczność kontrolek transportu przy obsłudze klawiaturą.
+W tej wersji rozbudowano pracę z podcastami i dostępność całej aplikacji. Z menu kontekstowego podcastu można teraz otworzyć same komentarze, znaczniki czasu i odnośniki bez wchodzenia do odtwarzacza. W samym playerze poprawiono kolejność komentarzy i odpowiedzi, sposób pokazywania szczegółów komentarza oraz widoczność kontrolek transportu przy obsłudze klawiaturą. Ujednolicono też akcje dla samych list znaczników i odnośników, tak aby oferowały te same operacje co odpowiednie listy w playerze, w tym ulubione, kopiowanie i udostępnianie.
 
 Usprawniono też nawigację po listach treści. Dodano ustawienie określające, czy typ treści ma być pomijany, czytany przed nazwą albo po nazwie, poprawiono nawigację po pierwszej literze na listach nowości, podcastów, artykułów, wyników wyszukiwania i w spisie treści TyfloŚwiata, a także uproszczono etykiety odczytywane przez czytniki ekranu, dzięki czemu poruszanie się po listach jest szybsze i bardziej responsywne.
 
@@ -31,6 +31,7 @@ Poprawiono również pobieranie i prezentację treści: aktualności są teraz w
 
 ## Changelog vs poprzednia opublikowana wersja
 - dodane menu kontekstowe podcastu dla komentarzy, znaczników czasu i odnośników bez otwierania playera
+- listy samych znaczników i odnośników mają teraz takie same akcje jak w playerze, w tym ulubione, kopiowanie i udostępnianie
 - poprawiona prezentacja komentarzy podcastu:
   - kolejność komentarzy i odpowiedzi
   - lepsze oznaczanie odpowiedzi
