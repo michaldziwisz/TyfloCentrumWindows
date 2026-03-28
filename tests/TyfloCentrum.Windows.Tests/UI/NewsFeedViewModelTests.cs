@@ -64,6 +64,62 @@ public sealed class NewsFeedViewModelTests
         Assert.Equal([1, 2], service.RequestedPages);
     }
 
+    [Fact]
+    public async Task RefreshIfStaleAsync_prepends_new_items_without_dropping_existing_ones()
+    {
+        var service = new FakeNewsFeedService
+        {
+            Pages =
+            {
+                [1] = new PagedResult<NewsFeedItem>(
+                    [
+                        CreateNewsItem(NewsItemKind.Podcast, 2, "Podcast drugi"),
+                        CreateNewsItem(NewsItemKind.Article, 1, "Artykuł pierwszy"),
+                    ],
+                    true
+                ),
+            },
+        };
+
+        var viewModel = new NewsFeedViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
+
+        await viewModel.LoadIfNeededAsync();
+
+        service.Pages[1] = new PagedResult<NewsFeedItem>(
+            [
+                CreateNewsItem(NewsItemKind.Podcast, 4, "Podcast czwarty"),
+                CreateNewsItem(NewsItemKind.Article, 3, "Artykuł trzeci"),
+                CreateNewsItem(NewsItemKind.Podcast, 2, "Podcast drugi"),
+                CreateNewsItem(NewsItemKind.Article, 1, "Artykuł pierwszy"),
+            ],
+            true
+        );
+
+        await viewModel.RefreshIfStaleAsync(TimeSpan.Zero);
+
+        Assert.Equal([4, 3, 2, 1], viewModel.Items.Select(item => item.PostId));
+        Assert.Equal([1, 1], service.RequestedPages);
+    }
+
+    private static NewsFeedItem CreateNewsItem(NewsItemKind kind, int id, string title)
+    {
+        return new NewsFeedItem(
+            kind,
+            new WpPostSummary
+            {
+                Id = id,
+                Date = $"2026-03-{10 + id:00}T08:00:00",
+                Link = $"https://example.invalid/{kind.ToString().ToLowerInvariant()}-{id}",
+                Title = new RenderedText(title),
+                Excerpt = new RenderedText($"<p>{title}</p>"),
+            }
+        );
+    }
+
     private sealed class FakeNewsFeedService : INewsFeedService
     {
         public Dictionary<int, PagedResult<NewsFeedItem>> Pages { get; } = [];

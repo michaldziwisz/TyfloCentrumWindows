@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
     Loaded="OnLoaded"
     PreviewKeyDown="OnPreviewKeyDown"
     mc:Ignorable="d">
@@ -11,15 +12,12 @@
         <DataTemplate x:Key="SectionItemTemplate">
             <StackPanel
                 AutomationProperties.AutomationId="Shell.SectionItem"
-                AutomationProperties.Name="{Binding Title}"
-                Spacing="2">
+                AutomationProperties.Name="{Binding DisplayTitle}">
                 <TextBlock
+                    AutomationProperties.AccessibilityView="Raw"
                     FontWeight="SemiBold"
-                    Text="{Binding Title}"
+                    Text="{Binding DisplayTitle}"
                     TextWrapping="WrapWholeWords" />
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{Binding ShortcutLabel}" />
             </StackPanel>
         </DataTemplate>
     </Page.Resources>
@@ -89,8 +87,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -106,28 +102,9 @@
                 Text="{Binding SelectedSectionDescription}"
                 TextWrapping="WrapWholeWords" />
 
-            <TextBlock
-                x:Name="ShortcutsText"
-                Grid.Row="2"
-                AutomationProperties.AutomationId="Shell.Shortcuts"
-                AutomationProperties.Name="Skróty klawiaturowe sekcji"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{Binding KeyboardShortcutsDescription}"
-                TextWrapping="WrapWholeWords" />
-
-            <InfoBar
-                x:Name="BootstrapInfo"
-                Grid.Row="3"
-                AutomationProperties.AutomationId="Shell.BootstrapInfo"
-                AutomationProperties.LiveSetting="Polite"
-                IsClosable="False"
-                IsOpen="True"
-                Message="{Binding BootstrapStatusMessage}"
-                Severity="Informational" />
-
             <ContentPresenter
                 x:Name="SectionContentHost"
-                Grid.Row="4"
+                Grid.Row="2"
                 AutomationProperties.AutomationId="Shell.SectionContent" />
         </Grid>
     </Grid>

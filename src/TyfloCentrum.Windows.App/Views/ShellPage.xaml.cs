@@ -232,8 +232,6 @@ public sealed partial class ShellPage : Page
         RequestedTheme = ElementTheme.Light;
         RootLayout.Background = new SolidColorBrush(Microsoft.UI.Colors.White);
         SectionList.Background = new SolidColorBrush(Microsoft.UI.Colors.White);
-        BootstrapInfo.Visibility = Visibility.Collapsed;
-        ShortcutsText.Visibility = Visibility.Collapsed;
     }
 
     private async Task PrepareSelectedSectionForScreenshotAsync(string sectionKey)

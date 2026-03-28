@@ -25,15 +25,6 @@ public partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     private string selectedSectionDescription = AppSections.News.Description;
 
-    [ObservableProperty]
-    private string selectedSectionShortcutLabel = AppSections.News.ShortcutLabel;
-
-    public string BootstrapStatusMessage =>
-        $"Wersja testowa Windows. Aktualnie wybrana sekcja: {SelectedSectionTitle}. Skrót: {SelectedSectionShortcutLabel}.";
-
-    public string KeyboardShortcutsDescription =>
-        $"Skróty sekcji: {string.Join(", ", Sections.Select(section => $"{section.ShortcutLabel} {section.Title}"))}.";
-
     public void SelectSection(string? key)
     {
         _selectedSection = Sections.FirstOrDefault(
@@ -43,8 +34,6 @@ public partial class ShellViewModel : ObservableObject
         SelectedSectionKey = _selectedSection.Key;
         SelectedSectionTitle = _selectedSection.Title;
         SelectedSectionDescription = _selectedSection.Description;
-        SelectedSectionShortcutLabel = _selectedSection.ShortcutLabel;
-        OnPropertyChanged(nameof(BootstrapStatusMessage));
     }
 
     public AppSection? GetSectionByShortcutNumber(int shortcutNumber)

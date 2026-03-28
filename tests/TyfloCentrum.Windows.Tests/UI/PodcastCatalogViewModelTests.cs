@@ -202,6 +202,63 @@ public sealed class PodcastCatalogViewModelTests
         Assert.Equal([null, 10, 20], service.RequestedCategoryIds);
     }
 
+    [Fact]
+    public async Task RefreshIfStaleAsync_prepends_new_items_without_clearing_loaded_entries()
+    {
+        var service = new FakeCatalogService
+        {
+            Categories =
+            [
+                new WpCategorySummary { Id = 10, Name = "Nowości sprzętowe", Count = 4 },
+            ],
+            Pages =
+            {
+                [1] =
+                [
+                    CreatePost(201, "Podcast pierwszy"),
+                    CreatePost(200, "Podcast zerowy"),
+                ],
+            },
+            HasMoreByPage =
+            {
+                [1] = true,
+            },
+        };
+
+        var viewModel = new PodcastCatalogViewModel(
+            service,
+            new FakeExternalLinkLauncher(),
+            new ContentTypeAnnouncementPreferenceService()
+        );
+
+        await viewModel.LoadIfNeededAsync();
+
+        service.Pages[1] =
+        [
+            CreatePost(203, "Podcast trzeci"),
+            CreatePost(202, "Podcast drugi"),
+            CreatePost(201, "Podcast pierwszy"),
+            CreatePost(200, "Podcast zerowy"),
+        ];
+
+        await viewModel.RefreshIfStaleAsync(TimeSpan.Zero);
+
+        Assert.Equal([203, 202, 201, 200], viewModel.Items.Select(item => item.PostId));
+        Assert.Equal([1, 1], service.RequestedPages);
+    }
+
+    private static WpPostSummary CreatePost(int id, string title)
+    {
+        return new WpPostSummary
+        {
+            Id = id,
+            Date = $"2026-03-{10 + (id % 10):00}T08:30:00",
+            Link = $"https://example.invalid/post/{id}",
+            Title = new RenderedText(title),
+            Excerpt = new RenderedText($"<p>{title}</p>"),
+        };
+    }
+
     private sealed class FakeCatalogService : IWordPressCatalogService
     {
         public IReadOnlyList<WpCategorySummary> Categories { get; init; } = [];

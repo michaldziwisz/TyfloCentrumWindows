@@ -9,12 +9,15 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class NewsFeedViewModel : ObservableObject
 {
+    private const int PageSize = 20;
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly INewsFeedService _newsFeedService;
     private int _currentPageNumber;
     private bool _hasRequestedInitialLoad;
     private bool _hasMoreItems;
+    private bool _isRefreshingLatestItems;
+    private DateTimeOffset? _lastSuccessfulRefreshAtUtc;
 
     public NewsFeedViewModel(
         INewsFeedService newsFeedService,
@@ -69,6 +72,25 @@ public partial class NewsFeedViewModel : ObservableObject
         await LoadAsync();
     }
 
+    public async Task RefreshIfStaleAsync(
+        TimeSpan staleAfter,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (!_hasRequestedInitialLoad)
+        {
+            await LoadIfNeededAsync(cancellationToken);
+            return;
+        }
+
+        if (!IsRefreshDue(staleAfter))
+        {
+            return;
+        }
+
+        await RefreshLatestItemsAsync(cancellationToken);
+    }
+
     public async Task LoadMoreAsync(CancellationToken cancellationToken = default)
     {
         if (IsLoading || IsLoadingMore || !HasMoreItems)
@@ -81,7 +103,11 @@ public partial class NewsFeedViewModel : ObservableObject
         try
         {
             var nextPageNumber = _currentPageNumber + 1;
-            var page = await _newsFeedService.GetLatestItemsPageAsync(20, nextPageNumber, cancellationToken);
+            var page = await _newsFeedService.GetLatestItemsPageAsync(
+                PageSize,
+                nextPageNumber,
+                cancellationToken
+            );
             AppendItems(page.Items);
             _currentPageNumber = nextPageNumber;
             _hasMoreItems = page.HasMoreItems;
@@ -137,12 +163,17 @@ public partial class NewsFeedViewModel : ObservableObject
 
         try
         {
-            var page = await _newsFeedService.GetLatestItemsPageAsync(20, 1, cancellationToken);
+            var page = await _newsFeedService.GetLatestItemsPageAsync(
+                PageSize,
+                1,
+                cancellationToken
+            );
 
             Items.Clear();
             AppendItems(page.Items);
             _currentPageNumber = 1;
             _hasMoreItems = page.HasMoreItems;
+            _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
 
             HasLoaded = true;
         }
@@ -171,12 +202,83 @@ public partial class NewsFeedViewModel : ObservableObject
 
     private void AppendItems(IEnumerable<NewsFeedItem> items)
     {
+        var existingKeys = new HashSet<(NewsItemKind Kind, int PostId)>(
+            Items.Select(item => (item.Kind, item.PostId))
+        );
+
         foreach (var item in items)
         {
+            if (!existingKeys.Add((item.Kind, item.Post.Id)))
+            {
+                continue;
+            }
+
             Items.Add(
                 new NewsFeedItemViewModel(item, _contentTypeAnnouncementPreferenceService.Placement)
             );
         }
+    }
+
+    private async Task RefreshLatestItemsAsync(CancellationToken cancellationToken)
+    {
+        if (IsLoading || IsLoadingMore || _isRefreshingLatestItems)
+        {
+            return;
+        }
+
+        _isRefreshingLatestItems = true;
+
+        try
+        {
+            var page = await _newsFeedService.GetLatestItemsPageAsync(PageSize, 1, cancellationToken);
+            PrependNewItems(page.Items);
+            _hasMoreItems = _currentPageNumber > 1 || page.HasMoreItems;
+            _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
+            ErrorMessage = null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+        finally
+        {
+            _isRefreshingLatestItems = false;
+            OnPropertyChanged(nameof(HasItems));
+            OnPropertyChanged(nameof(HasError));
+            OnPropertyChanged(nameof(HasMoreItems));
+            OnPropertyChanged(nameof(ShowEmptyState));
+        }
+    }
+
+    private void PrependNewItems(IEnumerable<NewsFeedItem> items)
+    {
+        var existingKeys = new HashSet<(NewsItemKind Kind, int PostId)>(
+            Items.Select(item => (item.Kind, item.PostId))
+        );
+
+        var newItems = items
+            .Where(item => existingKeys.Add((item.Kind, item.Post.Id)))
+            .Select(item => new NewsFeedItemViewModel(item, _contentTypeAnnouncementPreferenceService.Placement))
+            .ToArray();
+
+        for (var index = newItems.Length - 1; index >= 0; index--)
+        {
+            Items.Insert(0, newItems[index]);
+        }
+    }
+
+    private bool IsRefreshDue(TimeSpan staleAfter)
+    {
+        if (staleAfter <= TimeSpan.Zero)
+        {
+            return true;
+        }
+
+        return !_lastSuccessfulRefreshAtUtc.HasValue
+            || DateTimeOffset.UtcNow - _lastSuccessfulRefreshAtUtc.Value >= staleAfter;
     }
 
     private void OnContentTypeAnnouncementPlacementChanged(object? sender, EventArgs e)

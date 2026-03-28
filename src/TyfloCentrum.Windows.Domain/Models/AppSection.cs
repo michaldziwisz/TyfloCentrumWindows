@@ -6,4 +6,7 @@ public sealed record AppSection(
     string Description,
     int ShortcutNumber,
     string ShortcutLabel
-);
+)
+{
+    public string DisplayTitle => $"{Title} ({ShortcutLabel})";
+}

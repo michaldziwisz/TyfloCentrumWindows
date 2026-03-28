@@ -130,11 +130,13 @@ Pozniej automatyzowac:
   - wpisanie pierwszej litery sekcji przenosi fokus do kolejnej sekcji zaczynającej się od tej litery
   - `Enter` na liście sekcji przechodzi do głównej kontroli bieżącej sekcji, jak `Tab`
   - po przełączeniu focus trafia na aktywną pozycję listy sekcji
+  - skrót sekcji jest widoczny bezpośrednio przy nazwie każdej sekcji na liście, a nie w osobnym komunikacie pomocniczym
 - `Narrator`:
   - odczytuje sekcje jako zwykłe elementy, bez technicznego słowa `lista`, bez komunikatów o drzewie i poziomach
   - odczytuje komunikat o aktualnie wybranej sekcji po użyciu skrótu
 - `NVDA`:
   - odczytuje nazwy sekcji bez technicznych identyfikatorów i bez semantyki drzewa
+  - nie zatrzymuje się osobno na samym skrócie `Alt+1`, `Alt+2` i tak dalej jako oddzielnym statycznym tekście
 
 ### Modul `Nowosci`
 - klawiatura:
@@ -161,6 +163,7 @@ Pozniej automatyzowac:
   - po zamknięciu widoku artykułu focus wraca na poprzedni element listy
   - dojście do końca listy automatycznie dociąga starsze treści bez ręcznego przycisku `więcej`
   - szybkie wielokrotne dojście do końca listy, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie uruchamia równoległych awaryjnych doładowań
+  - pozostawienie sekcji `Nowości` otwartej przez kilka minut powoduje automatyczne pojawienie się nowo opublikowanego podcastu albo artykułu bez restartu aplikacji
 
 ### Modul `Kategorie podcastów i artykułów`
 - klawiatura:
@@ -176,6 +179,7 @@ Pozniej automatyzowac:
   - zmiana kategorii przeładowuje listę treści dla wybranej kategorii
   - po przeładowaniu lista kategorii zachowuje zaznaczenie i fokus na aktywnej pozycji
   - w listach `Podcastów` i `Artykułów` menu kontekstowe pokazuje skróty `Ctrl+S`, `Ctrl+U`, `Ctrl+C`, a dla podcastów także `Ctrl+P`
+  - pozostawienie sekcji `Podcastów` albo `Artykułów` otwartej przez kilka minut powoduje automatyczne pojawienie się nowo opublikowanej treści bez restartu aplikacji
 
 ### Modul `Czytanie artykulu`
 - klawiatura:

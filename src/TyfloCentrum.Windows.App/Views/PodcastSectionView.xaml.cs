@@ -10,11 +10,13 @@ using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Windows.System;
+using DispatcherQueueTimer = Microsoft.UI.Dispatching.DispatcherQueueTimer;
 
 namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class PodcastSectionView : UserControl
 {
+    private static readonly TimeSpan AutoRefreshInterval = TimeSpan.FromMinutes(6);
     private readonly IAudioPlaybackRequestFactory _audioPlaybackRequestFactory;
     private readonly IClipboardService _clipboardService;
     private readonly IContentDownloadService _contentDownloadService;
@@ -23,6 +25,7 @@ public sealed partial class PodcastSectionView : UserControl
     private readonly PodcastShowNotesDialogService _podcastShowNotesDialogService;
     private readonly IPodcastShowNotesService _podcastShowNotesService;
     private readonly IShareService _shareService;
+    private DispatcherQueueTimer? _autoRefreshTimer;
     private bool _loadMoreRequestPending;
     private ContentCategoryItemViewModel? _pendingFocusedCategory;
     private bool _restoreFocusToCategoriesList;
@@ -115,7 +118,21 @@ public sealed partial class PodcastSectionView : UserControl
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        EnsureAutoRefreshTimer();
         await ViewModel.LoadIfNeededAsync();
+        await ViewModel.RefreshIfStaleAsync(AutoRefreshInterval);
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_autoRefreshTimer is null)
+        {
+            return;
+        }
+
+        _autoRefreshTimer.Stop();
+        _autoRefreshTimer.Tick -= OnAutoRefreshTimerTick;
+        _autoRefreshTimer = null;
     }
 
     private async void OnRetryClick(object sender, RoutedEventArgs e)
@@ -215,6 +232,25 @@ public sealed partial class PodcastSectionView : UserControl
         {
             await OpenDefaultActionAsync(item);
         }
+    }
+
+    private void EnsureAutoRefreshTimer()
+    {
+        if (_autoRefreshTimer is not null)
+        {
+            return;
+        }
+
+        _autoRefreshTimer = DispatcherQueue.CreateTimer();
+        _autoRefreshTimer.Interval = AutoRefreshInterval;
+        _autoRefreshTimer.IsRepeating = true;
+        _autoRefreshTimer.Tick += OnAutoRefreshTimerTick;
+        _autoRefreshTimer.Start();
+    }
+
+    private async void OnAutoRefreshTimerTick(DispatcherQueueTimer sender, object args)
+    {
+        await ViewModel.RefreshIfStaleAsync(AutoRefreshInterval);
     }
 
     private async void OnItemsListKeyDown(object sender, KeyRoutedEventArgs e)

@@ -16,6 +16,8 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
     private int _currentPageNumber;
     private bool _hasRequestedInitialLoad;
     private bool _hasMoreItems;
+    private bool _isRefreshingLatestItems;
+    private DateTimeOffset? _lastSuccessfulRefreshAtUtc;
     private bool _reloadInProgress;
     private bool _reloadQueued;
     private bool _queuedIncludeCategories;
@@ -107,6 +109,25 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
     public async Task RetryAsync()
     {
         await ReloadAsync(includeCategories: true);
+    }
+
+    public async Task RefreshIfStaleAsync(
+        TimeSpan staleAfter,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (!_hasRequestedInitialLoad)
+        {
+            await LoadIfNeededAsync(cancellationToken);
+            return;
+        }
+
+        if (!IsRefreshDue(staleAfter))
+        {
+            return;
+        }
+
+        await RefreshLatestItemsAsync(cancellationToken);
     }
 
     public async Task LoadMoreAsync(CancellationToken cancellationToken = default)
@@ -280,6 +301,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
         AppendItems(page.Items);
         _currentPageNumber = 1;
         _hasMoreItems = page.HasMoreItems;
+        _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
 
         NotifyCollectionStateChanged();
         OnPropertyChanged(nameof(CurrentItemsHeading));
@@ -287,8 +309,15 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
 
     private void AppendItems(IEnumerable<WpPostSummary> items)
     {
+        var existingPostIds = new HashSet<int>(Items.Select(item => item.PostId));
+
         foreach (var item in items)
         {
+            if (!existingPostIds.Add(item.Id))
+            {
+                continue;
+            }
+
             Items.Add(
                 new ContentPostItemViewModel(
                     _source,
@@ -305,6 +334,73 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
         {
             item.SetContentTypeAnnouncementPlacement(_contentTypeAnnouncementPreferenceService.Placement);
         }
+    }
+
+    private async Task RefreshLatestItemsAsync(CancellationToken cancellationToken)
+    {
+        if (IsLoading || IsLoadingMore || _isRefreshingLatestItems)
+        {
+            return;
+        }
+
+        _isRefreshingLatestItems = true;
+
+        try
+        {
+            var page = await _catalogService.GetItemsPageAsync(
+                _source,
+                PageSize,
+                1,
+                SelectedCategory?.Id,
+                cancellationToken
+            );
+
+            PrependNewItems(page.Items);
+            _hasMoreItems = _currentPageNumber > 1 || page.HasMoreItems;
+            _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
+            ErrorMessage = null;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+        finally
+        {
+            _isRefreshingLatestItems = false;
+            NotifyCollectionStateChanged();
+        }
+    }
+
+    private void PrependNewItems(IEnumerable<WpPostSummary> items)
+    {
+        var existingPostIds = new HashSet<int>(Items.Select(item => item.PostId));
+        var newItems = items
+            .Where(item => existingPostIds.Add(item.Id))
+            .Select(item => new ContentPostItemViewModel(
+                _source,
+                item,
+                _contentTypeAnnouncementPreferenceService.Placement
+            ))
+            .ToArray();
+
+        for (var index = newItems.Length - 1; index >= 0; index--)
+        {
+            Items.Insert(0, newItems[index]);
+        }
+    }
+
+    private bool IsRefreshDue(TimeSpan staleAfter)
+    {
+        if (staleAfter <= TimeSpan.Zero)
+        {
+            return true;
+        }
+
+        return !_lastSuccessfulRefreshAtUtc.HasValue
+            || DateTimeOffset.UtcNow - _lastSuccessfulRefreshAtUtc.Value >= staleAfter;
     }
 
     private void NotifyCollectionStateChanged()

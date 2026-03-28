@@ -7,13 +7,22 @@ namespace TyfloCentrum.Windows.Tests.UI;
 public sealed class ShellViewModelTests
 {
     [Fact]
-    public void KeyboardShortcutsDescription_lists_all_primary_sections()
+    public void Sections_expose_shortcuts_in_visible_display_title()
     {
         var viewModel = new ShellViewModel();
 
         Assert.Equal(
-            "Skróty sekcji: Alt+1 Nowości, Alt+2 Podcasty, Alt+3 Artykuły, Alt+4 Szukaj, Alt+5 Ulubione, Alt+6 Tyfloradio, Alt+7 Ustawienia, Alt+8 Zgłoś błąd lub sugestię.",
-            viewModel.KeyboardShortcutsDescription
+            [
+                "Nowości (Alt+1)",
+                "Podcasty (Alt+2)",
+                "Artykuły (Alt+3)",
+                "Szukaj (Alt+4)",
+                "Ulubione (Alt+5)",
+                "Tyfloradio (Alt+6)",
+                "Ustawienia (Alt+7)",
+                "Zgłoś błąd lub sugestię (Alt+8)",
+            ],
+            viewModel.Sections.Select(section => section.DisplayTitle)
         );
     }
 
@@ -28,18 +37,14 @@ public sealed class ShellViewModelTests
     }
 
     [Fact]
-    public void SelectSection_updates_bootstrap_message_with_shortcut()
+    public void SelectSection_updates_selected_section_title_and_description()
     {
         var viewModel = new ShellViewModel();
 
         viewModel.SelectSection(AppSections.Favorites.Key);
 
         Assert.Equal("Ulubione", viewModel.SelectedSectionTitle);
-        Assert.Equal("Alt+5", viewModel.SelectedSectionShortcutLabel);
-        Assert.Equal(
-            "Wersja testowa Windows. Aktualnie wybrana sekcja: Ulubione. Skrót: Alt+5.",
-            viewModel.BootstrapStatusMessage
-        );
+        Assert.Equal("Lokalna lista zapisanych podcastów i artykułów.", viewModel.SelectedSectionDescription);
     }
 
     [Fact]

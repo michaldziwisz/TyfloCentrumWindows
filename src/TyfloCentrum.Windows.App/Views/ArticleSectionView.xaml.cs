@@ -10,11 +10,13 @@ using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Windows.System;
+using DispatcherQueueTimer = Microsoft.UI.Dispatching.DispatcherQueueTimer;
 
 namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class ArticleSectionView : UserControl
 {
+    private static readonly TimeSpan AutoRefreshInterval = TimeSpan.FromMinutes(6);
     private readonly IClipboardService _clipboardService;
     private readonly IContentDownloadService _contentDownloadService;
     private readonly ContentEntryActionService _contentEntryActionService;
@@ -26,6 +28,7 @@ public sealed partial class ArticleSectionView : UserControl
         "Czasopismo Tyfloświat"
     );
     private bool _loadMoreRequestPending;
+    private DispatcherQueueTimer? _autoRefreshTimer;
     private readonly ObservableCollection<ContentCategoryItemViewModel> _navigationItems = [];
     private ContentCategoryItemViewModel? _pendingFocusedNavigationItem;
     private bool _focusSelectedContentWhenReady;
@@ -124,12 +127,53 @@ public sealed partial class ArticleSectionView : UserControl
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        EnsureAutoRefreshTimer();
         await ViewModel.LoadIfNeededAsync();
+        if (!_isMagazineSelected)
+        {
+            await ViewModel.RefreshIfStaleAsync(AutoRefreshInterval);
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_autoRefreshTimer is null)
+        {
+            return;
+        }
+
+        _autoRefreshTimer.Stop();
+        _autoRefreshTimer.Tick -= OnAutoRefreshTimerTick;
+        _autoRefreshTimer = null;
     }
 
     private async void OnRetryClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.RetryAsync();
+    }
+
+    private void EnsureAutoRefreshTimer()
+    {
+        if (_autoRefreshTimer is not null)
+        {
+            return;
+        }
+
+        _autoRefreshTimer = DispatcherQueue.CreateTimer();
+        _autoRefreshTimer.Interval = AutoRefreshInterval;
+        _autoRefreshTimer.IsRepeating = true;
+        _autoRefreshTimer.Tick += OnAutoRefreshTimerTick;
+        _autoRefreshTimer.Start();
+    }
+
+    private async void OnAutoRefreshTimerTick(DispatcherQueueTimer sender, object args)
+    {
+        if (_isMagazineSelected)
+        {
+            return;
+        }
+
+        await ViewModel.RefreshIfStaleAsync(AutoRefreshInterval);
     }
 
     private async void OnCategoriesSelectionChanged(object sender, SelectionChangedEventArgs e)
