@@ -19,17 +19,12 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji rozbudowano pracę z podcastami i dostępność całej aplikacji. Z menu kontekstowego podcastu można teraz otworzyć same komentarze, znaczniki czasu i odnośniki bez wchodzenia do odtwarzacza. W samym playerze poprawiono kolejność komentarzy i odpowiedzi, sposób pokazywania szczegółów komentarza oraz widoczność kontrolek transportu przy obsłudze klawiaturą. Ujednolicono też akcje dla samych list znaczników i odnośników, tak aby oferowały te same operacje co odpowiednie listy w playerze, w tym ulubione, kopiowanie i udostępnianie.
+W tej wersji poprawiono odświeżanie treści przy dłużej otwartej aplikacji. Sekcje `Nowości`, `Podcasty` i `Artykuły` automatycznie pobierają nowe wpisy po kilku minutach, dzięki czemu nowo opublikowane audycje i artykuły pojawiają się bez restartu programu. Jednocześnie ograniczono ryzyko duplikatów przy dalszym doładowywaniu starszych treści.
 
-Usprawniono też nawigację po listach treści:
-- dodano ustawienie określające, czy typ treści ma być pomijany, czytany przed nazwą albo po nazwie,
-- poprawiono nawigację po pierwszej literze na listach nowości, podcastów, artykułów, wyników wyszukiwania i w spisie treści `TyfloŚwiata`,
-- uproszczono etykiety odczytywane przez czytniki ekranu, dzięki czemu poruszanie się po listach jest szybsze i bardziej responsywne.
-
-Poprawiono również pobieranie i prezentację treści:
-- aktualności są teraz wyświetlane w prawidłowej kolejności chronologicznej,
-- szybkie wielokrotne doładowywanie starszych treści nie powoduje już zamknięcia aplikacji,
-- dane z WordPressa są lokalnie cacheowane przez krótki czas, co zmniejsza liczbę zapytań do serwerów i przyspiesza działanie aplikacji.
+Uproszczono też nawigację w głównym shellu aplikacji:
+- usunięto zbędny komunikat o wersji testowej,
+- skróty sekcji są teraz widoczne bezpośrednio przy nazwach pozycji listy, na przykład `Nowości (Alt+1)` i `Podcasty (Alt+2)`,
+- czytniki ekranu nie zatrzymują się już na osobnych, technicznych popupach od skrótów klawiaturowych.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
