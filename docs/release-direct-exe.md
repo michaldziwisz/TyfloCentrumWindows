@@ -7,6 +7,7 @@ Utrzymac drugi kanal dystrybucji dla TyfloCentrum poza Microsoft Store, bez rozd
 - ta sama baza kodu co kanal Store
 - artefakt wynikowy: instalator `EXE`
 - instalator korzysta z dzialajacego pakietu `MSIX`
+- instalator zawiera kompletny payload `MSIX` z zaleznosciami i skryptami sideload jako archiwum rozpakowywane do katalogu tymczasowego
 - uzytkownik nie musi korzystac ze Store
 
 ## Co to daje
@@ -18,6 +19,8 @@ Utrzymac drugi kanal dystrybucji dla TyfloCentrum poza Microsoft Store, bez rozd
 - to nie jest kanal zarzadzany przez Store
 - aktualizacje trzeba dystrybuowac samodzielnie
 - pod spodem instalator nadal rozpakowuje i instaluje `MSIX`
+- niesygnowany `EXE` nadal moze pokazac ostrzezenie `SmartScreen`
+- bootstrap instalatora zapisuje tez prosty log diagnostyczny do `%TEMP%\TyfloCentrumSetup.log`
 - jesli pozniej pojawi sie podpisany kanal direct, ten sam model mozna przepiac na certyfikat produkcyjny
 
 ## Jak zbudowac direct EXE

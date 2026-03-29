@@ -39,20 +39,62 @@ $setupDirectory = Join-Path $outputRoot ("TyfloCentrumSetup_{0}_{1}" -f $Configu
 $payloadDirectory = Join-Path $setupDirectory 'payload'
 $outputExe = Join-Path $setupDirectory ("TyfloCentrumSetup_{0}.exe" -f $Platform)
 $installCommandFile = Join-Path $payloadDirectory 'Install-TyfloCentrum.cmd'
+$payloadArchivePath = Join-Path $payloadDirectory 'TyfloCentrumPayload.zip'
 $sedPath = Join-Path $setupDirectory 'TyfloCentrumSetup.sed'
 
 Remove-Item -Path $setupDirectory -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $payloadDirectory | Out-Null
 
-Copy-Item -Path (Join-Path $packageDirectory.FullName '*') -Destination $payloadDirectory -Recurse -Force
-
 $installCommand = @'
 @echo off
 setlocal
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Install.ps1" -Force
-exit /b %ERRORLEVEL%
+set "SETUP_LOG=%TEMP%\TyfloCentrumSetup.log"
+set "PAYLOAD_ZIP=%~dp0TyfloCentrumPayload.zip"
+set "EXTRACT_DIR=%TEMP%\TyfloCentrumSetup_%RANDOM%%RANDOM%"
+
+echo ==== %DATE% %TIME% ====>>"%SETUP_LOG%"
+echo Start setup bootstrap.>>"%SETUP_LOG%"
+echo Payload: %PAYLOAD_ZIP%>>"%SETUP_LOG%"
+echo Extract dir: %EXTRACT_DIR%>>"%SETUP_LOG%"
+
+mkdir "%EXTRACT_DIR%" >nul 2>&1
+if errorlevel 1 goto extract_failed
+
+echo Extracting payload...>>"%SETUP_LOG%"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%PAYLOAD_ZIP%' -DestinationPath '%EXTRACT_DIR%' -Force"
+if errorlevel 1 goto extract_failed
+
+echo Starting Install.ps1...>>"%SETUP_LOG%"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%EXTRACT_DIR%\Install.ps1" -Force
+set "EXIT_CODE=%ERRORLEVEL%"
+echo Install.ps1 exit code: %EXIT_CODE%>>"%SETUP_LOG%"
+
+if "%EXIT_CODE%"=="0" (
+    echo Installation finished successfully.>>"%SETUP_LOG%"
+    rmdir /s /q "%EXTRACT_DIR%" >nul 2>&1
+    exit /b 0
+)
+
+echo.
+echo Instalacja TyfloCentrum zakonczyla sie bledem. Kod: %EXIT_CODE%
+echo Rozpakowane pliki zostaly tutaj:
+echo %EXTRACT_DIR%
+echo Installation failed. Files left in: %EXTRACT_DIR%>>"%SETUP_LOG%"
+echo See log: %SETUP_LOG%>>"%SETUP_LOG%"
+pause
+exit /b %EXIT_CODE%
+
+:extract_failed
+echo.
+echo Nie udalo sie przygotowac instalatora TyfloCentrum.
+echo Sprobuj uruchomic plik ponownie.
+echo Extract failed.>>"%SETUP_LOG%"
+pause
+exit /b 1
 '@
 Set-Content -Path $installCommandFile -Value $installCommand -Encoding ASCII
+
+Compress-Archive -Path (Join-Path $packageDirectory.FullName '*') -DestinationPath $payloadArchivePath -Force
 
 $payloadFiles = Get-ChildItem $payloadDirectory -File | Sort-Object Name
 
@@ -65,10 +107,10 @@ $stringsLines.Add('DisplayLicense=')
 $stringsLines.Add('FinishMessage=')
 $stringsLines.Add("TargetName=$outputExe")
 $stringsLines.Add('FriendlyName=Instalator TyfloCentrum')
-$stringsLines.Add('AppLaunched=cmd.exe /c Install-TyfloCentrum.cmd')
+$stringsLines.Add('AppLaunched=Install-TyfloCentrum.cmd')
 $stringsLines.Add('PostInstallCmd=<None>')
-$stringsLines.Add('AdminQuietInstCmd=cmd.exe /c Install-TyfloCentrum.cmd')
-$stringsLines.Add('UserQuietInstCmd=cmd.exe /c Install-TyfloCentrum.cmd')
+$stringsLines.Add('AdminQuietInstCmd=Install-TyfloCentrum.cmd')
+$stringsLines.Add('UserQuietInstCmd=Install-TyfloCentrum.cmd')
 
 $sourceSectionLines.Add('[SourceFiles]')
 $sourceSectionLines.Add("SourceFiles0=$payloadDirectory\\")
@@ -128,6 +170,6 @@ Write-Host 'Payload instalatora:' -ForegroundColor Green
 Write-Host $payloadDirectory
 Write-Host ''
 Write-Host 'Uwagi:' -ForegroundColor Yellow
-Write-Host '- Instalator EXE rozpakowuje dzialajacy pakiet MSIX i uruchamia Install.ps1.'
+Write-Host '- Instalator EXE rozpakowuje pelny payload MSIX do katalogu tymczasowego i uruchamia Install.ps1.'
 Write-Host '- To jest kanal poza Microsoft Store.'
 Write-Host '- Uzytkownik uruchamia pojedynczy plik EXE.'
