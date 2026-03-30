@@ -41,12 +41,12 @@ jobs:
       ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
         with:
           ref: ${{ inputs.git_ref }}
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5.2.0
         with:
           dotnet-version: 8.0.x
 
@@ -143,7 +143,7 @@ jobs:
           "msixupload_path=$msixuploadPath" >> $env:GITHUB_OUTPUT
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: store-release-${{ inputs.platform }}
           path: |

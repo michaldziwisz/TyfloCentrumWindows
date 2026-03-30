@@ -21,7 +21,7 @@ jobs:
       AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Validate Store configuration
         shell: pwsh
@@ -60,7 +60,7 @@ jobs:
           "metadata_path=$metadataPath" >> $env:GITHUB_ENV
 
       - name: Upload base metadata
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: store-base-metadata
           path: ${{ env.metadata_path }}

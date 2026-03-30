@@ -33,7 +33,7 @@ jobs:
       METADATA_PATH: ${{ inputs.metadata_path }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Validate Store configuration and metadata file
         shell: pwsh

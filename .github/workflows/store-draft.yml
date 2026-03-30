@@ -35,12 +35,12 @@ jobs:
       AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
         with:
           ref: ${{ inputs.git_ref }}
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5.2.0
         with:
           dotnet-version: 8.0.x
 
@@ -130,7 +130,7 @@ jobs:
           "msixupload_path=$msixuploadPath" >> $env:GITHUB_OUTPUT
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: store-draft-${{ inputs.platform }}
           path: |
@@ -155,7 +155,7 @@ jobs:
           "metadata_path=$outputPath" >> $env:GITHUB_ENV
 
       - name: Upload draft metadata
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.0
         with:
           name: store-draft-metadata
           path: ${{ env.metadata_path }}
