@@ -79,12 +79,12 @@ Szczegoly:
 ## Uwagi organizacyjne
 - jesli produkt ma byc publikowany tylko przez Store, nalezy utrzymac proces release zgodny z tym scenariuszem od pierwszej wersji RC
 - repo ma juz tez osobna procedure dla kanalu poza Store:
-  - [Dystrybucja poza Store jako direct MSI](release-direct-msi.md)
-- kanal direct MSI nie zastępuje Store; to osobna sciezka dystrybucji poza ekosystemem Store
+  - [Dystrybucja poza Store jako standardowy instalator](release-direct-msi.md)
+- kanal direct installer nie zastępuje Store; to osobna sciezka dystrybucji poza ekosystemem Store
 
 ## Dokumenty powiazane
 - [Architektura](architecture.md)
 - [Roadmapa implementacji](implementation-roadmap.md)
 - [ADR 0001](adr/0001-winui3-windowsappsdk-msix.md)
 - [Push Service dla Windows](push-service-windows.md)
-- [Dystrybucja poza Store jako direct MSI](release-direct-msi.md)
+- [Dystrybucja poza Store jako standardowy instalator](release-direct-msi.md)

@@ -23,9 +23,9 @@ Status repo:
 - działają już pobierania z menu kontekstowego: podcasty zapisują się jako `mp3`, a artykuły jako pojedynczy plik `html` z osadzonymi obrazami; w `Ustawieniach` można wskazać folder docelowy albo użyć domyślnego folderu `Pobrane`
 - działa już pierwszy wariant `TyfloŚwiata`: roczniki, numery czasopisma, PDF, spis treści artykułów z `pages`, szybkie dodawanie stron do ulubionych i udostępnianie linków
 - działa już osobna sekcja `Zgłoś błąd lub sugestię`, która wysyła publiczne issue `GitHub` z bezpieczną diagnostyką jawną i opcjonalnym prywatnym logiem technicznym do `Sygnalisty`
-- repo ma juz tez niezalezny od `MSIX` kanal poza Store: standardowy instalator `MSI`, budowany z wersji `unpackaged`
-- instalator `MSI` dodaje skrot aplikacji do menu Start
-- repo ma juz tez workflow GitHub Actions `Direct MSI Build`, ktory buduje standardowy instalator Windows bez posrednictwa `MSIX`
+- repo ma juz tez niezalezny od `MSIX` kanal poza Store: standardowy instalator `EXE`, budowany z wersji `unpackaged`
+- instalator `EXE` pozwala wybrac katalog docelowy i dodaje skrot aplikacji do menu Start
+- repo ma juz tez workflow GitHub Actions `Direct Installer Build`, ktory buduje standardowy instalator Windows bez posrednictwa `MSIX`
 - listy treści oraz wybrane widoki wspierają już skróty `Ctrl+S` do pobierania i `Ctrl+U` do udostępniania, a komunikaty o zmianach ulubionych są ogłaszane także czytnikom ekranu
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
@@ -82,6 +82,6 @@ Wnioski z analizy tej aplikacji sa zebrane w:
   - usuwa poprzednia wersje pakietu testowego
   - instaluje nowy pakiet
 - albo dla klasycznego instalatora Windows niezaleznego od `MSIX`:
-  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectMsi.ps1`
-- wariant `MSI` publikuje aplikacje jako `unpackaged` i buduje standardowy instalator Windows
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectSetupExe.ps1`
+- wariant `EXE` publikuje aplikacje jako `unpackaged` i buduje standardowy instalator Windows z wizardem
 - szczegoly sa opisane w [Setup deweloperski](docs/developer-setup.md) i [Pakowanie MSIX i Microsoft Store](docs/release-msix-store.md)

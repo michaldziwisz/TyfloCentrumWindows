@@ -1,4 +1,4 @@
-name: Direct MSI Build
+name: Direct Installer Build
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ on:
           - Release
           - Debug
       platform:
-        description: Architektura MSI
+        description: Architektura instalatora
         required: true
         default: x64
         type: choice
@@ -41,39 +41,44 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+
       - name: Run automated tests
         shell: pwsh
         run: |
           dotnet test .\TyfloCentrum.Windows.sln -c Debug -p:Platform=x64 --nologo
 
-      - name: Build direct MSI
+      - name: Build direct installer EXE
         shell: pwsh
         run: |
-          powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectMsi.ps1 -Configuration ${{ inputs.configuration }} -Platform ${{ inputs.platform }}
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectSetupExe.ps1 -Configuration ${{ inputs.configuration }} -Platform ${{ inputs.platform }}
 
-      - name: Resolve direct MSI artifacts
+      - name: Resolve direct installer artifacts
         id: direct
         shell: pwsh
         run: |
-          $msiDir = Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts\DirectMsi" -Directory |
+          $setupDir = Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts\DirectSetup" -Directory |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
-          if (-not $msiDir) {
-            throw 'Nie znaleziono katalogu direct MSI.'
+          if (-not $setupDir) {
+            throw 'Nie znaleziono katalogu direct setup.'
           }
 
-          $msi = Get-ChildItem $msiDir.FullName -Filter TyfloCentrumSetup_*.msi -File |
+          $setupExe = Get-ChildItem $setupDir.FullName -Filter TyfloCentrumSetup_*.exe -File |
             Select-Object -First 1
-          if (-not $msi) {
-            throw 'Nie znaleziono glownego pliku MSI.'
+          if (-not $setupExe) {
+            throw 'Nie znaleziono glownego pliku instalatora EXE.'
           }
 
-          "msi_dir=$($msiDir.FullName)" >> $env:GITHUB_OUTPUT
-          "msi_path=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+          "setup_dir=$($setupDir.FullName)" >> $env:GITHUB_OUTPUT
+          "setup_path=$($setupExe.FullName)" >> $env:GITHUB_OUTPUT
 
-      - name: Upload direct MSI artifact
+      - name: Upload direct installer artifact
         uses: actions/upload-artifact@v7.0.0
         with:
-          name: direct-msi-${{ inputs.platform }}-${{ inputs.configuration }}
-          path: ${{ steps.direct.outputs.msi_path }}
+          name: direct-setup-${{ inputs.platform }}-${{ inputs.configuration }}
+          path: ${{ steps.direct.outputs.setup_path }}
           if-no-files-found: error
