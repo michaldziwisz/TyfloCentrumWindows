@@ -19,6 +19,7 @@ namespace TyfloCentrum.Windows.App;
 public partial class App : Application
 {
     private readonly IHost _host;
+    private readonly IAppRuntimeMode _appRuntimeMode;
     private Window? _mainWindow;
     private IContentNotificationMonitor? _contentNotificationMonitor;
     private WindowsPushNotificationService? _windowsPushNotificationService;
@@ -27,8 +28,12 @@ public partial class App : Application
 
     public App()
     {
+        _appRuntimeMode = new WindowsAppRuntimeMode();
         InitializeComponent();
-        ApplicationLanguages.PrimaryLanguageOverride = "pl-PL";
+        if (_appRuntimeMode.HasPackageIdentity)
+        {
+            ApplicationLanguages.PrimaryLanguageOverride = "pl-PL";
+        }
 
         UnhandledException += OnUnhandledException;
 
@@ -47,6 +52,7 @@ public partial class App : Application
 
                 services.AddTyfloCentrumUi();
                 services.AddTyfloCentrumInfrastructure(endpoints);
+                services.AddSingleton<IAppRuntimeMode>(_appRuntimeMode);
                 services.AddSingleton<WindowHandleProvider>();
                 services.AddSingleton<InternalStoreScreenshotCoordinator>();
                 services.AddSingleton<WindowsDownloadDirectoryService>();
@@ -119,6 +125,11 @@ public partial class App : Application
     {
         try
         {
+            if (!_appRuntimeMode.SupportsSystemNotifications)
+            {
+                return;
+            }
+
             if (!_appNotificationsRegistered)
             {
                 AppNotificationManager.Default.NotificationInvoked += OnNotificationInvoked;
@@ -143,6 +154,11 @@ public partial class App : Application
 
     private async void OnMainWindowClosed(object sender, WindowEventArgs args)
     {
+        if (!_appRuntimeMode.SupportsSystemNotifications)
+        {
+            return;
+        }
+
         if (_contentNotificationMonitor is null)
         {
             if (_appNotificationsRegistered)

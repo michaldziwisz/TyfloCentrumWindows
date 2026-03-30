@@ -23,8 +23,9 @@ Status repo:
 - działają już pobierania z menu kontekstowego: podcasty zapisują się jako `mp3`, a artykuły jako pojedynczy plik `html` z osadzonymi obrazami; w `Ustawieniach` można wskazać folder docelowy albo użyć domyślnego folderu `Pobrane`
 - działa już pierwszy wariant `TyfloŚwiata`: roczniki, numery czasopisma, PDF, spis treści artykułów z `pages`, szybkie dodawanie stron do ulubionych i udostępnianie linków
 - działa już osobna sekcja `Zgłoś błąd lub sugestię`, która wysyła publiczne issue `GitHub` z bezpieczną diagnostyką jawną i opcjonalnym prywatnym logiem technicznym do `Sygnalisty`
-- repo ma juz tez drugi kanal dystrybucji poza Store: instalator `EXE`, budowany z tej samej bazy kodu na podstawie dzialajacego pakietu `MSIX`
-- repo ma juz tez workflow GitHub Actions `Direct EXE Build`, ktory buduje instalator poza Store i zapisuje go jako artefakt
+- repo ma juz tez niezalezny od `MSIX` kanal poza Store: standardowy instalator `MSI`, budowany z wersji `unpackaged`
+- instalator `MSI` dodaje skrot aplikacji do menu Start
+- repo ma juz tez workflow GitHub Actions `Direct MSI Build`, ktory buduje standardowy instalator Windows bez posrednictwa `MSIX`
 - listy treści oraz wybrane widoki wspierają już skróty `Ctrl+S` do pobierania i `Ctrl+U` do udostępniania, a komunikaty o zmianach ulubionych są ogłaszane także czytnikom ekranu
 - docelowy stack: `WinUI 3`, `Windows App SDK`, `.NET 8`, `MSIX`
 
@@ -44,7 +45,7 @@ Status repo:
 - [Strategia testow](docs/testing-strategy.md)
 - [Setup deweloperski](docs/developer-setup.md)
 - [Release do MSIX i Microsoft Store](docs/release-msix-store.md)
-- [Dystrybucja poza Store jako direct EXE](docs/release-direct-exe.md)
+- [Dystrybucja poza Store jako direct MSI](docs/release-direct-msi.md)
 - [GitHub Pages dla polityki prywatności](site/privacy/index.html)
 
 ## Repo zrodlowe i analiza bazowa
@@ -80,7 +81,7 @@ Wnioski z analizy tej aplikacji sa zebrane w:
   - generuje odpowiadajaca mu paczke symboli `.appxsym`
   - usuwa poprzednia wersje pakietu testowego
   - instaluje nowy pakiet
-- alternatywnie, dla kanalu poza Store:
-  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectSetupExe.ps1`
-- ten workflow generuje instalator `EXE` oparty o dzialajacy pakiet `MSIX`
+- albo dla klasycznego instalatora Windows niezaleznego od `MSIX`:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectMsi.ps1`
+- wariant `MSI` publikuje aplikacje jako `unpackaged` i buduje standardowy instalator Windows
 - szczegoly sa opisane w [Setup deweloperski](docs/developer-setup.md) i [Pakowanie MSIX i Microsoft Store](docs/release-msix-store.md)

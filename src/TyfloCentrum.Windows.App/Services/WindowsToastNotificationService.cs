@@ -8,6 +8,13 @@ namespace TyfloCentrum.Windows.App.Services;
 
 public sealed class WindowsToastNotificationService : IContentNotificationPresenter
 {
+    private readonly IAppRuntimeMode _appRuntimeMode;
+
+    public WindowsToastNotificationService(IAppRuntimeMode appRuntimeMode)
+    {
+        _appRuntimeMode = appRuntimeMode;
+    }
+
     public Task ShowNewContentAsync(
         ContentSource source,
         WpPostSummary item,
@@ -15,6 +22,11 @@ public sealed class WindowsToastNotificationService : IContentNotificationPresen
     )
     {
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_appRuntimeMode.SupportsSystemNotifications)
+        {
+            return Task.CompletedTask;
+        }
 
         var body = WordPressContentText.NormalizeHtml(item.Excerpt?.Rendered ?? string.Empty);
         if (string.IsNullOrWhiteSpace(body))

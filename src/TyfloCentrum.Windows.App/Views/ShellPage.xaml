@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    KeyboardAcceleratorPlacementMode="Hidden"
     Loaded="OnLoaded"
     PreviewKeyDown="OnPreviewKeyDown"
     mc:Ignorable="d">
@@ -22,40 +21,6 @@
         </DataTemplate>
     </Page.Resources>
 
-    <Page.KeyboardAccelerators>
-        <KeyboardAccelerator
-            Key="Number1"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number2"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number3"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number4"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number5"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number6"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number7"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-        <KeyboardAccelerator
-            Key="Number8"
-            Modifiers="Menu"
-            Invoked="OnSectionShortcutInvoked" />
-    </Page.KeyboardAccelerators>
     <Grid
         x:Name="RootLayout"
         Padding="24"

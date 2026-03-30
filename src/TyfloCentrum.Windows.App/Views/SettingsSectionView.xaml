@@ -124,11 +124,13 @@
                             x:Name="NotifyNewPodcastsToggle"
                             AutomationProperties.Name="Powiadomienia o nowych podcastach"
                             Header="Powiadamiaj o nowych podcastach"
+                            IsEnabled="{Binding SupportsSystemNotifications}"
                             IsOn="{Binding NotifyAboutNewPodcasts, Mode=TwoWay}" />
                         <ToggleSwitch
                             x:Name="NotifyNewArticlesToggle"
                             AutomationProperties.Name="Powiadomienia o nowych artykułach"
                             Header="Powiadamiaj o nowych artykułach"
+                            IsEnabled="{Binding SupportsSystemNotifications}"
                             IsOn="{Binding NotifyAboutNewArticles, Mode=TwoWay}" />
                     </StackPanel>
                 </Border>

@@ -104,18 +104,19 @@ Opisac minimalne srodowisko potrzebne do pracy nad aplikacja Windows oraz ograni
   - usuwa zainstalowany pakiet testowy `TyfloCentrum.Windows` oraz pozostalosci po poprzednich wariantach, jesli sa obecne
   - instaluje nowy build
 
-## Jak zbudowac wersje direct EXE poza Store
+## Jak zbudowac wersje direct MSI poza Store
 - repo ma tez osobny skrypt:
-  - `scripts/windows/Build-DirectSetupExe.ps1`
+  - `scripts/windows/Build-DirectMsi.ps1`
 - rekomendowane uzycie:
-  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectSetupExe.ps1`
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectMsi.ps1`
 - ten workflow:
-  - buduje dzialajacy pakiet `MSIX`
-  - generuje instalator `EXE` w `artifacts/DirectSetup/...`
-  - daje pojedynczy plik `TyfloCentrumSetup_*.exe`
+  - publikuje aplikacje jako `unpackaged`
+  - buduje standardowy instalator `MSI` przez `WiX`
+  - zapisuje wynik w `artifacts/DirectMsi/...`
+  - nie polega na pakiecie `MSIX` ani na skryptach `Install.ps1`
 
 ## Powiazane dokumenty
 - [README repo](../README.md)
 - [Architektura](architecture.md)
 - [Pakowanie MSIX i Microsoft Store](release-msix-store.md)
-- [Dystrybucja poza Store jako direct EXE](release-direct-exe.md)
+- [Dystrybucja poza Store jako direct MSI](release-direct-msi.md)

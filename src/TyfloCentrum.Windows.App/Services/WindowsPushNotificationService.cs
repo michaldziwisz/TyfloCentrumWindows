@@ -15,6 +15,7 @@ public sealed class WindowsPushNotificationService
     private readonly IPushNotificationRegistrationSyncService _pushRegistrationSyncService;
     private readonly ILogger<WindowsPushNotificationService> _logger;
     private readonly TyfloCentrumEndpointsOptions _options;
+    private readonly IAppRuntimeMode _appRuntimeMode;
     private bool _started;
 
     public WindowsPushNotificationService(
@@ -22,7 +23,8 @@ public sealed class WindowsPushNotificationService
         ILocalSettingsStore localSettingsStore,
         IPushNotificationRegistrationSyncService pushRegistrationSyncService,
         ILogger<WindowsPushNotificationService> logger,
-        TyfloCentrumEndpointsOptions options
+        TyfloCentrumEndpointsOptions options,
+        IAppRuntimeMode appRuntimeMode
     )
     {
         _appSettingsService = appSettingsService;
@@ -30,6 +32,7 @@ public sealed class WindowsPushNotificationService
         _pushRegistrationSyncService = pushRegistrationSyncService;
         _logger = logger;
         _options = options;
+        _appRuntimeMode = appRuntimeMode;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -40,6 +43,12 @@ public sealed class WindowsPushNotificationService
         }
 
         _started = true;
+
+        if (!_appRuntimeMode.SupportsPushNotifications)
+        {
+            _logger.LogInformation("Push notifications are disabled because the app is running without package identity.");
+            return;
+        }
 
         if (!PushNotificationManager.IsSupported())
         {
@@ -54,7 +63,7 @@ public sealed class WindowsPushNotificationService
 
     public Task StopAsync(CancellationToken cancellationToken = default)
     {
-        if (!_started || !PushNotificationManager.IsSupported())
+        if (!_started || !_appRuntimeMode.SupportsPushNotifications || !PushNotificationManager.IsSupported())
         {
             return Task.CompletedTask;
         }
@@ -66,6 +75,12 @@ public sealed class WindowsPushNotificationService
 
     public async Task SyncRegistrationIfPossibleAsync(CancellationToken cancellationToken = default)
     {
+        if (!_appRuntimeMode.SupportsPushNotifications)
+        {
+            _logger.LogInformation("Skipping WNS registration sync because the app is running without package identity.");
+            return;
+        }
+
         var settings = (await _appSettingsService.GetAsync(cancellationToken)).Normalize();
         var preferences = PushNotificationPreferences.FromSettings(settings);
         var lastRegisteredChannelUri = await _localSettingsStore.GetStringAsync(

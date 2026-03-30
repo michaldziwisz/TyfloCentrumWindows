@@ -31,6 +31,9 @@ Thumbs.db
 
 # Local scratch files
 .tmp-*.ps1
+.tmp/
+.tools/
+.wix/
 
 # Local Store / release helpers
 src/TyfloCentrum.Windows.App/Package.StoreAssociation.xml

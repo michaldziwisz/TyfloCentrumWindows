@@ -10,6 +10,7 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
+    private readonly IAppRuntimeMode _appRuntimeMode;
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IDownloadDirectoryService _downloadDirectoryService;
     private bool _hasLoaded;
@@ -20,13 +21,15 @@ public partial class SettingsViewModel : ObservableObject
         IAppSettingsService appSettingsService,
         IAudioDeviceCatalogService audioDeviceCatalogService,
         IDownloadDirectoryService downloadDirectoryService,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IAppRuntimeMode appRuntimeMode
     )
     {
         _appSettingsService = appSettingsService;
         _audioDeviceCatalogService = audioDeviceCatalogService;
         _downloadDirectoryService = downloadDirectoryService;
         _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
+        _appRuntimeMode = appRuntimeMode;
 
         foreach (var value in PlaybackRateCatalog.SupportedValues)
         {
@@ -151,7 +154,11 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     public string NotificationsDescription =>
-        "Powiadomienia o nowych artykułach i podcastach pojawiają się, gdy aplikacja jest uruchomiona na tym komputerze.";
+        _appRuntimeMode.SupportsSystemNotifications
+            ? "Powiadomienia o nowych artykułach i podcastach pojawiają się, gdy aplikacja jest uruchomiona na tym komputerze."
+            : "W tej wersji instalowanej bez MSIX powiadomienia systemowe i WNS są niedostępne.";
+
+    public bool SupportsSystemNotifications => _appRuntimeMode.SupportsSystemNotifications;
 
     public string ContentTypeAnnouncementDescription =>
         "To ustawienie wpływa na sposób, w jaki czytnik ekranu odczytuje pozycje na listach nowości, podcastów, artykułów i wyników wyszukiwania.";

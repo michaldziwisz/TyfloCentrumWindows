@@ -1,0 +1,16 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <InstallerPlatform>$(Platform)</InstallerPlatform>
+    <OutputType>Package</OutputType>
+    <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\Unpackaged\publish-$(Platform)\</PublishDir>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">0.0.0</ProductVersion>
+    <OutputName>TyfloCentrumSetup_$(ProductVersion)_$(Platform)</OutputName>
+    <SuppressIces>ICE03</SuppressIces>
+    <DefineConstants>$(DefineConstants);PublishDir=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" />
+  </ItemGroup>
+</Project>

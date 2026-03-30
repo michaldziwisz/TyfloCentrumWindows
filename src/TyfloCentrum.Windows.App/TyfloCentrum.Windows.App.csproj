@@ -10,13 +10,22 @@
     <Platforms>x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-    <EnableMsixTooling>true</EnableMsixTooling>
+    <TyfloCentrumDistributionMode Condition="'$(TyfloCentrumDistributionMode)' == ''">Packaged</TyfloCentrumDistributionMode>
+    <EnableMsixTooling Condition="'$(TyfloCentrumDistributionMode)' == 'Packaged'">true</EnableMsixTooling>
+    <EnableMsixTooling Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">false</EnableMsixTooling>
     <SingleProject>true</SingleProject>
-    <WindowsPackageType>MSIX</WindowsPackageType>
-    <AppxPackage>true</AppxPackage>
+    <WindowsPackageType Condition="'$(TyfloCentrumDistributionMode)' == 'Packaged'">MSIX</WindowsPackageType>
+    <WindowsPackageType Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">None</WindowsPackageType>
+    <AppxPackage Condition="'$(TyfloCentrumDistributionMode)' == 'Packaged'">true</AppxPackage>
+    <AppxPackage Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">false</AppxPackage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
     <AppxBundle>Never</AppxBundle>
+    <WindowsAppSDKSelfContained Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">true</WindowsAppSDKSelfContained>
+    <WindowsAppSdkUndockedRegFreeWinRTInitialize Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">true</WindowsAppSdkUndockedRegFreeWinRTInitialize>
+    <SelfContained Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">true</SelfContained>
+    <PublishSingleFile Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">false</PublishSingleFile>
+    <PublishTrimmed Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged'">false</PublishTrimmed>
     <SDKIdentifier>Windows</SDKIdentifier>
     <DefaultLanguage>pl-PL</DefaultLanguage>
   </PropertyGroup>
@@ -35,7 +44,7 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TyfloCentrumDistributionMode)' == 'Packaged'">
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
@@ -49,4 +58,20 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <Target Name="CopyUnpackagedXamlArtifactsToPublish"
+          AfterTargets="Publish"
+          Condition="'$(TyfloCentrumDistributionMode)' != 'Packaged' and '$(PublishDir)' != ''">
+    <ItemGroup>
+      <UnpackagedPublishedXamlArtifacts Include="$(OutputPath)$(AssemblyName).pri" />
+      <UnpackagedPublishedXamlArtifacts Include="$(OutputPath)App.xbf" />
+      <UnpackagedPublishedXamlArtifacts Include="$(OutputPath)MainWindow.xbf" />
+      <UnpackagedPublishedXamlArtifacts Include="$(OutputPath)Views\**\*.xbf" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(UnpackagedPublishedXamlArtifacts)"
+          DestinationFiles="@(UnpackagedPublishedXamlArtifacts->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(UnpackagedPublishedXamlArtifacts)' != ''" />
+  </Target>
 </Project>

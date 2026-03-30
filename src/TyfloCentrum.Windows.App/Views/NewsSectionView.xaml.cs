@@ -645,4 +645,5 @@ public sealed partial class NewsSectionView : UserControl
         value = '\0';
         return false;
     }
+
 }

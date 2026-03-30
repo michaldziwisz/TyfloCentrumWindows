@@ -1,5 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -18,15 +20,16 @@ public sealed partial class ShellPage : Page
 {
     private readonly ContentEntryActionService _contentEntryActionService;
     private readonly NotificationActivationService _notificationActivationService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ShellViewModel _viewModel;
-    private readonly ArticleSectionView _articleSectionView;
-    private readonly FavoritesSectionView _favoritesSectionView;
-    private readonly NewsSectionView _newsSectionView;
-    private readonly PodcastSectionView _podcastSectionView;
-    private readonly RadioSectionView _radioSectionView;
-    private readonly SearchSectionView _searchSectionView;
-    private readonly SettingsSectionView _settingsSectionView;
-    private readonly FeedbackSectionView _feedbackSectionView;
+    private ArticleSectionView? _articleSectionView;
+    private FavoritesSectionView? _favoritesSectionView;
+    private NewsSectionView? _newsSectionView;
+    private PodcastSectionView? _podcastSectionView;
+    private RadioSectionView? _radioSectionView;
+    private SearchSectionView? _searchSectionView;
+    private SettingsSectionView? _settingsSectionView;
+    private FeedbackSectionView? _feedbackSectionView;
     private bool _synchronizingSectionSelection;
     private readonly TaskCompletionSource _loadedCompletionSource = new();
 
@@ -34,37 +37,16 @@ public sealed partial class ShellPage : Page
         ShellViewModel viewModel,
         ContentEntryActionService contentEntryActionService,
         NotificationActivationService notificationActivationService,
-        NewsSectionView newsSectionView,
-        PodcastSectionView podcastSectionView,
-        ArticleSectionView articleSectionView,
-        SearchSectionView searchSectionView,
-        FavoritesSectionView favoritesSectionView,
-        RadioSectionView radioSectionView,
-        SettingsSectionView settingsSectionView,
-        FeedbackSectionView feedbackSectionView
+        IServiceProvider serviceProvider
     )
     {
-        InitializeComponent();
         _contentEntryActionService = contentEntryActionService;
         _notificationActivationService = notificationActivationService;
+        _serviceProvider = serviceProvider;
         _viewModel = viewModel;
-        _newsSectionView = newsSectionView;
-        _podcastSectionView = podcastSectionView;
-        _articleSectionView = articleSectionView;
-        _searchSectionView = searchSectionView;
-        _favoritesSectionView = favoritesSectionView;
-        _radioSectionView = radioSectionView;
-        _settingsSectionView = settingsSectionView;
-        _feedbackSectionView = feedbackSectionView;
+        InitializeComponent();
+        ConfigureKeyboardAccelerators();
         DataContext = _viewModel;
-        _newsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _podcastSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _articleSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _searchSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _favoritesSectionView.ExitToSectionListRequested += OnFavoritesExitToSectionListRequested;
-        _radioSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _settingsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
-        _feedbackSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
         _notificationActivationService.PendingRequestChanged += OnPendingNotificationRequestChanged;
     }
 
@@ -202,28 +184,48 @@ public sealed partial class ShellPage : Page
         args.Handled = true;
     }
 
+    private void ConfigureKeyboardAccelerators()
+    {
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
+
+        for (var shortcutNumber = 1; shortcutNumber <= 8; shortcutNumber++)
+        {
+            var key = shortcutNumber switch
+            {
+                1 => VirtualKey.Number1,
+                2 => VirtualKey.Number2,
+                3 => VirtualKey.Number3,
+                4 => VirtualKey.Number4,
+                5 => VirtualKey.Number5,
+                6 => VirtualKey.Number6,
+                7 => VirtualKey.Number7,
+                8 => VirtualKey.Number8,
+                _ => throw new ArgumentOutOfRangeException(nameof(shortcutNumber)),
+            };
+
+            KeyboardAccelerators.Add(
+                new KeyboardAccelerator
+                {
+                    Key = key,
+                    Modifiers = VirtualKeyModifiers.Menu,
+                }
+            );
+
+            KeyboardAccelerators[^1].Invoked += OnSectionShortcutInvoked;
+        }
+    }
+
     private void UpdateSectionContent()
     {
-        SectionContentHost.Content = _viewModel.SelectedSectionKey switch
-        {
-            "news" => _newsSectionView,
-            "podcasts" => _podcastSectionView,
-            "articles" => _articleSectionView,
-            "search" => _searchSectionView,
-            "favorites" => _favoritesSectionView,
-            "radio" => _radioSectionView,
-            "settings" => _settingsSectionView,
-            "feedback" => _feedbackSectionView,
-            _ => CreatePlaceholderContent(),
-        };
+        SectionContentHost.Content = GetSectionContent(_viewModel.SelectedSectionKey);
 
         if (_viewModel.SelectedSectionKey == "favorites")
         {
-            _ = _favoritesSectionView.ReloadAsync();
+            _ = GetFavoritesSectionView().ReloadAsync();
         }
         else if (_viewModel.SelectedSectionKey == "settings")
         {
-            _ = _settingsSectionView.ReloadAsync();
+            _ = GetSettingsSectionView().ReloadAsync();
         }
     }
 
@@ -239,16 +241,16 @@ public sealed partial class ShellPage : Page
         switch (sectionKey)
         {
             case "news":
-                await _newsSectionView.PrepareForScreenshotAsync();
+                await GetNewsSectionView().PrepareForScreenshotAsync();
                 break;
             case "podcasts":
-                await _podcastSectionView.PrepareForScreenshotAsync();
+                await GetPodcastSectionView().PrepareForScreenshotAsync();
                 break;
             case "articles":
-                await _articleSectionView.PrepareForScreenshotAsync();
+                await GetArticleSectionView().PrepareForScreenshotAsync();
                 break;
             case "radio":
-                await _radioSectionView.PrepareForScreenshotAsync();
+                await GetRadioSectionView().PrepareForScreenshotAsync();
                 break;
             default:
                 await Task.Delay(1200);
@@ -419,30 +421,142 @@ public sealed partial class ShellPage : Page
         switch (_viewModel.SelectedSectionKey)
         {
             case "news":
-                _newsSectionView.FocusPrimaryContent();
+                GetNewsSectionView().FocusPrimaryContent();
                 break;
             case "podcasts":
-                _podcastSectionView.FocusPrimaryContent();
+                GetPodcastSectionView().FocusPrimaryContent();
                 break;
             case "articles":
-                _articleSectionView.FocusPrimaryContent();
+                GetArticleSectionView().FocusPrimaryContent();
                 break;
             case "search":
-                _searchSectionView.FocusPrimaryContent();
+                GetSearchSectionView().FocusPrimaryContent();
                 break;
             case "favorites":
-                _favoritesSectionView.FocusPrimaryContent();
+                GetFavoritesSectionView().FocusPrimaryContent();
                 break;
             case "radio":
-                _radioSectionView.FocusPrimaryContent();
+                GetRadioSectionView().FocusPrimaryContent();
                 break;
             case "settings":
-                _settingsSectionView.FocusPrimaryContent();
+                GetSettingsSectionView().FocusPrimaryContent();
                 break;
             case "feedback":
-                _feedbackSectionView.FocusPrimaryContent();
+                GetFeedbackSectionView().FocusPrimaryContent();
                 break;
         }
+    }
+
+    private object GetSectionContent(string sectionKey)
+    {
+        return sectionKey switch
+        {
+            "news" => GetNewsSectionView(),
+            "podcasts" => GetPodcastSectionView(),
+            "articles" => GetArticleSectionView(),
+            "search" => GetSearchSectionView(),
+            "favorites" => GetFavoritesSectionView(),
+            "radio" => GetRadioSectionView(),
+            "settings" => GetSettingsSectionView(),
+            "feedback" => GetFeedbackSectionView(),
+            _ => CreatePlaceholderContent(),
+        };
+    }
+
+    private NewsSectionView GetNewsSectionView()
+    {
+        if (_newsSectionView is not null)
+        {
+            return _newsSectionView;
+        }
+
+        _newsSectionView = _serviceProvider.GetRequiredService<NewsSectionView>();
+        _newsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _newsSectionView;
+    }
+
+    private PodcastSectionView GetPodcastSectionView()
+    {
+        if (_podcastSectionView is not null)
+        {
+            return _podcastSectionView;
+        }
+
+        _podcastSectionView = _serviceProvider.GetRequiredService<PodcastSectionView>();
+        _podcastSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _podcastSectionView;
+    }
+
+    private ArticleSectionView GetArticleSectionView()
+    {
+        if (_articleSectionView is not null)
+        {
+            return _articleSectionView;
+        }
+
+        _articleSectionView = _serviceProvider.GetRequiredService<ArticleSectionView>();
+        _articleSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _articleSectionView;
+    }
+
+    private SearchSectionView GetSearchSectionView()
+    {
+        if (_searchSectionView is not null)
+        {
+            return _searchSectionView;
+        }
+
+        _searchSectionView = _serviceProvider.GetRequiredService<SearchSectionView>();
+        _searchSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _searchSectionView;
+    }
+
+    private FavoritesSectionView GetFavoritesSectionView()
+    {
+        if (_favoritesSectionView is not null)
+        {
+            return _favoritesSectionView;
+        }
+
+        _favoritesSectionView = _serviceProvider.GetRequiredService<FavoritesSectionView>();
+        _favoritesSectionView.ExitToSectionListRequested += OnFavoritesExitToSectionListRequested;
+        return _favoritesSectionView;
+    }
+
+    private RadioSectionView GetRadioSectionView()
+    {
+        if (_radioSectionView is not null)
+        {
+            return _radioSectionView;
+        }
+
+        _radioSectionView = _serviceProvider.GetRequiredService<RadioSectionView>();
+        _radioSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _radioSectionView;
+    }
+
+    private SettingsSectionView GetSettingsSectionView()
+    {
+        if (_settingsSectionView is not null)
+        {
+            return _settingsSectionView;
+        }
+
+        _settingsSectionView = _serviceProvider.GetRequiredService<SettingsSectionView>();
+        _settingsSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _settingsSectionView;
+    }
+
+    private FeedbackSectionView GetFeedbackSectionView()
+    {
+        if (_feedbackSectionView is not null)
+        {
+            return _feedbackSectionView;
+        }
+
+        _feedbackSectionView = _serviceProvider.GetRequiredService<FeedbackSectionView>();
+        _feedbackSectionView.ExitToSectionListRequested += OnExitToSectionListRequested;
+        return _feedbackSectionView;
     }
 
     private static bool TryGetLatinLetter(VirtualKey key, out char value)
@@ -477,4 +591,5 @@ public sealed partial class ShellPage : Page
             },
         };
     }
+
 }

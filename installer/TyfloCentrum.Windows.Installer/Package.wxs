@@ -1,0 +1,56 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+      Name="TyfloCentrum"
+      Manufacturer="Michal Dziwisz"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="A2E7FD8E-4B1A-412C-8348-E1C1E1CF7E7F"
+      Scope="perMachine"
+      Language="1045"
+      Codepage="1250"
+      InstallerVersion="500">
+    <MajorUpgrade DowngradeErrorMessage="Nowsza wersja TyfloCentrum jest już zainstalowana." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.ico" SourceFile="..\..\src\TyfloCentrum.Windows.App\Assets\AppIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <Feature Id="MainFeature" Title="TyfloCentrum" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="TyfloCentrum" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="AppExecutableComponent" Guid="*">
+        <File
+            Id="AppExecutable"
+            Source="$(var.PublishDir)\TyfloCentrum.Windows.App.exe"
+            KeyPath="yes"
+            Checksum="yes">
+          <Shortcut
+              Id="StartMenuShortcut"
+              Advertise="yes"
+              Directory="ProgramMenuFolder"
+              Name="TyfloCentrum"
+              Description="TyfloCentrum"
+              WorkingDirectory="INSTALLFOLDER"
+              Icon="AppIcon.ico" />
+        </File>
+      </Component>
+
+      <Files Include="$(var.PublishDir)\**">
+        <Exclude Files="$(var.PublishDir)\TyfloCentrum.Windows.App.exe" />
+      </Files>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

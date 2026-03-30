@@ -43,7 +43,8 @@ public sealed class SettingsViewModelTests
             settingsService,
             deviceCatalogService,
             new FakeDownloadDirectoryService(),
-            new ContentTypeAnnouncementPreferenceService()
+            new ContentTypeAnnouncementPreferenceService(),
+            new FakeAppRuntimeMode()
         );
 
         await viewModel.LoadIfNeededAsync();
@@ -94,7 +95,8 @@ public sealed class SettingsViewModelTests
             settingsService,
             deviceCatalogService,
             new FakeDownloadDirectoryService(),
-            new ContentTypeAnnouncementPreferenceService()
+            new ContentTypeAnnouncementPreferenceService(),
+            new FakeAppRuntimeMode()
         );
         await viewModel.LoadIfNeededAsync();
 
@@ -145,7 +147,8 @@ public sealed class SettingsViewModelTests
             settingsService,
             deviceCatalogService,
             new FakeDownloadDirectoryService(),
-            new ContentTypeAnnouncementPreferenceService()
+            new ContentTypeAnnouncementPreferenceService(),
+            new FakeAppRuntimeMode()
         );
         await viewModel.LoadIfNeededAsync();
 
@@ -168,7 +171,8 @@ public sealed class SettingsViewModelTests
                 OutputDevices = [new AudioDeviceInfo("speaker-1", "Głośnik 1")],
             },
             new FakeDownloadDirectoryService(),
-            new ContentTypeAnnouncementPreferenceService()
+            new ContentTypeAnnouncementPreferenceService(),
+            new FakeAppRuntimeMode()
         );
         await viewModel.LoadIfNeededAsync();
 
@@ -244,5 +248,14 @@ public sealed class SettingsViewModelTests
                 ? GetDefaultDownloadDirectoryPath()
                 : configuredPath.Trim();
         }
+    }
+
+    private sealed class FakeAppRuntimeMode : IAppRuntimeMode
+    {
+        public bool HasPackageIdentity => true;
+
+        public bool SupportsSystemNotifications => true;
+
+        public bool SupportsPushNotifications => true;
     }
 }

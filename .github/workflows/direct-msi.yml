@@ -1,0 +1,79 @@
+name: Direct MSI Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Branch, tag albo commit do zbudowania
+        required: true
+        default: main
+        type: string
+      configuration:
+        description: Konfiguracja builda
+        required: true
+        default: Release
+        type: choice
+        options:
+          - Release
+          - Debug
+      platform:
+        description: Architektura MSI
+        required: true
+        default: x64
+        type: choice
+        options:
+          - x64
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref }}
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Run automated tests
+        shell: pwsh
+        run: |
+          dotnet test .\TyfloCentrum.Windows.sln -c Debug -p:Platform=x64 --nologo
+
+      - name: Build direct MSI
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DirectMsi.ps1 -Configuration ${{ inputs.configuration }} -Platform ${{ inputs.platform }}
+
+      - name: Resolve direct MSI artifacts
+        id: direct
+        shell: pwsh
+        run: |
+          $msiDir = Get-ChildItem "$env:GITHUB_WORKSPACE\artifacts\DirectMsi" -Directory |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $msiDir) {
+            throw 'Nie znaleziono katalogu direct MSI.'
+          }
+
+          $msi = Get-ChildItem $msiDir.FullName -Filter TyfloCentrumSetup_*.msi -File |
+            Select-Object -First 1
+          if (-not $msi) {
+            throw 'Nie znaleziono glownego pliku MSI.'
+          }
+
+          "msi_dir=$($msiDir.FullName)" >> $env:GITHUB_OUTPUT
+          "msi_path=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload direct MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-msi-${{ inputs.platform }}-${{ inputs.configuration }}
+          path: ${{ steps.direct.outputs.msi_path }}
+          if-no-files-found: error
