@@ -133,6 +133,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -199,9 +200,88 @@
             </StackPanel>
         </StackPanel>
 
+        <StackPanel
+            x:Name="TransportControlsPanel"
+            Grid.Row="2"
+            Spacing="4"
+            Visibility="Collapsed">
+            <TextBlock
+                AutomationProperties.HeadingLevel="Level3"
+                FontWeight="SemiBold"
+                Text="Sterowanie odtwarzaniem" />
+            <StackPanel
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    x:Name="SkipBackwardButton"
+                    AutomationProperties.HelpText="Skrót: Ctrl+strzałka w lewo"
+                    AutomationProperties.Name="Przewiń wstecz o 30 sekund"
+                    Click="OnSkipBackwardButtonClick"
+                    Content="Wstecz 30 s"
+                    MinWidth="120"
+                    Visibility="Collapsed" />
+                <Button
+                    x:Name="PlayPauseButton"
+                    AutomationProperties.HelpText="Skrót: Ctrl+spacja"
+                    AutomationProperties.Name="Odtwarzaj"
+                    Click="OnPlayPauseButtonClick"
+                    Content="Odtwarzaj"
+                    MinWidth="120" />
+                <Button
+                    x:Name="SkipForwardButton"
+                    AutomationProperties.HelpText="Skrót: Ctrl+strzałka w prawo"
+                    AutomationProperties.Name="Przewiń do przodu o 30 sekund"
+                    Click="OnSkipForwardButtonClick"
+                    Content="Dalej 30 s"
+                    MinWidth="120"
+                    Visibility="Collapsed" />
+                <Button
+                    x:Name="CastToDeviceButton"
+                    AutomationProperties.Name="Przesyłaj dźwięk do urządzenia zewnętrznego"
+                    Click="OnCastToDeviceButtonClick"
+                    Content="Przesyłaj do urządzenia"
+                    MinWidth="180" />
+            </StackPanel>
+            <StackPanel
+                x:Name="SeekControlsPanel"
+                Spacing="4"
+                Visibility="Collapsed">
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Text="Pozycja odtwarzania" />
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Name="CurrentPositionTextBlock"
+                        VerticalAlignment="Center"
+                        Text="00:00" />
+                    <Slider
+                        x:Name="PositionSlider"
+                        Grid.Column="1"
+                        AutomationProperties.HelpText="Skróty: Ctrl+strzałka w lewo i Ctrl+strzałka w prawo"
+                        AutomationProperties.Name="Pozycja odtwarzania podcastu"
+                        LargeChange="30"
+                        Maximum="1"
+                        Minimum="0"
+                        SmallChange="5"
+                        StepFrequency="5"
+                        ValueChanged="OnPositionSliderValueChanged" />
+                    <TextBlock
+                        x:Name="DurationTextBlock"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Text="--:--" />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+
         <TextBlock
             x:Name="StatusTextBlock"
-            Grid.Row="2"
+            Grid.Row="3"
             AutomationProperties.LiveSetting="Polite"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="WrapWholeWords"
@@ -209,14 +289,14 @@
 
         <TextBlock
             x:Name="OutputDeviceTextBlock"
-            Grid.Row="3"
+            Grid.Row="4"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="WrapWholeWords"
             Visibility="Collapsed" />
 
         <StackPanel
             x:Name="ShortcutHelpPanel"
-            Grid.Row="4"
+            Grid.Row="5"
             Spacing="4"
             Visibility="Collapsed">
                 <TextBlock
@@ -230,13 +310,13 @@
 
         <StackPanel
             x:Name="ShowNotesPanel"
-            Grid.Row="5"
+            Grid.Row="6"
             Spacing="8"
             Visibility="Collapsed" />
         
         <InfoBar
             x:Name="ErrorBar"
-            Grid.Row="6"
+            Grid.Row="7"
             IsClosable="False"
             IsOpen="False"
             Severity="Error"
@@ -245,10 +325,10 @@
         <MediaPlayerElement
             x:Name="PlayerElement"
             AutomationProperties.HelpText="Skrót: Ctrl+spacja"
-            Grid.Row="7"
-            AreTransportControlsEnabled="True"
+            Grid.Row="8"
+            AreTransportControlsEnabled="False"
             AutoPlay="False"
             Language="pl-PL"
-            MinHeight="320" />
+            MinHeight="180" />
     </Grid>
 </UserControl>

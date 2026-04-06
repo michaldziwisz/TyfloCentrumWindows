@@ -77,8 +77,10 @@
                 x:Name="ErrorBar"
                 AutomationProperties.AutomationId="radio.error"
                 IsClosable="False"
+                IsIconVisible="False"
                 IsOpen="False"
-                Severity="Error" />
+                Severity="Error"
+                Title="Problem w sekcji Tyfloradio" />
         </StackPanel>
 
         <StackPanel
@@ -92,10 +94,17 @@
                 CornerRadius="8">
                 <StackPanel Spacing="4">
                     <TextBlock FontWeight="SemiBold" Text="Status audycji interaktywnej" />
-                    <TextBlock
+                    <ScrollViewer
                         AutomationProperties.AutomationId="radio.current"
-                        Text="{Binding LiveStatusMessage}"
-                        TextWrapping="WrapWholeWords" />
+                        AutomationProperties.Name="{Binding LiveStatusAccessibleText}"
+                        HorizontalScrollBarVisibility="Disabled"
+                        IsTabStop="True"
+                        MinHeight="96"
+                        VerticalScrollBarVisibility="Auto">
+                        <TextBlock
+                            Text="{Binding LiveStatusDisplayText}"
+                            TextWrapping="WrapWholeWords" />
+                    </ScrollViewer>
                 </StackPanel>
             </Border>
 
@@ -107,20 +116,24 @@
                 CornerRadius="8">
                 <StackPanel Spacing="8">
                     <TextBlock FontWeight="SemiBold" Text="Ramówka" />
-                    <TextBlock
-                        x:Name="ScheduleFallbackText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding ScheduleFallbackMessage}"
-                        TextWrapping="WrapWholeWords"
+                    <Button
+                        x:Name="ScheduleButton"
+                        AutomationProperties.AutomationId="radio.schedule"
+                        AutomationProperties.Name="Pokaż ramówkę Tyfloradia"
+                        Click="OnOpenScheduleClick"
+                        KeyDown="OnScheduleButtonKeyDown"
+                        Content="Pokaż ramówkę Tyfloradia" />
+                    <TextBox
+                        x:Name="ScheduleEditor"
+                        AutomationProperties.AutomationId="radio.scheduleEditor"
+                        AutomationProperties.Name="Treść ramówki Tyfloradia"
+                        AcceptsReturn="True"
+                        IsReadOnly="True"
+                        MinHeight="240"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        Text="{Binding ScheduleDisplayText, Mode=OneWay}"
+                        TextWrapping="Wrap"
                         Visibility="Collapsed" />
-                    <ScrollViewer MaxHeight="420">
-                        <TextBlock
-                            x:Name="ScheduleTextBlock"
-                            AutomationProperties.AutomationId="radio.schedule"
-                            Text="{Binding ScheduleText}"
-                            TextWrapping="WrapWholeWords"
-                            Visibility="Collapsed" />
-                    </ScrollViewer>
                 </StackPanel>
             </Border>
         </StackPanel>

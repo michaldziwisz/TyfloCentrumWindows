@@ -18,6 +18,11 @@ public sealed partial class ContactTextMessageView : UserControl
 
     public ContactTextMessageViewModel ViewModel { get; }
 
+    public void FocusPrimaryContent()
+    {
+        FocusInitialField();
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         FocusInitialField();

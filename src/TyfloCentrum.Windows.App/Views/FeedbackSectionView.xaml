@@ -74,15 +74,28 @@
                     PlaceholderText="Krótki tytuł widoczny publicznie"
                     Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBox
-                    x:Name="DescriptionTextBox"
-                    AutomationProperties.AutomationId="feedback.description"
-                    AcceptsReturn="True"
-                    Header="Opis publiczny"
-                    Height="240"
-                    PlaceholderText="Opisz problem albo sugestię bez danych prywatnych"
-                    Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    TextWrapping="Wrap" />
+                <StackPanel Spacing="4">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="Opis publiczny" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Opisz problem albo sugestię bez danych prywatnych."
+                        TextWrapping="WrapWholeWords" />
+                    <Border
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="4">
+                        <RichEditBox
+                            x:Name="DescriptionEditor"
+                            AutomationProperties.AutomationId="feedback.description"
+                            AutomationProperties.Name="Opis publiczny"
+                            MinHeight="240"
+                            TextChanged="OnDescriptionEditorTextChanged" />
+                    </Border>
+                </StackPanel>
 
                 <TextBox
                     x:Name="ContactEmailTextBox"

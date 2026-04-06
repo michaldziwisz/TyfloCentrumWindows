@@ -5,6 +5,17 @@ namespace TyfloCentrum.Windows.App.Services;
 
 internal static class ListViewFocusHelper
 {
+    public static void RestoreFocusedSelectionIfNeeded(ListView listView)
+    {
+        if (!FocusNavigationHelper.IsFocusWithin(listView) || listView.SelectedItem is null)
+        {
+            return;
+        }
+
+        var selectedItem = listView.SelectedItem;
+        listView.DispatcherQueue.TryEnqueue(() => RestoreFocus(listView, selectedItem));
+    }
+
     public static void RestoreFocus(ListView listView, object? item)
     {
         RestoreFocus(listView, item, remainingDeferredAttempts: 2);

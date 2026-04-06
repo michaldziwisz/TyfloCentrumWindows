@@ -602,6 +602,11 @@ public sealed partial class NewsSectionView : UserControl
 
     private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.Action == NotifyCollectionChangedAction.Add)
+        {
+            ListViewFocusHelper.RestoreFocusedSelectionIfNeeded(NewsList);
+        }
+
         UpdateVisualState();
     }
 

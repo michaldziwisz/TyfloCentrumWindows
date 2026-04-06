@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Automation;
 using System.ComponentModel;
 using TyfloCentrum.Windows.App.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
@@ -13,6 +14,7 @@ public sealed partial class RadioSectionView : UserControl
     private readonly AudioPlayerDialogService _audioPlayerDialogService;
     private readonly ContactTextMessageDialogService _contactTextMessageDialogService;
     private readonly ContactVoiceMessageDialogService _contactVoiceMessageDialogService;
+    private string? _lastAnnouncedStatusMessage;
 
     public event EventHandler? ExitToSectionListRequested;
 
@@ -83,34 +85,53 @@ public sealed partial class RadioSectionView : UserControl
 
     private async void OnOpenContactClick(object sender, RoutedEventArgs e)
     {
-        if (!ViewModel.TryStartContact())
+        if (!ViewModel.TryStartTextContact())
         {
             return;
         }
 
-        var didSend = await _contactTextMessageDialogService.ShowAsync(XamlRoot);
-        if (didSend)
+        var dialogXamlRoot = (sender as FrameworkElement)?.XamlRoot ?? XamlRoot;
+        var result = await _contactTextMessageDialogService.ShowAsync(dialogXamlRoot);
+        if (result == FormDialogResult.Submitted)
         {
             ViewModel.ReportContactSent();
+            return;
+        }
+
+        if (result == FormDialogResult.FailedToOpen)
+        {
+            ViewModel.ReportContactFormOpenError();
         }
     }
 
     private async void OnOpenVoiceContactClick(object sender, RoutedEventArgs e)
     {
-        if (!ViewModel.TryStartContact())
+        if (!ViewModel.TryStartVoiceContact())
         {
             return;
         }
 
-        var didSend = await _contactVoiceMessageDialogService.ShowAsync(XamlRoot);
-        if (didSend)
+        var dialogXamlRoot = (sender as FrameworkElement)?.XamlRoot ?? XamlRoot;
+        var result = await _contactVoiceMessageDialogService.ShowAsync(dialogXamlRoot);
+        if (result == FormDialogResult.Submitted)
         {
             ViewModel.ReportVoiceMessageSent();
+            return;
+        }
+
+        if (result == FormDialogResult.FailedToOpen)
+        {
+            ViewModel.ReportVoiceContactFormOpenError();
         }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(RadioViewModel.StatusAnnouncement))
+        {
+            AnnounceStatusMessage(ViewModel.StatusAnnouncement);
+        }
+
         UpdateVisualState();
     }
 
@@ -127,15 +148,28 @@ public sealed partial class RadioSectionView : UserControl
             ? Visibility.Collapsed
             : Visibility.Visible;
 
-        ScheduleTextBlock.Visibility = ViewModel.HasScheduleText ? Visibility.Visible : Visibility.Collapsed;
-        ScheduleFallbackText.Visibility = !ViewModel.HasScheduleText && ViewModel.HasLoaded
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
         RefreshButton.IsEnabled = !ViewModel.IsLoading;
         ListenButton.IsEnabled = !ViewModel.IsLoading;
         ContactButton.IsEnabled = ViewModel.CanOpenContact;
         VoiceContactButton.IsEnabled = ViewModel.CanOpenContact;
+        ScheduleButton.IsEnabled = ViewModel.CanOpenSchedule;
+    }
+
+    private void AnnounceStatusMessage(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            _lastAnnouncedStatusMessage = null;
+            return;
+        }
+
+        if (string.Equals(_lastAnnouncedStatusMessage, message, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAnnouncedStatusMessage = message;
+        AutomationAnnouncementHelper.Announce(AnnouncementTextBlock, message, important: true);
     }
 
     private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
@@ -147,5 +181,26 @@ public sealed partial class RadioSectionView : UserControl
 
         e.Handled = true;
         ExitToSectionListRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async void OnOpenScheduleClick(object sender, RoutedEventArgs e)
+    {
+        ScheduleEditor.Visibility = Visibility.Visible;
+        ScheduleEditor.UpdateLayout();
+        await Task.Yield();
+        ScheduleEditor.StartBringIntoView();
+        ScheduleEditor.Focus(FocusState.Programmatic);
+        ScheduleEditor.Select(0, 0);
+    }
+
+    private void OnScheduleButtonKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Space)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        OnOpenScheduleClick(sender, new RoutedEventArgs());
     }
 }

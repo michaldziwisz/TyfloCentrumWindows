@@ -112,6 +112,11 @@ public partial class App : Application
             return;
         }
 
+        if (_mainWindow is MainWindow mainWindow)
+        {
+            mainWindow.EnsureMaximized();
+        }
+
         StartBackgroundServices();
     }
 

@@ -6,13 +6,17 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using TyfloCentrum.Windows.App.Services;
 using Windows.Devices.Enumeration;
+using Windows.Foundation;
 using Windows.Media.Core;
+using Windows.Media.Casting;
 using Windows.Media.Playback;
 using Windows.System;
+using Windows.UI.Popups;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Domain.Text;
 using TyfloCentrum.Windows.UI.ViewModels;
+using WinRT.Interop;
 
 namespace TyfloCentrum.Windows.App.Views;
 
@@ -26,6 +30,7 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly IFavoritesService _favoritesService;
     private readonly IPlaybackResumeService _playbackResumeService;
     private readonly IShareService _shareService;
+    private readonly WindowHandleProvider _windowHandleProvider;
     private readonly IWordPressCommentsService _wordPressCommentsService;
     private readonly PlaybackRateOption[] _playbackRates;
     private CancellationTokenSource? _showNotesLoadCts;
@@ -41,11 +46,17 @@ public sealed partial class AudioPlayerView : UserControl
     private bool _isCommentsVisible;
     private bool _isLoadingShowNotes;
     private bool _isRelatedLinksVisible;
+    private bool _isSynchronizingPositionSlider;
+    private bool _isTransportUiRefreshPending;
     private bool _hasPlaybackEnded;
     private bool _isRestoringResumePosition;
     private bool _isSynchronizingVolume;
+    private bool _isDisconnectingCasting;
     private double _lastPersistedResumeSeconds;
+    private double _lastKnownDurationSeconds;
     private AudioPlaybackRequest? _currentRequest;
+    private CastingConnection? _castingConnection;
+    private CastingDevicePicker? _castingDevicePicker;
     private double? _pendingResumePositionSeconds;
 
     public AudioPlayerView(
@@ -56,7 +67,8 @@ public sealed partial class AudioPlayerView : UserControl
         IPlaybackResumeService playbackResumeService,
         IShareService shareService,
         IWordPressCommentsService wordPressCommentsService,
-        IExternalLinkLauncher externalLinkLauncher
+        IExternalLinkLauncher externalLinkLauncher,
+        WindowHandleProvider windowHandleProvider
     )
     {
         _appSettingsService = appSettingsService;
@@ -67,6 +79,7 @@ public sealed partial class AudioPlayerView : UserControl
         _shareService = shareService;
         _wordPressCommentsService = wordPressCommentsService;
         _externalLinkLauncher = externalLinkLauncher;
+        _windowHandleProvider = windowHandleProvider;
         _playbackRates = PlaybackRateCatalog
             .SupportedValues.Select(value => new PlaybackRateOption(PlaybackRateCatalog.FormatLabel(value), value))
             .ToArray();
@@ -87,6 +100,7 @@ public sealed partial class AudioPlayerView : UserControl
         _currentRequest = null;
         _pendingResumePositionSeconds = null;
         _lastPersistedResumeSeconds = 0;
+        _lastKnownDurationSeconds = 0;
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
         ErrorBar.IsOpen = false;
@@ -129,12 +143,14 @@ public sealed partial class AudioPlayerView : UserControl
 
         if (_mediaPlayer is null)
         {
-            _currentRequest = null;
-            _pendingResumePositionSeconds = null;
-            _lastPersistedResumeSeconds = 0;
-            _hasPlaybackEnded = false;
-            _isRestoringResumePosition = false;
-            return;
+        _currentRequest = null;
+        _pendingResumePositionSeconds = null;
+        _lastPersistedResumeSeconds = 0;
+        _lastKnownDurationSeconds = 0;
+        _hasPlaybackEnded = false;
+        _isRestoringResumePosition = false;
+        await DisconnectCastingAsync(announce: false);
+        return;
         }
 
         var mediaPlayer = _mediaPlayer;
@@ -148,8 +164,10 @@ public sealed partial class AudioPlayerView : UserControl
         _currentRequest = null;
         _pendingResumePositionSeconds = null;
         _lastPersistedResumeSeconds = 0;
+        _lastKnownDurationSeconds = 0;
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
+        await DisconnectCastingAsync(announce: false);
     }
 
     private async Task ConfigureMediaPlayerAsync(
@@ -161,6 +179,7 @@ public sealed partial class AudioPlayerView : UserControl
         _currentRequest = request;
         _pendingResumePositionSeconds = null;
         _lastPersistedResumeSeconds = 0;
+        _lastKnownDurationSeconds = 0;
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
 
@@ -175,6 +194,7 @@ public sealed partial class AudioPlayerView : UserControl
         mediaPlayer.MediaOpened += OnMediaOpened;
         mediaPlayer.MediaEnded += OnMediaEnded;
         mediaPlayer.PlaybackSession.PositionChanged += OnPlaybackSessionPositionChanged;
+        mediaPlayer.PlaybackSession.PlaybackStateChanged += OnPlaybackSessionPlaybackStateChanged;
         try
         {
             var outputDeviceMessage = await TryApplyOutputDeviceAsync(
@@ -212,6 +232,7 @@ public sealed partial class AudioPlayerView : UserControl
                 OutputDeviceTextBlock.Visibility = Visibility.Visible;
             }
 
+            QueueTransportControlsRefresh();
             SetStatusMessage(
                 request.IsLive
                     ? "Trwa odtwarzanie transmisji na żywo."
@@ -228,23 +249,19 @@ public sealed partial class AudioPlayerView : UserControl
 
     private void ConfigureTransportControls(AudioPlaybackRequest request)
     {
-        var transportControls = PlayerElement.TransportControls;
-        transportControls.ShowAndHideAutomatically = false;
-        transportControls.IsNextTrackButtonVisible = false;
-        transportControls.IsPreviousTrackButtonVisible = false;
-        transportControls.IsRepeatButtonVisible = false;
-        transportControls.IsPlaybackRateButtonVisible = false;
-        transportControls.IsPlaybackRateEnabled = false;
-        transportControls.IsSeekBarVisible = request.CanSeek;
-        transportControls.IsSeekEnabled = request.CanSeek;
-        transportControls.IsFastForwardButtonVisible = request.CanSeek;
-        transportControls.IsFastForwardEnabled = request.CanSeek;
-        transportControls.IsFastRewindButtonVisible = request.CanSeek;
-        transportControls.IsFastRewindEnabled = request.CanSeek;
-        transportControls.IsSkipBackwardButtonVisible = false;
-        transportControls.IsSkipForwardButtonVisible = false;
-        transportControls.IsZoomButtonVisible = false;
-        transportControls.IsZoomEnabled = false;
+        TransportControlsPanel.Visibility = Visibility.Visible;
+        SkipBackwardButton.Visibility = request.CanSeek ? Visibility.Visible : Visibility.Collapsed;
+        SkipForwardButton.Visibility = request.CanSeek ? Visibility.Visible : Visibility.Collapsed;
+        SeekControlsPanel.Visibility = request.CanSeek ? Visibility.Visible : Visibility.Collapsed;
+        DurationTextBlock.Text = request.CanSeek ? "--:--" : "Na żywo";
+        CurrentPositionTextBlock.Text = request.CanSeek ? "00:00" : "Na żywo";
+        _isSynchronizingPositionSlider = true;
+        PositionSlider.Minimum = 0d;
+        PositionSlider.Maximum = 1d;
+        PositionSlider.Value = 0d;
+        PositionSlider.IsEnabled = request.CanSeek;
+        _isSynchronizingPositionSlider = false;
+        UpdatePlayPauseButton(false);
     }
 
     private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
@@ -438,6 +455,92 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
+    private void OnPlayPauseButtonClick(object sender, RoutedEventArgs e)
+    {
+        TogglePlayback();
+    }
+
+    private void OnSkipBackwardButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (_currentRequest?.CanSeek == true)
+        {
+            SeekBy(TimeSpan.FromSeconds(-30), "Przewinięto wstecz o 30 sekund.");
+        }
+    }
+
+    private void OnSkipForwardButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (_currentRequest?.CanSeek == true)
+        {
+            SeekBy(TimeSpan.FromSeconds(30), "Przewinięto do przodu o 30 sekund.");
+        }
+    }
+
+    private async void OnCastToDeviceButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (_castingConnection is not null && _castingConnection.State != CastingConnectionState.Disconnected)
+        {
+            await DisconnectCastingAsync(announce: true);
+            return;
+        }
+
+        if (_mediaPlayer is null)
+        {
+            SetStatusMessage("Odtwarzacz nie jest jeszcze gotowy do przesyłania dźwięku.", announce: true);
+            return;
+        }
+
+        if (_windowHandleProvider.Handle == IntPtr.Zero)
+        {
+            SetStatusMessage("Nie udało się otworzyć wyboru urządzenia zewnętrznego.", announce: true);
+            return;
+        }
+
+        try
+        {
+            var picker = EnsureCastingDevicePicker();
+            picker.Filter.SupportsAudio = true;
+            picker.Filter.SupportsVideo = false;
+            picker.Filter.SupportsPictures = false;
+            picker.Filter.SupportedCastingSources.Clear();
+            picker.Filter.SupportedCastingSources.Add(_mediaPlayer.GetAsCastingSource());
+
+            var anchor = CastToDeviceButton.TransformToVisual(null).TransformPoint(new Point(0, 0));
+            var rect = new Rect(anchor.X, anchor.Y, Math.Max(1, CastToDeviceButton.ActualWidth), Math.Max(1, CastToDeviceButton.ActualHeight));
+            picker.Show(rect, Placement.Above);
+            SetStatusMessage("Wybierz urządzenie zewnętrzne do przesyłania dźwięku.", announce: true);
+        }
+        catch
+        {
+            SetStatusMessage("Nie udało się otworzyć wyboru urządzenia zewnętrznego.", announce: true, important: true);
+        }
+    }
+
+    private void OnPositionSliderValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (
+            _isSynchronizingPositionSlider
+            || _currentRequest?.CanSeek != true
+            || _mediaPlayer?.PlaybackSession is not { } session
+        )
+        {
+            return;
+        }
+
+        var targetSeconds = Math.Max(0d, e.NewValue);
+        var durationSeconds =
+            session.NaturalDuration.TotalSeconds > 0d
+                ? session.NaturalDuration.TotalSeconds
+                : _lastKnownDurationSeconds;
+        if (durationSeconds > 1d)
+        {
+            targetSeconds = Math.Min(targetSeconds, durationSeconds);
+        }
+
+        session.Position = TimeSpan.FromSeconds(targetSeconds);
+        QueueTransportControlsRefresh();
+    }
+
     private void SeekBy(TimeSpan delta, string announcement)
     {
         if (_mediaPlayer?.PlaybackSession is not { } session)
@@ -458,6 +561,7 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         session.Position = targetPosition;
+        QueueTransportControlsRefresh();
         SetStatusMessage(announcement);
     }
 
@@ -471,6 +575,7 @@ public sealed partial class AudioPlayerView : UserControl
         if (_mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
         {
             _mediaPlayer.Pause();
+            UpdatePlayPauseButton(isPlaying: false);
             SetStatusMessage(
                 _currentRequest?.IsLive == true
                     ? "Wstrzymano transmisję na żywo."
@@ -480,6 +585,7 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         _mediaPlayer.Play();
+        UpdatePlayPauseButton(isPlaying: true);
         SetStatusMessage(
             _currentRequest?.IsLive == true
                 ? "Wznowiono transmisję na żywo."
@@ -557,6 +663,8 @@ public sealed partial class AudioPlayerView : UserControl
             ErrorBar.Message = "Nie udało się odtworzyć audio. Sprawdź połączenie i spróbuj ponownie.";
             ErrorBar.IsOpen = true;
             ErrorBar.Visibility = Visibility.Visible;
+            UpdatePlayPauseButton(isPlaying: false);
+            QueueTransportControlsRefresh();
             SetStatusMessage(ErrorBar.Message);
         });
     }
@@ -565,6 +673,7 @@ public sealed partial class AudioPlayerView : UserControl
     {
         if (_pendingResumePositionSeconds is not double resumePositionSeconds || resumePositionSeconds <= 1d)
         {
+            QueueTransportControlsRefresh();
             return;
         }
 
@@ -584,6 +693,7 @@ public sealed partial class AudioPlayerView : UserControl
 
             if (targetSeconds <= 1d)
             {
+                QueueTransportControlsRefresh();
                 return;
             }
 
@@ -592,6 +702,7 @@ public sealed partial class AudioPlayerView : UserControl
             _lastPersistedResumeSeconds = targetSeconds;
             _pendingResumePositionSeconds = null;
             _isRestoringResumePosition = false;
+            QueueTransportControlsRefresh();
             var wasInitialSeekRequested =
                 _currentRequest?.InitialSeekSeconds is double initialSeekSeconds
                 && initialSeekSeconds > 1d;
@@ -613,6 +724,8 @@ public sealed partial class AudioPlayerView : UserControl
         _hasPlaybackEnded = true;
         _pendingResumePositionSeconds = null;
         _lastPersistedResumeSeconds = 0;
+        _lastKnownDurationSeconds = 0;
+        QueueTransportControlsRefresh();
         _ = ClearResumePositionAsync(_currentRequest.SourceUrl);
     }
 
@@ -644,7 +757,13 @@ public sealed partial class AudioPlayerView : UserControl
         }
 
         _lastPersistedResumeSeconds = positionSeconds;
+        QueueTransportControlsRefresh();
         _ = PersistResumePositionAsync(_currentRequest.SourceUrl, positionSeconds);
+    }
+
+    private void OnPlaybackSessionPlaybackStateChanged(MediaPlaybackSession sender, object args)
+    {
+        QueueTransportControlsRefresh();
     }
 
     private void SetStatusMessage(string? message, bool announce = false, bool important = false)
@@ -658,6 +777,271 @@ public sealed partial class AudioPlayerView : UserControl
         {
             AutomationAnnouncementHelper.Announce(StatusTextBlock, message, important);
         }
+    }
+
+    private void QueueTransportControlsRefresh()
+    {
+        if (_isTransportUiRefreshPending)
+        {
+            return;
+        }
+
+        _isTransportUiRefreshPending = true;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _isTransportUiRefreshPending = false;
+            RefreshTransportControlsUi();
+        });
+    }
+
+    private void RefreshTransportControlsUi()
+    {
+        var canSeek = _currentRequest?.CanSeek == true;
+        SeekControlsPanel.Visibility = canSeek ? Visibility.Visible : Visibility.Collapsed;
+        SkipBackwardButton.Visibility = canSeek ? Visibility.Visible : Visibility.Collapsed;
+        SkipForwardButton.Visibility = canSeek ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_mediaPlayer?.PlaybackSession is not { } session)
+        {
+            UpdatePlayPauseButton(isPlaying: false);
+            if (canSeek)
+            {
+                SynchronizePositionSlider(0d, _lastKnownDurationSeconds);
+            }
+            else
+            {
+                CurrentPositionTextBlock.Text = "Na żywo";
+                DurationTextBlock.Text = "Na żywo";
+            }
+
+            return;
+        }
+
+        UpdatePlayPauseButton(session.PlaybackState == MediaPlaybackState.Playing);
+
+        if (!canSeek)
+        {
+            CurrentPositionTextBlock.Text = "Na żywo";
+            DurationTextBlock.Text = "Na żywo";
+            return;
+        }
+
+        var positionSeconds = Math.Max(0d, session.Position.TotalSeconds);
+        var durationSeconds = session.NaturalDuration.TotalSeconds;
+        if (durationSeconds > 1d)
+        {
+            _lastKnownDurationSeconds = durationSeconds;
+        }
+        else
+        {
+            durationSeconds = _lastKnownDurationSeconds;
+        }
+
+        SynchronizePositionSlider(positionSeconds, durationSeconds);
+    }
+
+    private void SynchronizePositionSlider(double positionSeconds, double durationSeconds)
+    {
+        _isSynchronizingPositionSlider = true;
+        PositionSlider.Maximum = durationSeconds > 1d ? durationSeconds : Math.Max(1d, positionSeconds);
+        PositionSlider.IsEnabled = durationSeconds > 1d;
+        PositionSlider.Value = Math.Clamp(positionSeconds, 0d, PositionSlider.Maximum);
+        _isSynchronizingPositionSlider = false;
+
+        CurrentPositionTextBlock.Text = FormatTime(positionSeconds);
+        DurationTextBlock.Text = durationSeconds > 1d ? FormatTime(durationSeconds) : "--:--";
+    }
+
+    private void UpdatePlayPauseButton(bool isPlaying)
+    {
+        var text = isPlaying ? "Pauza" : "Odtwarzaj";
+        PlayPauseButton.Content = text;
+        AutomationProperties.SetName(PlayPauseButton, text);
+    }
+
+    private CastingDevicePicker EnsureCastingDevicePicker()
+    {
+        if (_castingDevicePicker is not null)
+        {
+            return _castingDevicePicker;
+        }
+
+        _castingDevicePicker = new CastingDevicePicker();
+        InitializeWithWindow.Initialize(_castingDevicePicker, _windowHandleProvider.Handle);
+        _castingDevicePicker.CastingDeviceSelected += OnCastingDeviceSelected;
+        return _castingDevicePicker;
+    }
+
+    private void OnCastingDeviceSelected(CastingDevicePicker sender, CastingDeviceSelectedEventArgs args)
+    {
+        DispatcherQueue.TryEnqueue(() => _ = StartCastingAsync(args.SelectedCastingDevice));
+    }
+
+    private async Task StartCastingAsync(CastingDevice device)
+    {
+        if (_mediaPlayer is null)
+        {
+            SetStatusMessage("Odtwarzacz nie jest jeszcze gotowy do przesyłania dźwięku.", announce: true);
+            return;
+        }
+
+        await DisconnectCastingAsync(announce: false);
+
+        var connection = device.CreateCastingConnection();
+        connection.StateChanged += OnCastingConnectionStateChanged;
+        connection.ErrorOccurred += OnCastingConnectionErrorOccurred;
+        _castingConnection = connection;
+        UpdateCastingUi();
+
+        try
+        {
+            var status = await connection.RequestStartCastingAsync(_mediaPlayer.GetAsCastingSource());
+            if (status == CastingConnectionErrorStatus.Succeeded)
+            {
+                SetStatusMessage($"Rozpoczęto przesyłanie do urządzenia: {device.FriendlyName}.", announce: true, important: true);
+                UpdateCastingUi();
+                return;
+            }
+
+            await CleanupCastingConnectionAsync(connection);
+            SetStatusMessage(BuildCastingErrorMessage(status), announce: true, important: true);
+        }
+        catch
+        {
+            await CleanupCastingConnectionAsync(connection);
+            SetStatusMessage("Nie udało się rozpocząć przesyłania dźwięku do urządzenia zewnętrznego.", announce: true, important: true);
+        }
+    }
+
+    private void OnCastingConnectionStateChanged(CastingConnection sender, object args)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!ReferenceEquals(_castingConnection, sender))
+            {
+                return;
+            }
+
+            UpdateCastingUi();
+
+            var message = sender.State switch
+            {
+                CastingConnectionState.Connecting => "Łączenie z urządzeniem zewnętrznym…",
+                CastingConnectionState.Connected => "Połączono z urządzeniem zewnętrznym.",
+                CastingConnectionState.Rendering => "Dźwięk jest przesyłany do urządzenia zewnętrznego.",
+                CastingConnectionState.Disconnecting => "Rozłączanie urządzenia zewnętrznego…",
+                CastingConnectionState.Disconnected => "Przesyłanie do urządzenia zewnętrznego zostało zakończone.",
+                _ => null,
+            };
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                SetStatusMessage(message, announce: true);
+            }
+
+            if (sender.State == CastingConnectionState.Disconnected && !_isDisconnectingCasting)
+            {
+                _ = CleanupCastingConnectionAsync(sender);
+            }
+        });
+    }
+
+    private void OnCastingConnectionErrorOccurred(CastingConnection sender, CastingConnectionErrorOccurredEventArgs args)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!ReferenceEquals(_castingConnection, sender))
+            {
+                return;
+            }
+
+            _ = CleanupCastingConnectionAsync(sender);
+            SetStatusMessage(BuildCastingErrorMessage(args.ErrorStatus), announce: true, important: true);
+        });
+    }
+
+    private async Task DisconnectCastingAsync(bool announce)
+    {
+        if (_castingConnection is null)
+        {
+            UpdateCastingUi();
+            return;
+        }
+
+        var connection = _castingConnection;
+        _isDisconnectingCasting = true;
+        UpdateCastingUi();
+
+        try
+        {
+            var status = await connection.DisconnectAsync();
+            await CleanupCastingConnectionAsync(connection);
+
+            if (announce)
+            {
+                var message = status == CastingConnectionErrorStatus.Succeeded
+                    ? "Rozłączono urządzenie zewnętrzne."
+                    : BuildCastingErrorMessage(status);
+                SetStatusMessage(message, announce: true, important: status != CastingConnectionErrorStatus.Succeeded);
+            }
+        }
+        catch
+        {
+            await CleanupCastingConnectionAsync(connection);
+            if (announce)
+            {
+                SetStatusMessage("Nie udało się rozłączyć urządzenia zewnętrznego.", announce: true, important: true);
+            }
+        }
+        finally
+        {
+            _isDisconnectingCasting = false;
+            UpdateCastingUi();
+        }
+    }
+
+    private Task CleanupCastingConnectionAsync(CastingConnection connection)
+    {
+        connection.StateChanged -= OnCastingConnectionStateChanged;
+        connection.ErrorOccurred -= OnCastingConnectionErrorOccurred;
+        connection.Dispose();
+
+        if (ReferenceEquals(_castingConnection, connection))
+        {
+            _castingConnection = null;
+        }
+
+        UpdateCastingUi();
+        return Task.CompletedTask;
+    }
+
+    private void UpdateCastingUi()
+    {
+        var isConnected = _castingConnection is not null
+            && _castingConnection.State is CastingConnectionState.Connected or CastingConnectionState.Rendering or CastingConnectionState.Connecting or CastingConnectionState.Disconnecting;
+
+        CastToDeviceButton.Content = isConnected ? "Rozłącz urządzenie" : "Przesyłaj do urządzenia";
+        AutomationProperties.SetName(
+            CastToDeviceButton,
+            isConnected
+                ? "Rozłącz urządzenie zewnętrzne"
+                : "Przesyłaj dźwięk do urządzenia zewnętrznego"
+        );
+    }
+
+    private static string BuildCastingErrorMessage(CastingConnectionErrorStatus status)
+    {
+        return status switch
+        {
+            CastingConnectionErrorStatus.DeviceDidNotRespond => "Urządzenie zewnętrzne nie odpowiedziało.",
+            CastingConnectionErrorStatus.DeviceError => "Urządzenie zewnętrzne zgłosiło błąd.",
+            CastingConnectionErrorStatus.DeviceLocked => "Urządzenie zewnętrzne jest zablokowane.",
+            CastingConnectionErrorStatus.ProtectedPlaybackFailed => "Urządzenie zewnętrzne nie obsługuje tego typu odtwarzania.",
+            CastingConnectionErrorStatus.InvalidCastingSource => "Tego dźwięku nie udało się przesłać do urządzenia zewnętrznego.",
+            CastingConnectionErrorStatus.Unknown => "Nie udało się przesłać dźwięku do urządzenia zewnętrznego.",
+            CastingConnectionErrorStatus.Succeeded => "Przesyłanie do urządzenia zewnętrznego zakończyło się powodzeniem.",
+            _ => "Nie udało się przesłać dźwięku do urządzenia zewnętrznego.",
+        };
     }
 
     private async Task LoadShowNotesAsync(int podcastPostId, CancellationToken cancellationToken)
@@ -1631,6 +2015,7 @@ public sealed partial class AudioPlayerView : UserControl
         mediaPlayer.MediaOpened -= OnMediaOpened;
         mediaPlayer.MediaEnded -= OnMediaEnded;
         mediaPlayer.PlaybackSession.PositionChanged -= OnPlaybackSessionPositionChanged;
+        mediaPlayer.PlaybackSession.PlaybackStateChanged -= OnPlaybackSessionPlaybackStateChanged;
     }
 
     private static string GetHostLabel(Uri url)

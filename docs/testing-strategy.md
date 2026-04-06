@@ -125,6 +125,7 @@ Pozniej automatyzowac:
 
 ### Modul `Shell`
 - klawiatura:
+  - aplikacja uruchamia się w oknie zmaksymalizowanym
   - `Alt+1` do `Alt+8` przełącza sekcje bez użycia myszy
   - strzałka w górę i strzałka w dół przełącza aktywną sekcję na liście sekcji
   - wpisanie pierwszej litery sekcji przenosi fokus do kolejnej sekcji zaczynającej się od tej litery
@@ -163,6 +164,7 @@ Pozniej automatyzowac:
   - po zamknięciu widoku artykułu focus wraca na poprzedni element listy
   - dojście do końca listy automatycznie dociąga starsze treści bez ręcznego przycisku `więcej`
   - szybkie wielokrotne dojście do końca listy, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie uruchamia równoległych awaryjnych doładowań
+  - po automatycznym doczytaniu starszych treści fokus i zaznaczenie zostają na tym samym wpisie, bez przeskoku na inny element listy
   - pozostawienie sekcji `Nowości` otwartej przez kilka minut powoduje automatyczne pojawienie się nowo opublikowanego podcastu albo artykułu bez restartu aplikacji
 
 ### Modul `Kategorie podcastów i artykułów`
@@ -179,19 +181,37 @@ Pozniej automatyzowac:
   - zmiana kategorii przeładowuje listę treści dla wybranej kategorii
   - po przeładowaniu lista kategorii zachowuje zaznaczenie i fokus na aktywnej pozycji
   - w listach `Podcastów` i `Artykułów` menu kontekstowe pokazuje skróty `Ctrl+S`, `Ctrl+U`, `Ctrl+C`, a dla podcastów także `Ctrl+P`
+  - po automatycznym doczytaniu kolejnych pozycji w `Podcastach` albo `Artykułach` fokus i zaznaczenie zostają na tym samym wpisie
   - pozostawienie sekcji `Podcastów` albo `Artykułów` otwartej przez kilka minut powoduje automatyczne pojawienie się nowo opublikowanej treści bez restartu aplikacji
 
 ### Modul `Czytanie artykulu`
 - klawiatura:
   - focus po otwarciu przechodzi od razu do treści artykułu
+  - `Tab` porusza się już tylko po zawartości osadzonego czytnika artykułu, bez dodatkowych przycisków `Odśwież`, `Otwórz w przeglądarce` i bez przycisku `Zamknij` w cyklu tabulacji
   - `Escape` zamyka widok czytania i wraca do listy źródłowej
 - `Narrator`:
   - odczytuje nagłówek artykułu i treść bez przechodzenia przez elementy serwisu WordPress
 - `NVDA`:
   - odczytuje treść jako jeden spójny dokument, bez technicznego chrome przeglądarki
+  - przy wyłączonym trybie przeglądania po wejściu do treści ogłasza krótką nazwę hosta `Czytnik artykułu`, bez dodatkowego dublowania nazwy z warstwy HTML
 - funkcjonalnie:
   - widok czytania renderuje tylko treść artykułu z API wraz z metadanymi
   - linki z treści artykułu otwierają się w zewnętrznej przeglądarce bez opuszczania widoku czytania
+
+### Modul `Tyfloradio`
+- klawiatura:
+  - przyciski `Skontaktuj się z Tyfloradiem` i `Nagraj głosówkę` pozostają osiągalne z klawiatury niezależnie od statusu audycji
+  - `Tab` pozwala dojść do focusowalnego regionu `Status audycji interaktywnej` i do przycisku `Pokaż ramówkę`
+- `Narrator`:
+  - odczytuje pełny komunikat błędu przy próbie otwarcia kontaktu tekstowego albo głosówki poza audycją interaktywną
+  - odczytuje aktualny status audycji interaktywnej oraz przycisk `Pokaż ramówkę Tyfloradia`
+- `NVDA`:
+  - odczytuje tytuł i treść `InfoBar`, a nie samo techniczne `Ikona błędu`
+- funkcjonalnie:
+  - zamknięcie formularza kontaktu bez wysyłki nie pokazuje błędu
+  - rzeczywisty problem z otwarciem formularza kontaktu tekstowego albo głosowego pokazuje czytelny komunikat
+  - bieżący status Tyfloradia jest dostępny z klawiatury, a przycisk `Pokaż ramówkę Tyfloradia` odsłania w tej samej sekcji wielowierszowe pole tylko do odczytu i przenosi do niego fokus
+  - przy braku opublikowanej ramówki przycisk `Pokaż ramówkę Tyfloradia` odsłania pole z komunikatem `Brak dostępnej ramówki.`
 
 ### Modul `Ustawienia`
 - klawiatura:
@@ -238,6 +258,7 @@ Pozniej automatyzowac:
   - odczytuje stan pól wyboru diagnostyki i prywatnego logu bez pustych nazw
   - odczytuje pojawienie się przycisku otwierającego publiczne issue po udanej wysyłce
 - funkcjonalnie:
+  - pole `Opis publiczny` działa jako natywne wielowierszowe pole edycji `RichEditBox`
   - publiczne zgłoszenie zawiera tylko tytuł, opis i bezpieczną diagnostykę jawną
   - opcjonalny log techniczny trafia wyłącznie do prywatnego repo intake
   - klient zawsze wysyła nagłówek `User-Agent`
@@ -289,7 +310,7 @@ Pozniej automatyzowac:
 
 ### Modul `Odtwarzacz`
 - klawiatura:
-  - focus przechodzi przez przyciski `Wstecz 30 s`, `Dalej 30 s`, wybór prędkości, `Głośność`, przyciski dodatków i akcje w listach w logicznej kolejności
+  - focus przechodzi przez widoczne przyciski `Wstecz 30 s`, `Odtwarzaj` albo `Pauza`, `Dalej 30 s`, `Przesyłaj do urządzenia`, suwak pozycji, wybór prędkości, `Głośność`, przyciski dodatków i akcje w listach w logicznej kolejności
   - fokus na przyciskach przewijania, przycisku odtwarzania i suwaku pozycji jest zawsze czytelny wizualnie, bez znikania kontrolek po samym wejściu z klawiatury
   - `Ctrl+spacja` wstrzymuje i wznawia odtwarzanie
   - `Ctrl+strzałka w lewo` i `Ctrl+strzałka w prawo` przewijają podcast o `30 s`
@@ -305,7 +326,8 @@ Pozniej automatyzowac:
   - odczytuje listę odnośników jako tytuł i host bez pustych wartości
 - funkcjonalnie:
   - player `Tyfloradia` pozwala zmienić głośność bez wychodzenia z dialogu
-  - przyciski transportu i suwak pozycji pozostają stale widoczne wizualnie także przy nawigacji samą klawiaturą
+  - przyciski transportu i suwak pozycji są jawnie widoczne jako osobny pasek sterowania także przy nawigacji samą klawiaturą
+  - przycisk `Przesyłaj do urządzenia` otwiera wybór urządzenia zewnętrznego dla podcastu i `Tyfloradia`, a po połączeniu pozwala też rozłączyć przesyłanie
   - komentarz z sekcją `Znaczniki czasu` daje listę markerów w kolejności rosnącej
   - komentarz z sekcją `Odnośniki` albo `Linki` daje listę linków
   - kliknięcie znacznika przewija player do właściwego czasu i uruchamia odtwarzanie

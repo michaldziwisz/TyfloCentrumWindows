@@ -19,12 +19,18 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji poprawiono odświeżanie treści przy dłużej otwartej aplikacji. Sekcje `Nowości`, `Podcasty` i `Artykuły` automatycznie pobierają nowe wpisy po kilku minutach, dzięki czemu nowo opublikowane audycje i artykuły pojawiają się bez restartu programu. Jednocześnie ograniczono ryzyko duplikatów przy dalszym doładowywaniu starszych treści.
+W tej wersji poprawiono czytanie artykułów, Tyfloradio i odtwarzacz. Czytnik artykułów działa teraz czyściej z klawiaturą i czytnikami ekranu, bez zbędnych przycisków w cyklu tabulacji, a fokus trafia bezpośrednio do treści.
 
-Uproszczono też nawigację w głównym shellu aplikacji:
-- usunięto zbędny komunikat o wersji testowej,
-- skróty sekcji są teraz widoczne bezpośrednio przy nazwach pozycji listy, na przykład `Nowości (Alt+1)` i `Podcasty (Alt+2)`,
-- czytniki ekranu nie zatrzymują się już na osobnych, technicznych popupach od skrótów klawiaturowych.
+Rozbudowano też odtwarzacz:
+- pasek transportu jest stale widoczny wizualnie,
+- przycisk `Przesyłaj do urządzenia` wrócił do interfejsu,
+- sterowanie odtwarzaniem jest bardziej przewidywalne przy obsłudze samą klawiaturą.
+
+Usprawniono również sekcję `Tyfloradio` i długie listy treści:
+- komunikaty przy próbie kontaktu poza audycją interaktywną są teraz spójne i czytelne,
+- `Pokaż ramówkę Tyfloradia` otwiera pełną treść ramówki w polu tylko do odczytu,
+- podczas automatycznego doczytywania starszych pozycji aplikacja lepiej zachowuje fokus na aktualnym elemencie,
+- aplikacja uruchamia się teraz od razu w zmaksymalizowanym oknie.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.

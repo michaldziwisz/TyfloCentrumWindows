@@ -22,7 +22,58 @@ public sealed class RadioViewModelTests
         Assert.Equal("Na antenie trwa audycja interaktywna: Audycja testowa.", viewModel.LiveStatusMessage);
         Assert.Equal("12:00 Test", viewModel.ScheduleText);
         Assert.Equal("Dane Tyfloradia zostały odświeżone.", viewModel.StatusAnnouncement);
+        Assert.Equal(
+            "Status audycji interaktywnej. Na antenie trwa audycja interaktywna: Audycja testowa.",
+            viewModel.LiveStatusAccessibleText
+        );
+        Assert.Equal("Ramówka. 12:00 Test", viewModel.ScheduleAccessibleText);
         Assert.True(viewModel.IsInteractiveBroadcastAvailable);
+    }
+
+    [Fact]
+    public async Task LoadIfNeededAsync_normalizes_schedule_line_breaks_and_html_breaks()
+    {
+        var service = new FakeRadioService
+        {
+            Availability = new RadioAvailability(true, "Audycja testowa"),
+            Schedule = new RadioScheduleInfo(
+                true,
+                "12:00 Start<br>13:00 Dalej\\n14:00 Koniec",
+                null
+            ),
+        };
+        var viewModel = new RadioViewModel(service, new FakeAudioPlaybackRequestFactory());
+
+        await viewModel.LoadIfNeededAsync();
+
+        Assert.Equal("12:00 Start\n13:00 Dalej\n14:00 Koniec", viewModel.ScheduleText);
+        Assert.Equal(
+            "Ramówka. 12:00 Start\n13:00 Dalej\n14:00 Koniec",
+            viewModel.ScheduleAccessibleText
+        );
+    }
+
+    [Fact]
+    public async Task LoadIfNeededAsync_preserves_plain_multiline_schedule_text()
+    {
+        var service = new FakeRadioService
+        {
+            Availability = new RadioAvailability(false, null),
+            Schedule = new RadioScheduleInfo(
+                true,
+                "Witajcie,\nw tym tygodniu jedyną audycją na antenie TyfloRadia będzie\nTyfloPrzegląd.\nDo usłyszenia!\n",
+                null
+            ),
+        };
+        var viewModel = new RadioViewModel(service, new FakeAudioPlaybackRequestFactory());
+
+        await viewModel.LoadIfNeededAsync();
+
+        Assert.Equal(
+            "Witajcie,\nw tym tygodniu jedyną audycją na antenie TyfloRadia będzie\nTyfloPrzegląd.\nDo usłyszenia!",
+            viewModel.ScheduleText
+        );
+        Assert.Equal(viewModel.ScheduleText, viewModel.ScheduleDisplayText);
     }
 
     [Fact]
@@ -40,7 +91,25 @@ public sealed class RadioViewModelTests
         Assert.Equal("Na antenie Tyfloradia nie trwa teraz żadna audycja interaktywna.", viewModel.LiveStatusMessage);
         Assert.Equal("Brak ramówki", viewModel.ErrorMessage);
         Assert.Equal("Brak ramówki", viewModel.StatusAnnouncement);
+        Assert.Equal("Brak ramówki", viewModel.ScheduleDisplayText);
+        Assert.True(viewModel.CanOpenSchedule);
         Assert.False(viewModel.IsInteractiveBroadcastAvailable);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_exposes_schedule_fallback_in_readonly_field_text()
+    {
+        var service = new FakeRadioService
+        {
+            Availability = new RadioAvailability(false, null),
+            Schedule = new RadioScheduleInfo(true, null, null),
+        };
+        var viewModel = new RadioViewModel(service, new FakeAudioPlaybackRequestFactory());
+
+        await viewModel.RefreshAsync();
+
+        Assert.Equal("Brak dostępnej ramówki.", viewModel.ScheduleDisplayText);
+        Assert.True(viewModel.CanOpenSchedule);
     }
 
     [Fact]
@@ -70,9 +139,96 @@ public sealed class RadioViewModelTests
         var result = viewModel.TryStartContact();
 
         Assert.False(result);
+        Assert.False(viewModel.HasError);
+        Assert.Null(viewModel.ErrorMessage);
         Assert.Equal(
-            "Na antenie Tyfloradia nie trwa teraz żadna audycja interaktywna.",
-            viewModel.ErrorMessage
+            "Na antenie Tyfloradia nie trwa teraz żadna audycja interaktywna, więc nie można wysłać wiadomości tekstowej.",
+            viewModel.StatusAnnouncement
+        );
+    }
+
+    [Fact]
+    public void TryStartVoiceContact_sets_voice_specific_error_when_audition_is_not_available()
+    {
+        var viewModel = new RadioViewModel(
+            new FakeRadioService(),
+            new FakeAudioPlaybackRequestFactory()
+        );
+
+        var result = viewModel.TryStartVoiceContact();
+
+        Assert.False(result);
+        Assert.False(viewModel.HasError);
+        Assert.Null(viewModel.ErrorMessage);
+        Assert.Equal(
+            "Na antenie Tyfloradia nie trwa teraz żadna audycja interaktywna, więc nie można nagrać głosówki.",
+            viewModel.StatusAnnouncement
+        );
+    }
+
+    [Fact]
+    public void TryStartTextContact_does_not_clear_existing_feedback_when_audition_is_available()
+    {
+        var viewModel = new RadioViewModel(
+            new FakeRadioService
+            {
+                Availability = new RadioAvailability(true, "Audycja testowa"),
+            },
+            new FakeAudioPlaybackRequestFactory()
+        )
+        {
+            ErrorMessage = "Poprzedni komunikat.",
+            StatusAnnouncement = "Poprzedni komunikat.",
+            IsInteractiveBroadcastAvailable = true,
+        };
+
+        var result = viewModel.TryStartTextContact();
+
+        Assert.True(result);
+        Assert.Equal("Poprzedni komunikat.", viewModel.ErrorMessage);
+        Assert.Equal("Poprzedni komunikat.", viewModel.StatusAnnouncement);
+    }
+
+    [Fact]
+    public void ReportContactFormOpenError_announces_without_setting_error_bar_state()
+    {
+        var viewModel = new RadioViewModel(
+            new FakeRadioService(),
+            new FakeAudioPlaybackRequestFactory()
+        );
+
+        viewModel.ReportContactFormOpenError();
+
+        Assert.False(viewModel.HasError);
+        Assert.Equal(
+            "Nie udało się otworzyć formularza wiadomości do Tyfloradia.",
+            viewModel.StatusAnnouncement
+        );
+    }
+
+    [Fact]
+    public void TryStartTextContact_reannounces_same_error_on_second_attempt()
+    {
+        var viewModel = new RadioViewModel(
+            new FakeRadioService(),
+            new FakeAudioPlaybackRequestFactory()
+        );
+        var statusAnnouncementChanges = 0;
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(RadioViewModel.StatusAnnouncement))
+            {
+                statusAnnouncementChanges++;
+            }
+        };
+
+        _ = viewModel.TryStartTextContact();
+        _ = viewModel.TryStartTextContact();
+
+        Assert.True(statusAnnouncementChanges >= 3);
+        Assert.Equal(
+            "Na antenie Tyfloradia nie trwa teraz żadna audycja interaktywna, więc nie można wysłać wiadomości tekstowej.",
+            viewModel.StatusAnnouncement
         );
     }
 

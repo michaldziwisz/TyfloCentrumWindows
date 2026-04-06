@@ -37,8 +37,10 @@
                 x:Name="ErrorBar"
                 Grid.Row="1"
                 IsClosable="False"
+                IsIconVisible="False"
                 IsOpen="False"
                 Severity="Error"
+                Title="Problem z głosówką do Tyfloradia"
                 Visibility="Collapsed" />
 
             <StackPanel

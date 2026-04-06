@@ -13,7 +13,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -25,21 +24,7 @@
                 TextWrapping="WrapWholeWords" />
         </StackPanel>
 
-        <StackPanel
-            Grid.Row="1"
-            Orientation="Horizontal"
-            Spacing="8">
-            <Button
-                AutomationProperties.Name="Odśwież widok czytania artykułu"
-                Click="OnRefreshClick"
-                Content="Odśwież" />
-            <Button
-                AutomationProperties.Name="Otwórz artykuł w zewnętrznej przeglądarce"
-                Click="OnOpenExternalClick"
-                Content="Otwórz w przeglądarce" />
-        </StackPanel>
-
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="1">
             <ProgressRing
                 x:Name="LoadingIndicator"
                 HorizontalAlignment="Left"
@@ -55,9 +40,10 @@
 
         <controls:WebView2
             x:Name="BrowserView"
-            Grid.Row="3"
+            Grid.Row="2"
             AutomationProperties.AutomationId="InAppBrowser.WebView"
-            AutomationProperties.Name="Widok czytania artykułu"
+            AutomationProperties.Name="Czytnik artykułu"
+            GotFocus="OnBrowserViewGotFocus"
             NavigationCompleted="OnNavigationCompleted"
             NavigationStarting="OnNavigationStarting" />
     </Grid>

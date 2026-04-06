@@ -575,6 +575,11 @@ public sealed partial class ArticleSectionView : UserControl
 
     private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.Action == NotifyCollectionChangedAction.Add)
+        {
+            ListViewFocusHelper.RestoreFocusedSelectionIfNeeded(ItemsList);
+        }
+
         UpdateVisualState();
     }
 

@@ -43,14 +43,13 @@ public static partial class ArticleReaderDocumentBuilder
         builder.AppendLine("  </style>");
         builder.AppendLine("</head>");
         builder.AppendLine("<body>");
-        builder.AppendLine(
-            $"  <main id=\"article-root\" tabindex=\"-1\" aria-label=\"Artykuł: {safeTitle}\">"
-        );
-        builder.AppendLine("    <header>");
-        builder.AppendLine($"      <h1>{safeTitle}</h1>");
+        builder.AppendLine("  <main>");
+        builder.AppendLine("    <div id=\"article-root\" tabindex=\"-1\">");
+        builder.AppendLine("      <header>");
+        builder.AppendLine($"        <h1>{safeTitle}</h1>");
         if (!string.IsNullOrWhiteSpace(safeDate) || !string.IsNullOrWhiteSpace(safeExternalUrl))
         {
-            builder.Append("      <p class=\"meta\">");
+            builder.Append("        <p class=\"meta\">");
             if (!string.IsNullOrWhiteSpace(safeDate))
             {
                 builder.Append(safeDate);
@@ -68,10 +67,11 @@ public static partial class ArticleReaderDocumentBuilder
 
             builder.AppendLine("</p>");
         }
-        builder.AppendLine("    </header>");
-        builder.AppendLine("    <article>");
+        builder.AppendLine("      </header>");
+        builder.AppendLine("      <article>");
         builder.AppendLine(safeContent);
-        builder.AppendLine("    </article>");
+        builder.AppendLine("      </article>");
+        builder.AppendLine("    </div>");
         builder.AppendLine("  </main>");
         builder.AppendLine("  <script>");
         builder.AppendLine("    (function () {");

@@ -58,9 +58,9 @@ Szczegoly:
 - lista wspieranych architektur
 - numer wersji zgodny z Partner Center:
   - czwarty segment wersji musi pozostac `0`
-  - przyklad poprawnej wersji: `0.1.4.0`
+  - przyklad poprawnej wersji: `0.1.6.0`
 - dla kolejnych recznych update'ow warto przygotowac osobny plik z gotowym listingiem i `What's new`, np.:
-  - [submission-0.1.5.0-pl-PL.md](../store/submission-0.1.5.0-pl-PL.md)
+  - [submission-0.1.6.0-pl-PL.md](../store/submission-0.1.6.0-pl-PL.md)
 
 ## Ryzyka release
 - push notifications moga wplynac na szczegoly konfiguracji pakietu

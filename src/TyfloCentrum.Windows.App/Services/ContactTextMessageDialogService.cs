@@ -8,20 +8,27 @@ namespace TyfloCentrum.Windows.App.Services;
 public sealed class ContactTextMessageDialogService
 {
     private readonly IServiceProvider _serviceProvider;
+    private bool _isShowing;
 
     public ContactTextMessageDialogService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<bool> ShowAsync(
+    public async Task<FormDialogResult> ShowAsync(
         XamlRoot? xamlRoot,
         CancellationToken cancellationToken = default
     )
     {
+        xamlRoot = ResolveDialogXamlRoot(xamlRoot);
         if (xamlRoot is null)
         {
-            return false;
+            return FormDialogResult.FailedToOpen;
+        }
+
+        if (_isShowing)
+        {
+            return FormDialogResult.Closed;
         }
 
         var view = _serviceProvider.GetRequiredService<ContactTextMessageView>();
@@ -33,7 +40,7 @@ public sealed class ContactTextMessageDialogService
             XamlRoot = xamlRoot,
             Title = "Kontakt z Tyfloradiem",
             CloseButtonText = "Zamknij",
-            DefaultButton = ContentDialogButton.Close,
+            DefaultButton = ContentDialogButton.None,
             FullSizeDesired = false,
             Content = view,
         };
@@ -45,16 +52,44 @@ public sealed class ContactTextMessageDialogService
         }
 
         view.ViewModel.MessageSent += OnMessageSent;
+        dialog.Opened += OnDialogOpened;
 
         try
         {
+            _isShowing = true;
             cancellationToken.ThrowIfCancellationRequested();
+            await Task.Yield();
             await dialog.ShowAsync();
-            return didSend;
+            return didSend ? FormDialogResult.Submitted : FormDialogResult.Closed;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return FormDialogResult.FailedToOpen;
         }
         finally
         {
+            _isShowing = false;
             view.ViewModel.MessageSent -= OnMessageSent;
+            dialog.Opened -= OnDialogOpened;
         }
+
+        void OnDialogOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
+        {
+            view.DispatcherQueue.TryEnqueue(view.FocusPrimaryContent);
+        }
+    }
+
+    private XamlRoot? ResolveDialogXamlRoot(XamlRoot? preferredXamlRoot)
+    {
+        if (preferredXamlRoot is not null)
+        {
+            return preferredXamlRoot;
+        }
+
+        return (_serviceProvider.GetService<MainWindow>()?.Content as FrameworkElement)?.XamlRoot;
     }
 }

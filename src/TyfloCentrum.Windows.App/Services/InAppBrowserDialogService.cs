@@ -124,8 +124,6 @@ public sealed class InAppBrowserDialogService
         {
             XamlRoot = xamlRoot,
             Title = "Czytanie artykułu",
-            CloseButtonText = "Zamknij",
-            DefaultButton = ContentDialogButton.Close,
             FullSizeDesired = true,
             Content = view,
         };

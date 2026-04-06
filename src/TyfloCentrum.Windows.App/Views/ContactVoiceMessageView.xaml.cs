@@ -35,6 +35,11 @@ public sealed partial class ContactVoiceMessageView : UserControl
 
     public ContactVoiceMessageViewModel ViewModel { get; }
 
+    public void FocusPrimaryContent()
+    {
+        NameTextBox.Focus(FocusState.Programmatic);
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         NameTextBox.Focus(FocusState.Programmatic);

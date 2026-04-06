@@ -32,8 +32,10 @@
             x:Name="ErrorBar"
             Grid.Row="2"
             IsClosable="False"
+            IsIconVisible="False"
             IsOpen="False"
             Severity="Error"
+            Title="Problem z wiadomością do Tyfloradia"
             Visibility="Collapsed" />
 
         <StackPanel

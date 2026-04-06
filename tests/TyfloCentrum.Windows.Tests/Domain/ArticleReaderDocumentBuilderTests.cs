@@ -15,7 +15,8 @@ public sealed class ArticleReaderDocumentBuilderTests
             "<p>Pierwszy akapit.</p><p>Drugi akapit.</p>"
         );
 
-        Assert.Contains("<main id=\"article-root\"", html, StringComparison.Ordinal);
+        Assert.Contains("<main>", html, StringComparison.Ordinal);
+        Assert.Contains("<div id=\"article-root\" tabindex=\"-1\">", html, StringComparison.Ordinal);
         Assert.Contains("<h1>Testowy artykuł</h1>", html, StringComparison.Ordinal);
         Assert.Contains("20 marca 2026", html, StringComparison.Ordinal);
         Assert.Contains("<article>", html, StringComparison.Ordinal);
