@@ -93,6 +93,13 @@ cd D:\projekty\tyflocentrum_pc
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\Build-DevMsix.ps1 -Configuration Release
 ```
 
+Pakiet `msixupload` do Partner Center przygotuj osobnym krokiem:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\New-StoreMsixUpload.ps1
+```
+
+Do `msixupload` trafia tylko `.msix` oraz opcjonalnie `.appxsym`. Nie dolaczaj `.cer`.
+
 ### 8. Zrob pierwsza reczna submission
 - W Partner Center utworz pierwsza submission.
 - Wgraj paczke aplikacji.

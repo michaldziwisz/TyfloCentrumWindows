@@ -171,4 +171,7 @@ else {
     Write-Host ''
     Write-Host 'Albo jednym poleceniem:' -ForegroundColor Yellow
     Write-Host "powershell -ExecutionPolicy Bypass -File `"$repoRoot\scripts\windows\Build-DevMsix.ps1`" -Install"
+    Write-Host ''
+    Write-Host 'Aby przygotowac .msixupload do Microsoft Store:' -ForegroundColor Yellow
+    Write-Host "powershell -ExecutionPolicy Bypass -File `"$repoRoot\scripts\windows\New-StoreMsixUpload.ps1`" -PackageDirectory `"$($latestPackage.FullName)`""
 }

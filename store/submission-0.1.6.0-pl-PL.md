@@ -8,6 +8,15 @@ Po zbudowaniu release wrzuc do `Packages` plik:
 
 - `TyfloCentrum.Windows.App_0.1.6.0_x64.msixupload`
 
+Jesli budujesz go lokalnie, przygotuj go tak:
+
+```powershell
+cd D:\projekty\tyflocentrum_pc
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\New-StoreMsixUpload.ps1 -PackageDirectory .\artifacts\SignedAppPackages\TyfloCentrum.Windows.App_0.1.6.0_x64_Test
+```
+
+Do `msixupload` trafia tylko `.msix` oraz opcjonalnie `.appxsym`. Plik `.cer` musi zostac poza archiwum.
+
 ## Description
 Początek opisu powinien pozostać bez zmian, żeby nie wróciło ostrzeżenie o zależności od runtime:
 

@@ -61,6 +61,12 @@ Szczegoly:
   - przyklad poprawnej wersji: `0.1.6.0`
 - dla kolejnych recznych update'ow warto przygotowac osobny plik z gotowym listingiem i `What's new`, np.:
   - [submission-0.1.6.0-pl-PL.md](../store/submission-0.1.6.0-pl-PL.md)
+- lokalny `msixupload` przygotowuj skryptem:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\New-StoreMsixUpload.ps1 -PackageDirectory <katalog AppPackages>`
+- do `msixupload` trafia tylko:
+  - `.msix`
+  - opcjonalnie `.appxsym`
+- nie dolaczaj `.cer`, bo Partner Center odrzuca taki pakiet
 
 ## Ryzyka release
 - push notifications moga wplynac na szczegoly konfiguracji pakietu
