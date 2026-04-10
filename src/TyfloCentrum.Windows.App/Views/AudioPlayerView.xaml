@@ -98,26 +98,28 @@
                     Padding="{Binding ReplyAccentPaddingValue}"
                     BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                     BorderThickness="{Binding ReplyAccentBorderThicknessValue}">
-                    <StackPanel
-                        AutomationProperties.Name="{Binding AccessibleLabel}"
-                        Spacing="8">
-                        <TextBlock
-                            FontWeight="SemiBold"
-                            Text="{Binding AuthorName}"
-                            TextWrapping="WrapWholeWords" />
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{Binding ReplyContextText}"
-                            TextWrapping="WrapWholeWords"
-                            Visibility="{Binding ReplyContextVisibilityValue}" />
-                        <TextBlock
-                            Text="{Binding BodyDisplayText}"
-                            TextWrapping="WrapWholeWords" />
+                    <StackPanel Spacing="8">
+                        <StackPanel
+                            AutomationProperties.Name="{Binding AccessibleLabel}"
+                            Spacing="8">
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Text="{Binding AuthorName}"
+                                TextWrapping="WrapWholeWords" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding ReplyContextText}"
+                                TextWrapping="WrapWholeWords"
+                                Visibility="{Binding ReplyContextVisibilityValue}" />
+                            <TextBlock
+                                Text="{Binding BodyDisplayText}"
+                                TextWrapping="WrapWholeWords" />
+                        </StackPanel>
                         <Button
                             HorizontalAlignment="Left"
-                            AutomationProperties.Name="{Binding DetailsButtonLabel}"
-                            Click="OnCommentDetailsClick"
-                            Content="{Binding DetailsButtonText}"
+                            AutomationProperties.Name="{Binding ReplyButtonLabel}"
+                            Click="OnCommentReplyClick"
+                            Content="{Binding ReplyButtonText}"
                             Tag="{Binding}" />
                     </StackPanel>
                 </Border>

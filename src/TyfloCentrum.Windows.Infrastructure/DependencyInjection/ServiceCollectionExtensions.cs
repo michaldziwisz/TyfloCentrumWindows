@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.Infrastructure.Http;
 using TyfloCentrum.Windows.Infrastructure.Notifications;
@@ -25,63 +26,61 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAudioPlaybackRequestFactory, AudioPlaybackRequestFactory>();
         services.AddHttpClient<IFeedbackSubmissionService, SygnalistaFeedbackSubmissionService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IPushNotificationRegistrationSyncService, PushNotificationRegistrationSyncService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IContentDownloadService, ContentDownloadService>(client =>
         {
             client.Timeout = TimeSpan.FromMinutes(5);
+            TyfloCentrumHttpClientDefaults.EnsureUserAgent(client);
         });
         services.AddHttpClient<INewsFeedService, WordPressNewsFeedService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IWordPressCatalogService, WordPressCatalogService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IWordPressSearchService, WordPressSearchService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IWordPressPostDetailsService, WordPressPostDetailsService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<ITyfloSwiatMagazineService, WordPressTyfloSwiatMagazineService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IWordPressCommentsService, WordPressCommentsService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-        });
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
+        }).ConfigurePrimaryHttpMessageHandler(static () =>
+            new HttpClientHandler
+            {
+                AllowAutoRedirect = false,
+                AutomaticDecompression =
+                    DecompressionMethods.GZip
+                    | DecompressionMethods.Deflate
+                    | DecompressionMethods.Brotli,
+            });
         services.AddTransient<IPodcastShowNotesService, PodcastShowNotesService>();
         services.AddHttpClient<IRadioService, ContactPanelRadioService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IRadioContactService, ContactPanelRadioContactService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
         services.AddHttpClient<IRadioVoiceContactService, ContactPanelRadioVoiceContactService>(client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(60);
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(60));
         });
         return services;
     }

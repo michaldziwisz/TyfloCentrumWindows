@@ -8,4 +8,6 @@ public interface ITransientContentCache
         Func<CancellationToken, Task<T>> factory,
         CancellationToken cancellationToken = default
     );
+
+    Task RemoveAsync(string key, CancellationToken cancellationToken = default);
 }

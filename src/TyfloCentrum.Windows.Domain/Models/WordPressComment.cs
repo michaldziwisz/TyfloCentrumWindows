@@ -20,6 +20,9 @@ public sealed record WordPressComment
     [JsonPropertyName("date_gmt")]
     public string? DateGmt { get; init; }
 
+    [JsonPropertyName("status")]
+    public string? Status { get; init; }
+
     [JsonPropertyName("content")]
     public required RenderedText Content { get; init; }
 

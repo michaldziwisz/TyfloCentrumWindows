@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<TyfloSwiatMagazineViewModel>();
         services.AddTransient<TyfloSwiatPageDetailViewModel>();
         services.AddTransient<CommentDetailViewModel>();
+        services.AddTransient<PodcastCommentComposerViewModel>();
         services.AddTransient<ContactTextMessageViewModel>();
         services.AddTransient<ContactVoiceMessageViewModel>();
         return services;

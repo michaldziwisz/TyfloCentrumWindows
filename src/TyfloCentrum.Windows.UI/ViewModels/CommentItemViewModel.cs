@@ -52,10 +52,9 @@ public partial class CommentItemViewModel : ObservableObject
 
     public string ReplyAccentPaddingValue => IsReply ? "12,0,0,0" : "0";
 
-    public string DetailsButtonText =>
-        IsExpanded ? "Ukryj szczegóły komentarza" : "Szczegóły komentarza";
+    public string ReplyButtonText => "Odpowiedz";
 
-    public string DetailsButtonLabel => $"{DetailsButtonText}: {AuthorName}";
+    public string ReplyButtonLabel => $"Odpowiedz na komentarz: {AuthorName}";
 
     public string AccessibleLabel =>
         IsReply
@@ -82,8 +81,6 @@ public partial class CommentItemViewModel : ObservableObject
     partial void OnIsExpandedChanged(bool value)
     {
         OnPropertyChanged(nameof(BodyDisplayText));
-        OnPropertyChanged(nameof(DetailsButtonText));
-        OnPropertyChanged(nameof(DetailsButtonLabel));
         OnPropertyChanged(nameof(AccessibleLabel));
     }
 

@@ -6,6 +6,12 @@ public interface IWordPressCommentsService
 {
     Task<IReadOnlyList<WordPressComment>> GetCommentsAsync(
         int postId,
+        CancellationToken cancellationToken = default,
+        bool forceRefresh = false
+    );
+
+    Task<WordPressCommentSubmissionResult> SubmitCommentAsync(
+        WordPressCommentSubmissionRequest request,
         CancellationToken cancellationToken = default
     );
 }

@@ -66,10 +66,19 @@ public sealed class PodcastShowNotesServiceTests
 
         public Task<IReadOnlyList<WordPressComment>> GetCommentsAsync(
             int postId,
-            CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default,
+            bool forceRefresh = false
         )
         {
             return Task.FromResult(_comments);
+        }
+
+        public Task<WordPressCommentSubmissionResult> SubmitCommentAsync(
+            WordPressCommentSubmissionRequest request,
+            CancellationToken cancellationToken = default
+        )
+        {
+            throw new NotSupportedException();
         }
     }
 }

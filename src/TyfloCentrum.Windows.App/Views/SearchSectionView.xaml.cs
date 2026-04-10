@@ -228,10 +228,7 @@ public sealed partial class SearchSectionView : UserControl
             copyAudioLinkItem.Click += async (_, _) => await CopyPodcastAudioLinkAsync(item);
             flyout.Items.Add(copyAudioLinkItem);
 
-            if (await TryGetPodcastShowNotesAsync(item.PostId) is { } showNotes)
-            {
-                AddPodcastShowNotesMenuItems(flyout, item, showNotes);
-            }
+            AddPodcastShowNotesMenuItems(flyout, item, await TryGetPodcastShowNotesAsync(item.PostId));
         }
 
         var downloadItem = new MenuFlyoutItem { Text = "Pobierz (Ctrl+S)" };
@@ -274,14 +271,19 @@ public sealed partial class SearchSectionView : UserControl
         PodcastShowNotesSnapshot showNotes
     )
     {
-        if (showNotes.HasComments)
+        var commentsItem = new MenuFlyoutItem
         {
-            var commentsItem = new MenuFlyoutItem { Text = "Pokaż komentarze" };
-            AutomationProperties.SetName(commentsItem, $"Pokaż komentarze podcastu: {item.Title}");
-            commentsItem.Click += async (_, _) =>
-                await ShowPodcastShowNotesSectionAsync(PodcastShowNotesSection.Comments, item, showNotes);
-            flyout.Items.Add(commentsItem);
-        }
+            Text = showNotes.HasComments ? "Pokaż komentarze" : "Dodaj komentarz",
+        };
+        AutomationProperties.SetName(
+            commentsItem,
+            showNotes.HasComments
+                ? $"Pokaż komentarze podcastu: {item.Title}"
+                : $"Dodaj komentarz do podcastu: {item.Title}"
+        );
+        commentsItem.Click += async (_, _) =>
+            await ShowPodcastShowNotesSectionAsync(PodcastShowNotesSection.Comments, item, showNotes);
+        flyout.Items.Add(commentsItem);
 
         if (showNotes.HasChapterMarkers)
         {
@@ -316,7 +318,7 @@ public sealed partial class SearchSectionView : UserControl
         }
     }
 
-    private async Task<PodcastShowNotesSnapshot?> TryGetPodcastShowNotesAsync(int postId)
+    private async Task<PodcastShowNotesSnapshot> TryGetPodcastShowNotesAsync(int postId)
     {
         try
         {
@@ -324,7 +326,7 @@ public sealed partial class SearchSectionView : UserControl
         }
         catch
         {
-            return null;
+            return new PodcastShowNotesSnapshot([], [], []);
         }
     }
 

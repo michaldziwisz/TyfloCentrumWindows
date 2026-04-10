@@ -17,6 +17,7 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - `GET /wp/v2/posts/{id}`
 - `GET /wp/v2/categories`
 - `GET /wp/v2/comments`
+- `POST /wp-comments-post.php`
 
 ### Zachowania do odtworzenia
 - paginacja przez `page` i `per_page`
@@ -26,6 +27,25 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - filtrowanie po kategorii
 - wyszukiwanie po parametrze `search`
 - ograniczanie zwracanych pol przez `_fields`
+- dla wysylki komentarza:
+  - odczyt komentarzy pozostaje na `GET /wp/v2/comments`
+  - publikacja komentarza uzywa tego samego formularza co strona WWW, bo REST `POST /wp/v2/comments` moze wymagac logowania mimo wlaczonego publicznego komentowania
+  - body:
+    - `comment`
+    - `author`
+    - `email`
+    - `url`
+    - `comment_post_ID`
+    - `comment_parent`
+    - `submit`
+    - `akismet_comment_nonce` jesli formularz strony go udostepnia
+    - `ak_js`
+    - `ak_hp_textarea`
+  - aplikacja musi obslugiwac odpowiedzi `WordPress` dla statusow:
+    - redirect bez parametrow moderacji -> komentarz opublikowany
+    - redirect z `unapproved` albo `moderation-hash` -> komentarz przekazany do moderacji
+    - strona bledu z komunikatem o spamie -> komentarz zakwalifikowany jako spam
+    - strona bledu `WordPress` -> pokazac komunikat uzytkownikowi wprost
 
 ## WordPress - TyfloSwiat
 

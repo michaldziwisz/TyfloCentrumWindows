@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using System.ComponentModel;
 using TyfloCentrum.Windows.App.Services;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
@@ -29,6 +30,7 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly IPlaybackResumeService _playbackResumeService;
+    private readonly PodcastCommentComposerViewModel _commentComposerViewModel;
     private readonly IShareService _shareService;
     private readonly WindowHandleProvider _windowHandleProvider;
     private readonly IWordPressCommentsService _wordPressCommentsService;
@@ -37,15 +39,21 @@ public sealed partial class AudioPlayerView : UserControl
     private PodcastChapterMarkerItemViewModel[] _chapterMarkers = [];
     private CommentItemViewModel[] _comments = [];
     private PodcastRelatedLinkItemViewModel[] _relatedLinks = [];
+    private Button? _addCommentButton;
     private ListView? _chapterMarkersListView;
     private ListView? _commentsListView;
     private ListView? _relatedLinksListView;
+    private TextBox? _commentAuthorNameTextBox;
+    private TextBox? _commentAuthorEmailTextBox;
+    private TextBox? _commentContentTextBox;
     private MediaPlayer? _mediaPlayer;
     private AppSettingsSnapshot _currentSettings = AppSettingsSnapshot.Defaults;
     private bool _isChapterMarkersVisible;
     private bool _isCommentsVisible;
+    private bool _isCommentComposerVisible;
     private bool _isLoadingShowNotes;
     private bool _isRelatedLinksVisible;
+    private bool _isSynchronizingCommentComposer;
     private bool _isSynchronizingPositionSlider;
     private bool _isTransportUiRefreshPending;
     private bool _hasPlaybackEnded;
@@ -65,6 +73,7 @@ public sealed partial class AudioPlayerView : UserControl
         IClipboardService clipboardService,
         IFavoritesService favoritesService,
         IPlaybackResumeService playbackResumeService,
+        PodcastCommentComposerViewModel commentComposerViewModel,
         IShareService shareService,
         IWordPressCommentsService wordPressCommentsService,
         IExternalLinkLauncher externalLinkLauncher,
@@ -76,10 +85,12 @@ public sealed partial class AudioPlayerView : UserControl
         _clipboardService = clipboardService;
         _favoritesService = favoritesService;
         _playbackResumeService = playbackResumeService;
+        _commentComposerViewModel = commentComposerViewModel;
         _shareService = shareService;
         _wordPressCommentsService = wordPressCommentsService;
         _externalLinkLauncher = externalLinkLauncher;
         _windowHandleProvider = windowHandleProvider;
+        _commentComposerViewModel.PropertyChanged += OnCommentComposerPropertyChanged;
         _playbackRates = PlaybackRateCatalog
             .SupportedValues.Select(value => new PlaybackRateOption(PlaybackRateCatalog.FormatLabel(value), value))
             .ToArray();
@@ -132,6 +143,9 @@ public sealed partial class AudioPlayerView : UserControl
 
         if (!request.IsLive && request.PodcastPostId is int podcastPostId)
         {
+            _commentComposerViewModel.Initialize(podcastPostId);
+            _commentComposerViewModel.CancelReply();
+            await _commentComposerViewModel.LoadIfNeededAsync(cancellationToken);
             _showNotesLoadCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             _ = LoadShowNotesAsync(podcastPostId, _showNotesLoadCts.Token);
         }
@@ -1315,11 +1329,38 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
-    private void OnCommentDetailsClick(object sender, RoutedEventArgs e)
+    private void OnCommentsListContextRequested(object sender, ContextRequestedEventArgs e)
+    {
+        if (sender is not ListView listView)
+        {
+            return;
+        }
+
+        var item =
+            ItemContextResolver.Resolve<CommentItemViewModel>(e.OriginalSource)
+            ?? listView.SelectedItem as CommentItemViewModel;
+        if (item is null)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        var flyout = new MenuFlyout();
+
+        var replyItem = new MenuFlyoutItem { Text = item.ReplyButtonText };
+        AutomationProperties.SetName(replyItem, item.ReplyButtonLabel);
+        replyItem.Click += async (_, _) => await ShowCommentComposerAsync(item);
+        flyout.Items.Add(replyItem);
+
+        flyout.ShowAt(e.OriginalSource as FrameworkElement ?? listView);
+    }
+
+    private async void OnCommentReplyClick(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: CommentItemViewModel item })
         {
-            ToggleCommentDetails(item);
+            await ShowCommentComposerAsync(item);
         }
     }
 
@@ -1476,6 +1517,182 @@ public sealed partial class AudioPlayerView : UserControl
         RestoreCommentSelection(item);
     }
 
+    private Border BuildCommentComposerPanel()
+    {
+        _isSynchronizingCommentComposer = true;
+        try
+        {
+            var host = new StackPanel { Spacing = 10 };
+
+            host.Children.Add(new TextBlock
+            {
+                Text = _commentComposerViewModel.FormHeadingText,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            });
+            host.Children.Add(new TextBlock { Text = "Pola oznaczone * są obowiązkowe." });
+
+            if (_commentComposerViewModel.HasReplyTarget)
+            {
+                host.Children.Add(new TextBlock
+                {
+                    Text = _commentComposerViewModel.ReplyTargetText,
+                    TextWrapping = TextWrapping.WrapWholeWords,
+                });
+
+                var cancelReplyButton = new Button
+                {
+                    Content = "Anuluj odpowiedź",
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                };
+                cancelReplyButton.Click += OnCancelCommentReplyClick;
+                host.Children.Add(cancelReplyButton);
+            }
+
+            _commentAuthorNameTextBox = new TextBox
+            {
+                Header = "Imię *",
+                Text = _commentComposerViewModel.AuthorName,
+            };
+            _commentAuthorNameTextBox.TextChanged += OnCommentAuthorNameTextChanged;
+            host.Children.Add(_commentAuthorNameTextBox);
+
+            _commentAuthorEmailTextBox = new TextBox
+            {
+                Header = "Adres e-mail *",
+                Text = _commentComposerViewModel.AuthorEmail,
+                InputScope = new InputScope
+                {
+                    Names = { new InputScopeName(InputScopeNameValue.EmailSmtpAddress) },
+                },
+            };
+            _commentAuthorEmailTextBox.TextChanged += OnCommentAuthorEmailTextChanged;
+            host.Children.Add(_commentAuthorEmailTextBox);
+
+            _commentContentTextBox = new TextBox
+            {
+                Header = "Treść komentarza *",
+                Text = _commentComposerViewModel.Content,
+                AcceptsReturn = true,
+                MinHeight = 120,
+                TextWrapping = TextWrapping.Wrap,
+            };
+            _commentContentTextBox.TextChanged += OnCommentContentTextChanged;
+            host.Children.Add(_commentContentTextBox);
+
+            var submitButton = new Button
+            {
+                Content = _commentComposerViewModel.SubmitButtonText,
+                IsEnabled = _commentComposerViewModel.CanSubmit,
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            submitButton.Click += OnSubmitCommentClick;
+            host.Children.Add(submitButton);
+
+            return new Border
+            {
+                Padding = new Thickness(12),
+                Background = Application.Current.Resources["CardBackgroundFillColorDefaultBrush"] as Brush,
+                BorderBrush = Application.Current.Resources["CardStrokeColorDefaultBrush"] as Brush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Child = host,
+            };
+        }
+        finally
+        {
+            _isSynchronizingCommentComposer = false;
+        }
+    }
+
+    private void OnCommentComposerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isCommentComposerVisible)
+        {
+            UpdateShowNotesUi(null);
+        }
+    }
+
+    private void OnCommentAuthorNameTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_isSynchronizingCommentComposer && sender is TextBox textBox)
+        {
+            _commentComposerViewModel.AuthorName = textBox.Text;
+        }
+    }
+
+    private void OnCommentAuthorEmailTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_isSynchronizingCommentComposer && sender is TextBox textBox)
+        {
+            _commentComposerViewModel.AuthorEmail = textBox.Text;
+        }
+    }
+
+    private void OnCommentContentTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_isSynchronizingCommentComposer && sender is TextBox textBox)
+        {
+            _commentComposerViewModel.Content = textBox.Text;
+        }
+    }
+
+    private void OnCancelCommentReplyClick(object sender, RoutedEventArgs e)
+    {
+        _commentComposerViewModel.CancelReply();
+        UpdateShowNotesUi(null);
+        FocusCommentComposerField(PodcastCommentFormField.Content);
+    }
+
+    private async void OnSubmitCommentClick(object sender, RoutedEventArgs e)
+    {
+        var result = await _commentComposerViewModel.SubmitAsync();
+        SetStatusMessage(result.Message, announce: true, important: !result.Accepted);
+
+        if (!result.Accepted)
+        {
+            FocusCommentComposerField(result.FocusTarget);
+            return;
+        }
+
+        if (_currentRequest?.PodcastPostId is not int podcastPostId)
+        {
+            return;
+        }
+
+        _isCommentsVisible = true;
+        await LoadShowNotesAsync(podcastPostId, CancellationToken.None);
+        _isCommentsVisible = true;
+        _isCommentComposerVisible = false;
+        UpdateShowNotesUi(null);
+
+        if (_comments.Length > 0)
+        {
+            FocusCommentsList();
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() => _addCommentButton?.Focus(FocusState.Programmatic));
+    }
+
+    private void FocusCommentComposerField(PodcastCommentFormField field)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            switch (field)
+            {
+                case PodcastCommentFormField.AuthorName:
+                    _commentAuthorNameTextBox?.Focus(FocusState.Programmatic);
+                    break;
+                case PodcastCommentFormField.AuthorEmail:
+                    _commentAuthorEmailTextBox?.Focus(FocusState.Programmatic);
+                    break;
+                case PodcastCommentFormField.Content:
+                    _commentContentTextBox?.Focus(FocusState.Programmatic);
+                    break;
+            }
+        });
+    }
+
     private async Task ToggleChapterMarkerFavoriteAsync(PodcastChapterMarkerItemViewModel item)
     {
         if (_currentRequest?.PodcastPostId is not int podcastPostId)
@@ -1610,7 +1827,9 @@ public sealed partial class AudioPlayerView : UserControl
             });
         }
 
-        if (_comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0)
+        var canComment = _currentRequest?.PodcastPostId is int;
+
+        if (_comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0 && !canComment)
         {
             if (!_isLoadingShowNotes && string.IsNullOrWhiteSpace(statusMessage))
             {
@@ -1627,6 +1846,18 @@ public sealed partial class AudioPlayerView : UserControl
             Orientation = Orientation.Horizontal,
             Spacing = 8,
         };
+
+        if (canComment)
+        {
+            var addCommentButton = new Button
+            {
+                Content = "Dodaj komentarz",
+            };
+            AutomationProperties.SetName(addCommentButton, "Dodaj komentarz");
+            addCommentButton.Click += OnAddCommentClick;
+            _addCommentButton = addCommentButton;
+            actionsPanel.Children.Add(addCommentButton);
+        }
 
         if (_comments.Length > 0)
         {
@@ -1678,6 +1909,11 @@ public sealed partial class AudioPlayerView : UserControl
 
         ShowNotesPanel.Children.Add(actionsPanel);
 
+        if (_isCommentComposerVisible && canComment)
+        {
+            ShowNotesPanel.Children.Add(BuildCommentComposerPanel());
+        }
+
         if (_isCommentsVisible && _comments.Length > 0)
         {
             ShowNotesPanel.Children.Add(new TextBlock
@@ -1695,6 +1931,7 @@ public sealed partial class AudioPlayerView : UserControl
             AutomationProperties.SetName(listView, "Komentarze podcastu");
             listView.ItemClick += OnCommentsListItemClick;
             listView.KeyDown += OnCommentsListKeyDown;
+            listView.ContextRequested += OnCommentsListContextRequested;
             _commentsListView = listView;
             ShowNotesPanel.Children.Add(listView);
         }
@@ -1921,15 +2158,63 @@ public sealed partial class AudioPlayerView : UserControl
         _comments = [];
         _chapterMarkers = [];
         _relatedLinks = [];
+        _addCommentButton = null;
         _commentsListView = null;
         _chapterMarkersListView = null;
         _relatedLinksListView = null;
+        _commentAuthorNameTextBox = null;
+        _commentAuthorEmailTextBox = null;
+        _commentContentTextBox = null;
         _isLoadingShowNotes = false;
         _isCommentsVisible = false;
+        _isCommentComposerVisible = false;
         _isChapterMarkersVisible = false;
         _isRelatedLinksVisible = false;
         ShowNotesPanel.Children.Clear();
         ShowNotesPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private async void OnAddCommentClick(object sender, RoutedEventArgs e)
+    {
+        await ShowCommentComposerAsync();
+    }
+
+    private async Task ShowCommentComposerAsync(CommentItemViewModel? replyTarget = null)
+    {
+        if (_currentRequest?.PodcastPostId is not int podcastPostId)
+        {
+            return;
+        }
+
+        try
+        {
+            await _commentComposerViewModel.LoadIfNeededAsync();
+            _isCommentComposerVisible = true;
+
+            if (replyTarget is null)
+            {
+                _commentComposerViewModel.CancelReply();
+                SetStatusMessage("Dodawanie nowego komentarza.", announce: true);
+            }
+            else
+            {
+                _commentComposerViewModel.BeginReply(replyTarget);
+                SetStatusMessage(
+                    $"Odpowiadasz na komentarz autora: {replyTarget.AuthorName}.",
+                    announce: true
+                );
+            }
+
+            UpdateShowNotesUi(null);
+            FocusCommentComposerField(PodcastCommentFormField.AuthorName);
+        }
+        catch
+        {
+            ErrorBar.Message = "Nie udało się przygotować formularza komentarza.";
+            ErrorBar.IsOpen = true;
+            ErrorBar.Visibility = Visibility.Visible;
+            SetStatusMessage(ErrorBar.Message, announce: true);
+        }
     }
 
     private void CancelShowNotesLoad()

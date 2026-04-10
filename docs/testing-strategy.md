@@ -362,24 +362,45 @@ Pozniej automatyzowac:
   - `Ctrl+D` i `Ctrl+U` działają w liście samych odnośników tak samo jak w playerze
   - `Enter` na odnośniku otwiera go w przeglądarce
   - `Pokaż komentarze` otwiera listę komentarzy bez wchodzenia do playera
+  - otwarcie listy komentarzy z menu kontekstowego nie pokazuje formularza komentarza automatycznie
+  - w dialogu komentarzy jest osobny przycisk `Dodaj komentarz`, który dopiero odsłania formularz
   - szybkie wielokrotne dojście do końca listy w `Podcastach` albo `Artykułach`, na przykład kilkukrotne `End`, nie zamyka aplikacji i nie powoduje równoległego dublowania doładowań
 
 ### Modul `Komentarze podcastu`
 - klawiatura:
   - po otwarciu podcastu można pokazać komentarze bez opuszczania odtwarzacza
   - komentarze można też otworzyć bezpośrednio z menu kontekstowego podcastu
-  - focus przechodzi przez licznik komentarzy, listę komentarzy i przycisk `Szczegóły komentarza` w logicznej kolejności
+  - nawet gdy nie uda się pobrać komentarzy do menu kontekstowego podcastu, pozycja `Dodaj komentarz` nadal otwiera formularz komentarza
+  - w odtwarzaczu dostępny jest przycisk `Dodaj komentarz`
+  - w odtwarzaczu komentarz ma przycisk i menu kontekstowe `Odpowiedz`, które otwiera formularz odpowiedzi
+  - focus przechodzi przez licznik komentarzy, listę komentarzy i przycisk `Odpowiedz` w logicznej kolejności
   - `Enter` na zaznaczonym komentarzu rozwija albo zwija jego pełną treść
+  - gdy komentarzy jeszcze nie ma, pozycja menu kontekstowego podcastu pozwala otworzyć formularz `Dodaj komentarz`
+  - w dialogu `Komentarze podcastu` formularz jest domyślnie schowany i otwiera się dopiero po `Dodaj komentarz` albo `Odpowiedz`
+  - formularz komentarza pozwala wysłać komentarz najwyższego poziomu bez wybierania odpowiedzi
+  - przycisk `Odpowiedz` przy komentarzu przełącza formularz w tryb odpowiedzi na wybrany komentarz
 - `Narrator`:
   - odczytuje licznik komentarzy po załadowaniu odtwarzacza podcastu
-  - odczytuje przycisk `Szczegóły komentarza` z nazwą autora
+  - odczytuje przycisk `Dodaj komentarz` zanim formularz zostanie odsłonięty
+  - odczytuje pola `Imię *`, `Adres e-mail *` i `Treść komentarza *` bez dublowania komunikatu o obowiązkowości
+  - odczytuje komunikat zwrotny po wysłaniu komentarza, w tym przypadki:
+    - opublikowany
+    - przekazany do moderacji
+    - zakwalifikowany jako spam
+    - odrzucony przez `WordPress`
 - `NVDA`:
   - odczytuje element listy komentarzy bez technicznych nazw i z sensownym skrótem treści
+  - po wejściu na przycisk `Odpowiedz` nie odczytuje ponownie całej treści komentarza przed nazwą przycisku
 - funkcjonalnie:
   - licznik komentarzy aktualizuje się po załadowaniu podcastu bez gubienia fokusu
   - pełna treść komentarza rozwija się inline w odtwarzaczu bez otwierania zagnieżdżonego dialogu
   - komentarze główne są sortowane od najstarszych do najnowszych, a odpowiedzi pojawiają się bezpośrednio pod rodzicem
   - odpowiedzi są także wizualnie odróżnione od komentarzy głównych przez wcięcie i lewy akcent
+  - pełna treść dłuższego komentarza rozwija się po `Enter` albo aktywacji samego komentarza, bez osobnego przycisku `Szczegóły komentarza`
+  - pola obowiązkowe nie pozwalają wysłać pustego komentarza i przenoszą fokus na pierwsze błędne pole
+  - po odsłonięciu formularza komentarza fokus trafia najpierw na pole `Imię`, nawet jeśli poprzednie dane są już uzupełnione
+  - po udanej wysyłce treść komentarza czyści się, a tryb odpowiedzi wraca do zwykłego komentarza
+  - po udanej wysyłce lista komentarzy odświeża się z `WordPress`
 
 ## Dokumenty powiazane
 - [Wymagania dostepnosci](accessibility-requirements.md)

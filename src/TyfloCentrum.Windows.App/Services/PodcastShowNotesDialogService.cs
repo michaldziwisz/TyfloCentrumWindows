@@ -17,6 +17,7 @@ public sealed class PodcastShowNotesDialogService
     private readonly IFavoritesService _favoritesService;
     private readonly IShareService _shareService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IWordPressCommentsService _wordPressCommentsService;
 
     public PodcastShowNotesDialogService(
         IServiceProvider serviceProvider,
@@ -25,7 +26,8 @@ public sealed class PodcastShowNotesDialogService
         IClipboardService clipboardService,
         IExternalLinkLauncher externalLinkLauncher,
         IFavoritesService favoritesService,
-        IShareService shareService
+        IShareService shareService,
+        IWordPressCommentsService wordPressCommentsService
     )
     {
         _serviceProvider = serviceProvider;
@@ -35,6 +37,7 @@ public sealed class PodcastShowNotesDialogService
         _externalLinkLauncher = externalLinkLauncher;
         _favoritesService = favoritesService;
         _shareService = shareService;
+        _wordPressCommentsService = wordPressCommentsService;
     }
 
     public async Task<bool> ShowAsync(
@@ -44,86 +47,104 @@ public sealed class PodcastShowNotesDialogService
         string subtitle,
         PodcastShowNotesSnapshot snapshot,
         XamlRoot? xamlRoot,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        int? replyToCommentId = null
     )
     {
         if (xamlRoot is null || !HasSectionContent(snapshot, section))
         {
             return false;
         }
-
-        var view = _serviceProvider.GetRequiredService<PodcastShowNotesDialogView>();
         ContentDialog? dialog = null;
-
-        switch (section)
-        {
-            case PodcastShowNotesSection.Comments:
-                view.InitializeComments(
-                    postId,
-                    title,
-                    subtitle,
-                    PodcastCommentThreadBuilder.Build(snapshot.Comments)
-                );
-                break;
-            case PodcastShowNotesSection.ChapterMarkers:
-                var chapterMarkers = await LoadChapterMarkerFavoritesAsync(
-                    snapshot.Markers,
-                    postId,
-                    cancellationToken
-                );
-                view.InitializeChapterMarkers(
-                    postId,
-                    title,
-                    subtitle,
-                    chapterMarkers,
-                    async item =>
-                    {
-                        dialog?.Hide();
-                        var request = _audioPlaybackRequestFactory.CreatePodcast(
-                            postId,
-                            title,
-                            subtitle,
-                            item.Seconds
-                        );
-                        return await _audioPlayerDialogService.ShowAsync(request, xamlRoot, cancellationToken);
-                    },
-                    item => ToggleChapterMarkerFavoriteAsync(item, postId, title, subtitle)
-                );
-                break;
-            case PodcastShowNotesSection.RelatedLinks:
-                var relatedLinks = await LoadRelatedLinkFavoritesAsync(
-                    snapshot.Links,
-                    postId,
-                    cancellationToken
-                );
-                view.InitializeRelatedLinks(
-                    postId,
-                    title,
-                    subtitle,
-                    relatedLinks,
-                    item => _externalLinkLauncher.LaunchAsync(item.Url.AbsoluteUri),
-                    item => _clipboardService.SetTextAsync(item.Url.AbsoluteUri),
-                    item => _shareService.ShareLinkAsync(item.Title, title, item.Url.AbsoluteUri),
-                    item => ToggleRelatedLinkFavoriteAsync(item, postId, title, subtitle)
-                );
-                break;
-            default:
-                return false;
-        }
-
-        dialog = new ContentDialog
-        {
-            XamlRoot = xamlRoot,
-            Title = GetDialogTitle(section),
-            CloseButtonText = "Zamknij",
-            DefaultButton = ContentDialogButton.Close,
-            FullSizeDesired = true,
-            Content = view,
-        };
 
         try
         {
+            var view = _serviceProvider.GetRequiredService<PodcastShowNotesDialogView>();
+
+            switch (section)
+            {
+                case PodcastShowNotesSection.Comments:
+                    view.InitializeComments(
+                        postId,
+                        title,
+                        subtitle,
+                        PodcastCommentThreadBuilder.Build(snapshot.Comments),
+                        async cancellationTokenInner =>
+                            PodcastCommentThreadBuilder.Build(
+                                (await _wordPressCommentsService.GetCommentsAsync(
+                                    postId,
+                                    cancellationTokenInner,
+                                    forceRefresh: true
+                                )).ToArray()
+                            )
+                    );
+                    if (replyToCommentId is int initialReplyCommentId && initialReplyCommentId > 0)
+                    {
+                        view.BeginReplyToComment(initialReplyCommentId);
+                    }
+                    break;
+                case PodcastShowNotesSection.ChapterMarkers:
+                    var chapterMarkers = await LoadChapterMarkerFavoritesAsync(
+                        snapshot.Markers,
+                        postId,
+                        cancellationToken
+                    );
+                    view.InitializeChapterMarkers(
+                        postId,
+                        title,
+                        subtitle,
+                        chapterMarkers,
+                        async item =>
+                        {
+                            dialog?.Hide();
+                            var request = _audioPlaybackRequestFactory.CreatePodcast(
+                                postId,
+                                title,
+                                subtitle,
+                                item.Seconds
+                            );
+                            return await _audioPlayerDialogService.ShowAsync(
+                                request,
+                                xamlRoot,
+                                cancellationToken
+                            );
+                        },
+                        item => ToggleChapterMarkerFavoriteAsync(item, postId, title, subtitle)
+                    );
+                    break;
+                case PodcastShowNotesSection.RelatedLinks:
+                    var relatedLinks = await LoadRelatedLinkFavoritesAsync(
+                        snapshot.Links,
+                        postId,
+                        cancellationToken
+                    );
+                    view.InitializeRelatedLinks(
+                        postId,
+                        title,
+                        subtitle,
+                        relatedLinks,
+                        item => _externalLinkLauncher.LaunchAsync(item.Url.AbsoluteUri),
+                        item => _clipboardService.SetTextAsync(item.Url.AbsoluteUri),
+                        item => _shareService.ShareLinkAsync(item.Title, title, item.Url.AbsoluteUri),
+                        item => ToggleRelatedLinkFavoriteAsync(item, postId, title, subtitle)
+                    );
+                    break;
+                default:
+                    return false;
+            }
+
+            dialog = new ContentDialog
+            {
+                XamlRoot = xamlRoot,
+                Title = GetDialogTitle(section),
+                CloseButtonText = "Zamknij",
+                DefaultButton = ContentDialogButton.Close,
+                FullSizeDesired = true,
+                Content = view,
+            };
+
             cancellationToken.ThrowIfCancellationRequested();
+            await Task.Yield();
             await dialog.ShowAsync();
             return true;
         }
@@ -141,7 +162,7 @@ public sealed class PodcastShowNotesDialogService
     {
         return section switch
         {
-            PodcastShowNotesSection.Comments => snapshot.HasComments,
+            PodcastShowNotesSection.Comments => true,
             PodcastShowNotesSection.ChapterMarkers => snapshot.HasChapterMarkers,
             PodcastShowNotesSection.RelatedLinks => snapshot.HasRelatedLinks,
             _ => false,

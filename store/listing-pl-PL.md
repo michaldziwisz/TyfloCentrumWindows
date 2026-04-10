@@ -19,18 +19,11 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji poprawiono czytanie artykułów, Tyfloradio i odtwarzacz. Czytnik artykułów działa teraz czyściej z klawiaturą i czytnikami ekranu, bez zbędnych przycisków w cyklu tabulacji, a fokus trafia bezpośrednio do treści.
+W tej wersji rozbudowano obsługę komentarzy podcastów. Można już czytać komentarze bezpośrednio z menu kontekstowego podcastu, dodawać nowe komentarze i odpowiadać na istniejące zarówno z poziomu listy komentarzy, jak i bezpośrednio w odtwarzaczu. Aplikacja pokazuje też wynik publikacji komentarza zgodnie z odpowiedzią WordPressa, na przykład że komentarz został opublikowany, przekazany do moderacji albo zakwalifikowany jako spam.
 
-Rozbudowano też odtwarzacz:
-- pasek transportu jest stale widoczny wizualnie,
-- przycisk `Przesyłaj do urządzenia` wrócił do interfejsu,
-- sterowanie odtwarzaniem jest bardziej przewidywalne przy obsłudze samą klawiaturą.
+Usprawniono również sam formularz komentarza i jego dostępność. Formularz nie otwiera się już automatycznie przy samym wejściu w komentarze, po udanym wysłaniu zamyka się, fokus wraca w logiczne miejsce, a pola formularza są czytane krócej i bez dublowania komunikatów. Uproszczono też widok komentarzy, usuwając zbędny przycisk szczegółów i zostawiając rozwijanie treści bezpośrednio na komentarzu.
 
-Usprawniono również sekcję `Tyfloradio` i długie listy treści:
-- komunikaty przy próbie kontaktu poza audycją interaktywną są teraz spójne i czytelne,
-- `Pokaż ramówkę Tyfloradia` otwiera pełną treść ramówki w polu tylko do odczytu,
-- podczas automatycznego doczytywania starszych pozycji aplikacja lepiej zachowuje fokus na aktualnym elemencie,
-- aplikacja uruchamia się teraz od razu w zmaksymalizowanym oknie.
+Poprawiono też stabilność dodatków podcastu. Komentarze, znaczniki czasu i odnośniki uruchamiane z menu kontekstowego podcastu działają teraz spójnie z widokiem w odtwarzaczu, a sam odtwarzacz i listy komentarzy lepiej współpracują z klawiaturą oraz czytnikami ekranu.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.

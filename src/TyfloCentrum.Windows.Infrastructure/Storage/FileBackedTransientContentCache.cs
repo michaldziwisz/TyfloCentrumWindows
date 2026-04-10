@@ -79,6 +79,16 @@ public sealed class FileBackedTransientContentCache : ITransientContentCache
         }
     }
 
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+        _memoryEntries.TryRemove(key, out _);
+        var path = GetCacheFilePath(key);
+        TryDeleteFile(path);
+        return Task.CompletedTask;
+    }
+
     private bool TryGetFromMemory<T>(string key, DateTimeOffset now, out T value)
     {
         if (

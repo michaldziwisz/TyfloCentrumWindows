@@ -49,5 +49,11 @@ public sealed class InMemoryTransientContentCache : ITransientContentCache
         }
     }
 
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    {
+        _entries.TryRemove(key, out _);
+        return Task.CompletedTask;
+    }
+
     private sealed record CacheEntry(DateTimeOffset ExpiresAtUtc, object Value);
 }
