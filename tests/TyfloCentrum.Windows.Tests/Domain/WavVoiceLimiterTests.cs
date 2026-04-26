@@ -69,6 +69,32 @@ public sealed class WavVoiceLimiterTests : IDisposable
         Assert.Contains(outputSamples, sample => Math.Abs((int)sample) > Math.Abs(inputSamples[0]));
     }
 
+    [Fact]
+    public void Process_downmixes_stereo_input_to_mono_output()
+    {
+        var inputPath = Path.Combine(_tempDirectory, "stereo-input.wav");
+        var outputPath = Path.Combine(_tempDirectory, "mono-output.wav");
+        short[] stereoSamples =
+        [
+            12000, -12000,
+            10000, -10000,
+            8000, -8000,
+            6000, -6000,
+        ];
+        File.WriteAllBytes(
+            inputPath,
+            CreatePcm16Wav(stereoSamples, sampleRate: 44100, channelCount: 2)
+        );
+
+        WavVoiceLimiter.Process(inputPath, outputPath);
+
+        var outputBytes = File.ReadAllBytes(outputPath);
+        Assert.Equal((ushort)1, BinaryPrimitives.ReadUInt16LittleEndian(outputBytes.AsSpan(22, 2)));
+        Assert.Equal((ushort)2, BinaryPrimitives.ReadUInt16LittleEndian(outputBytes.AsSpan(32, 2)));
+        Assert.Equal((uint)(stereoSamples.Length), BinaryPrimitives.ReadUInt32LittleEndian(outputBytes.AsSpan(40, 4)));
+        Assert.Equal(stereoSamples.Length / 2, ReadPcm16Samples(outputBytes).Length);
+    }
+
     public void Dispose()
     {
         try
@@ -97,10 +123,9 @@ public sealed class WavVoiceLimiterTests : IDisposable
         return samples;
     }
 
-    private static byte[] CreatePcm16Wav(short[] samples, uint sampleRate)
+    private static byte[] CreatePcm16Wav(short[] samples, uint sampleRate, ushort channelCount = 1)
     {
         const ushort audioFormat = 1;
-        const ushort channelCount = 1;
         const ushort bitsPerSample = 16;
         var blockAlign = (ushort)(channelCount * (bitsPerSample / 8));
         var byteRate = sampleRate * blockAlign;

@@ -23,6 +23,7 @@ public sealed partial class ContactVoiceMessageView : UserControl
     private string? _lastAnnouncedStatusMessage;
     private MediaPlayer? _cuePlayer;
     private MediaPlayer? _previewPlayer;
+    private bool _wasRecording;
 
     public ContactVoiceMessageView(ContactVoiceMessageViewModel viewModel)
     {
@@ -30,6 +31,7 @@ public sealed partial class ContactVoiceMessageView : UserControl
         InitializeComponent();
         DataContext = ViewModel;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _wasRecording = ViewModel.IsRecording;
         UpdateVisualState();
     }
 
@@ -160,6 +162,8 @@ public sealed partial class ContactVoiceMessageView : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        var recordingStarted = !_wasRecording && ViewModel.IsRecording;
+
         if (e.PropertyName == nameof(ContactVoiceMessageViewModel.StatusMessage))
         {
             UpdateVisualState();
@@ -174,6 +178,13 @@ public sealed partial class ContactVoiceMessageView : UserControl
         {
             StopPreviewPlayer();
         }
+
+        if (recordingStarted)
+        {
+            TryFocusStopButton();
+        }
+
+        _wasRecording = ViewModel.IsRecording;
     }
 
     private void UpdateVisualState()
@@ -311,7 +322,22 @@ public sealed partial class ContactVoiceMessageView : UserControl
         {
             _isStartingWithCue = false;
             UpdateVisualState();
+            if (ViewModel.IsRecording)
+            {
+                TryFocusStopButton();
+            }
         }
+    }
+
+    private void TryFocusStopButton()
+    {
+        if (!StopButton.IsEnabled)
+        {
+            DispatcherQueue.TryEnqueue(TryFocusStopButton);
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() => StopButton.Focus(FocusState.Programmatic));
     }
 
     private async Task PlayRecordingSignalAsync()

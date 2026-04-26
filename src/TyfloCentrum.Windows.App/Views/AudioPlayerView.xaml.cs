@@ -1843,7 +1843,6 @@ public sealed partial class AudioPlayerView : UserControl
 
         var actionsPanel = new StackPanel
         {
-            Orientation = Orientation.Horizontal,
             Spacing = 8,
         };
 
@@ -1852,6 +1851,8 @@ public sealed partial class AudioPlayerView : UserControl
             var addCommentButton = new Button
             {
                 Content = "Dodaj komentarz",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MinWidth = 240,
             };
             AutomationProperties.SetName(addCommentButton, "Dodaj komentarz");
             addCommentButton.Click += OnAddCommentClick;
@@ -1870,6 +1871,8 @@ public sealed partial class AudioPlayerView : UserControl
             var button = new Button
             {
                 Content = _isCommentsVisible ? "Ukryj komentarze" : "Pokaż komentarze",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MinWidth = 240,
             };
             AutomationProperties.SetName(
                 button,
@@ -1884,6 +1887,8 @@ public sealed partial class AudioPlayerView : UserControl
             var button = new Button
             {
                 Content = _isChapterMarkersVisible ? "Ukryj znaczniki czasu" : "Pokaż znaczniki czasu",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MinWidth = 240,
             };
             AutomationProperties.SetName(
                 button,
@@ -1898,6 +1903,8 @@ public sealed partial class AudioPlayerView : UserControl
             var button = new Button
             {
                 Content = _isRelatedLinksVisible ? "Ukryj odnośniki" : "Pokaż odnośniki",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                MinWidth = 240,
             };
             AutomationProperties.SetName(
                 button,

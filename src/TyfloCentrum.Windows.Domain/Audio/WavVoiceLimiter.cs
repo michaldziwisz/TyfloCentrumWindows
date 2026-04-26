@@ -28,15 +28,28 @@ public static class WavVoiceLimiter
         ValidateFormat(descriptor.Format);
         var analysis = Analyze(input, descriptor);
 
-        input.Position = 0;
+        input.Position = descriptor.DataOffset;
         using var output = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
 
-        var headerBytes = new byte[descriptor.DataOffset];
-        ReadExactly(input, headerBytes, 0, headerBytes.Length);
-        output.Write(headerBytes, 0, headerBytes.Length);
+        var inputChannelCount = descriptor.Format.ChannelCount;
+        var outputChannelCount = 1;
+        var bitsPerSample = descriptor.Format.BitsPerSample;
+        var bytesPerSample = bitsPerSample / 8;
+        var inputFrameSize = descriptor.Format.BlockAlign;
+        var outputBlockAlign = (ushort)(outputChannelCount * bytesPerSample);
+        var outputByteRate = descriptor.Format.SampleRate * outputBlockAlign;
+        var outputDataLength = descriptor.DataLength / inputChannelCount;
 
-        var channelCount = descriptor.Format.ChannelCount;
-        var frameSize = descriptor.Format.BlockAlign;
+        WritePcmWaveHeader(
+            output,
+            descriptor.Format.SampleRate,
+            (ushort)outputChannelCount,
+            bitsPerSample,
+            outputByteRate,
+            outputBlockAlign,
+            outputDataLength
+        );
+
         var sampleRate = descriptor.Format.SampleRate;
         var attackCoefficient = Math.Exp(-1.0 / (sampleRate * AttackSeconds));
         var releaseCoefficient = Math.Exp(-1.0 / (sampleRate * ReleaseSeconds));
@@ -45,41 +58,42 @@ public static class WavVoiceLimiter
         var makeupLinear = DbToLinear(BaseMakeupGainDb + adaptiveMakeupGainDb);
         var currentGainDb = 0.0;
 
-        var bufferSize = Math.Max(frameSize * 256, 81920);
-        bufferSize -= bufferSize % frameSize;
+        var bufferSize = Math.Max(inputFrameSize * 256, 81920);
+        bufferSize -= bufferSize % inputFrameSize;
         if (bufferSize <= 0)
         {
-            bufferSize = frameSize;
+            bufferSize = inputFrameSize;
         }
 
         var buffer = new byte[bufferSize];
+        var outputBuffer = new byte[(bufferSize / inputFrameSize) * outputBlockAlign];
         long remainingDataBytes = descriptor.DataLength;
 
         while (remainingDataBytes > 0)
         {
             var bytesToRead = (int)Math.Min(buffer.Length, remainingDataBytes);
-            bytesToRead -= bytesToRead % frameSize;
+            bytesToRead -= bytesToRead % inputFrameSize;
             if (bytesToRead <= 0)
             {
-                bytesToRead = frameSize;
+                bytesToRead = inputFrameSize;
             }
 
             ReadExactly(input, buffer, 0, bytesToRead);
-            ProcessBlock(
+            var outputBytesWritten = ProcessBlock(
                 buffer.AsSpan(0, bytesToRead),
-                channelCount,
-                frameSize,
+                outputBuffer,
+                inputChannelCount,
+                inputFrameSize,
                 attackCoefficient,
                 releaseCoefficient,
                 makeupLinear,
                 ceilingLinear,
                 ref currentGainDb
             );
-            output.Write(buffer, 0, bytesToRead);
+            output.Write(outputBuffer, 0, outputBytesWritten);
             remainingDataBytes -= bytesToRead;
         }
 
-        input.CopyTo(output);
         output.Flush();
     }
 
@@ -132,10 +146,11 @@ public static class WavVoiceLimiter
         return new WavAnalysis(Math.Max(peakLinear, SilenceFloor), Math.Max(rmsLinear, SilenceFloor));
     }
 
-    private static void ProcessBlock(
+    private static int ProcessBlock(
         Span<byte> pcmData,
-        int channelCount,
-        int frameSize,
+        byte[] outputBuffer,
+        int inputChannelCount,
+        int inputFrameSize,
         double attackCoefficient,
         double releaseCoefficient,
         double makeupLinear,
@@ -143,10 +158,12 @@ public static class WavVoiceLimiter
         ref double currentGainDb
     )
     {
-        for (var frameOffset = 0; frameOffset < pcmData.Length; frameOffset += frameSize)
+        var outputOffset = 0;
+
+        for (var frameOffset = 0; frameOffset < pcmData.Length; frameOffset += inputFrameSize)
         {
             var framePeak = SilenceFloor;
-            for (var channel = 0; channel < channelCount; channel++)
+            for (var channel = 0; channel < inputChannelCount; channel++)
             {
                 var sampleOffset = frameOffset + (channel * 2);
                 var sample = BinaryPrimitives.ReadInt16LittleEndian(
@@ -166,23 +183,29 @@ public static class WavVoiceLimiter
             currentGainDb = targetGainDb + (coefficient * (currentGainDb - targetGainDb));
             var frameGain = DbToLinear(currentGainDb) * makeupLinear;
 
-            for (var channel = 0; channel < channelCount; channel++)
+            double mixedSample = 0.0;
+            for (var channel = 0; channel < inputChannelCount; channel++)
             {
                 var sampleOffset = frameOffset + (channel * 2);
                 var sample = BinaryPrimitives.ReadInt16LittleEndian(
                     pcmData.Slice(sampleOffset, 2)
                 );
-                var normalized = sample / 32768.0;
-                var processed = normalized * frameGain;
-                processed = SoftLimit(processed, ceilingLinear);
-                var limited = Math.Clamp(processed, -1.0, 1.0);
-                var outputSample = (short)Math.Round(limited * short.MaxValue);
-                BinaryPrimitives.WriteInt16LittleEndian(
-                    pcmData.Slice(sampleOffset, 2),
-                    outputSample
-                );
+                mixedSample += sample / 32768.0;
             }
+
+            var monoSample = mixedSample / inputChannelCount;
+            var processed = monoSample * frameGain;
+            processed = SoftLimit(processed, ceilingLinear);
+            var limited = Math.Clamp(processed, -1.0, 1.0);
+            var outputSample = (short)Math.Round(limited * short.MaxValue);
+            BinaryPrimitives.WriteInt16LittleEndian(
+                outputBuffer.AsSpan(outputOffset, 2),
+                outputSample
+            );
+            outputOffset += 2;
         }
+
+        return outputOffset;
     }
 
     private static double ComputeTargetGainDb(double peakLinear)
@@ -276,6 +299,41 @@ public static class WavVoiceLimiter
         {
             throw new InvalidDataException("Plik WAV ma nieprawidłowe wyrównanie ramek.");
         }
+    }
+
+    private static void WritePcmWaveHeader(
+        Stream output,
+        uint sampleRate,
+        ushort channelCount,
+        ushort bitsPerSample,
+        uint byteRate,
+        ushort blockAlign,
+        long dataLength
+    )
+    {
+        if (dataLength is < 0 or > uint.MaxValue)
+        {
+            throw new InvalidDataException("Docelowy plik WAV ma nieprawidłowy rozmiar.");
+        }
+
+        var header = new byte[44];
+        "RIFF"u8.CopyTo(header.AsSpan(0, 4));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            header.AsSpan(4, 4),
+            checked((uint)(36 + dataLength))
+        );
+        "WAVE"u8.CopyTo(header.AsSpan(8, 4));
+        "fmt "u8.CopyTo(header.AsSpan(12, 4));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(16, 4), 16);
+        BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(20, 2), 1);
+        BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(22, 2), channelCount);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(24, 4), sampleRate);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(28, 4), byteRate);
+        BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(32, 2), blockAlign);
+        BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(34, 2), bitsPerSample);
+        "data"u8.CopyTo(header.AsSpan(36, 4));
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(40, 4), checked((uint)dataLength));
+        output.Write(header, 0, header.Length);
     }
 
     private static WavDescriptor ReadDescriptor(Stream stream)

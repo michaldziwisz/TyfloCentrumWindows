@@ -212,37 +212,46 @@
                 FontWeight="SemiBold"
                 Text="Sterowanie odtwarzaniem" />
             <StackPanel
-                Orientation="Horizontal"
                 Spacing="8">
-                <Button
-                    x:Name="SkipBackwardButton"
-                    AutomationProperties.HelpText="Skrót: Ctrl+strzałka w lewo"
-                    AutomationProperties.Name="Przewiń wstecz o 30 sekund"
-                    Click="OnSkipBackwardButtonClick"
-                    Content="Wstecz 30 s"
-                    MinWidth="120"
-                    Visibility="Collapsed" />
-                <Button
-                    x:Name="PlayPauseButton"
-                    AutomationProperties.HelpText="Skrót: Ctrl+spacja"
-                    AutomationProperties.Name="Odtwarzaj"
-                    Click="OnPlayPauseButtonClick"
-                    Content="Odtwarzaj"
-                    MinWidth="120" />
-                <Button
-                    x:Name="SkipForwardButton"
-                    AutomationProperties.HelpText="Skrót: Ctrl+strzałka w prawo"
-                    AutomationProperties.Name="Przewiń do przodu o 30 sekund"
-                    Click="OnSkipForwardButtonClick"
-                    Content="Dalej 30 s"
-                    MinWidth="120"
-                    Visibility="Collapsed" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        x:Name="SkipBackwardButton"
+                        AutomationProperties.HelpText="Skrót: Ctrl+strzałka w lewo"
+                        AutomationProperties.Name="Przewiń wstecz o 30 sekund"
+                        Click="OnSkipBackwardButtonClick"
+                        Content="Wstecz 30 s"
+                        MinWidth="120"
+                        Visibility="Collapsed" />
+                    <Button
+                        x:Name="PlayPauseButton"
+                        Grid.Column="1"
+                        AutomationProperties.HelpText="Skrót: Ctrl+spacja"
+                        AutomationProperties.Name="Odtwarzaj"
+                        Click="OnPlayPauseButtonClick"
+                        Content="Odtwarzaj"
+                        MinWidth="120" />
+                    <Button
+                        x:Name="SkipForwardButton"
+                        Grid.Column="2"
+                        AutomationProperties.HelpText="Skrót: Ctrl+strzałka w prawo"
+                        AutomationProperties.Name="Przewiń do przodu o 30 sekund"
+                        Click="OnSkipForwardButtonClick"
+                        Content="Dalej 30 s"
+                        MinWidth="120"
+                        Visibility="Collapsed" />
+                </Grid>
                 <Button
                     x:Name="CastToDeviceButton"
                     AutomationProperties.Name="Przesyłaj dźwięk do urządzenia zewnętrznego"
                     Click="OnCastToDeviceButtonClick"
                     Content="Przesyłaj do urządzenia"
-                    MinWidth="180" />
+                    HorizontalAlignment="Left"
+                    MinWidth="220" />
             </StackPanel>
             <StackPanel
                 x:Name="SeekControlsPanel"

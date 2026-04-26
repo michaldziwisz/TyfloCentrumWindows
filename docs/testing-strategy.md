@@ -119,6 +119,7 @@ Pozniej automatyzowac:
   - po zaakceptowaniu pytania nagranie może ruszyć bez ręcznego otwierania ustawień
   - mikrofon wspierający `RAW` pozwala rozpocząć nagrywanie
   - mikrofon bez `RAW` nadal pozwala rozpocząć nagrywanie w najlepszym trybie dostępnym na urządzeniu
+  - finalny plik głosówki jest monofoniczny, także wtedy, gdy mikrofon wejściowy zgłasza dwa kanały
   - po zamknięciu dialogu plik tymczasowy jest usuwany
 
 ## Biezaca checklista manualna
@@ -327,6 +328,7 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - player `Tyfloradia` pozwala zmienić głośność bez wychodzenia z dialogu
   - przyciski transportu i suwak pozycji są jawnie widoczne jako osobny pasek sterowania także przy nawigacji samą klawiaturą
+  - przycisk `Przesyłaj do urządzenia` pokazuje pełną nazwę, bez ucięcia do skrótu
   - przycisk `Przesyłaj do urządzenia` otwiera wybór urządzenia zewnętrznego dla podcastu i `Tyfloradia`, a po połączeniu pozwala też rozłączyć przesyłanie
   - komentarz z sekcją `Znaczniki czasu` daje listę markerów w kolejności rosnącej
   - komentarz z sekcją `Odnośniki` albo `Linki` daje listę linków
@@ -354,6 +356,7 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - listy nie pokazują już osobnego, stałego wiersza `Podcast` albo `Artykuł` nad tytułem
   - menu kontekstowe podcastu pokazuje `Pokaż komentarze`, `Pokaż znaczniki czasu` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
+  - w playerze pełne nazwy przycisków dodatków podcastu są zawsze widoczne, bez ucinania tekstu do samego `Pokaż`
   - `Pokaż znaczniki czasu` otwiera listę samych znaczników bez wchodzenia do playera
   - lista samych znaczników ma takie samo menu kontekstowe jak w playerze, w tym `Przejdź` i `Dodaj do ulubionych`
   - `Enter` na znaczniku czasu uruchamia player podcastu od wybranej czasówki

@@ -565,7 +565,13 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
 
     private static MediaEncodingProfile CreateOutputEncodingProfile()
     {
-        return MediaEncodingProfile.CreateM4a(AudioEncodingQuality.Auto);
+        var profile = MediaEncodingProfile.CreateM4a(AudioEncodingQuality.Auto);
+        if (profile.Audio is not null)
+        {
+            profile.Audio.ChannelCount = 1;
+        }
+
+        return profile;
     }
 
     private async Task<MediaCapture?> CreateInitializedCaptureAsync(
