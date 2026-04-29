@@ -91,7 +91,11 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid RowSpacing="12" MaxWidth="820">
+    <Grid
+        RowSpacing="12"
+        MinWidth="360"
+        MaxWidth="820"
+        HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -133,12 +137,16 @@
             x:Name="CommentComposerPanel"
             Grid.Row="4"
             Padding="12"
+            HorizontalAlignment="Stretch"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
             CornerRadius="8"
             Visibility="Collapsed">
-            <StackPanel x:Name="CommentComposerHost" Spacing="10" />
+            <StackPanel
+                x:Name="CommentComposerHost"
+                HorizontalAlignment="Stretch"
+                Spacing="10" />
         </Border>
 
         <ListView

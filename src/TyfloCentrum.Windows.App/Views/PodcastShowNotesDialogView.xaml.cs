@@ -11,6 +11,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class PodcastShowNotesDialogView : UserControl
 {
+    private const double CommentComposerMinimumTextBoxWidth = 320;
     private readonly PodcastCommentComposerViewModel _commentComposerViewModel;
     private bool _isSynchronizingCommentComposer;
     private TextBlock? _commentComposerHeadingTextBlock;
@@ -707,12 +708,16 @@ public sealed partial class PodcastShowNotesDialogView : UserControl
         _authorNameTextBox = new TextBox
         {
             Header = "Imię *",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            MinWidth = CommentComposerMinimumTextBoxWidth,
         };
         _authorNameTextBox.TextChanged += OnAuthorNameTextChanged;
 
         _authorEmailTextBox = new TextBox
         {
             Header = "Adres e-mail *",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            MinWidth = CommentComposerMinimumTextBoxWidth,
             InputScope = new InputScope
             {
                 Names = { new InputScopeName(InputScopeNameValue.EmailSmtpAddress) },
@@ -724,7 +729,9 @@ public sealed partial class PodcastShowNotesDialogView : UserControl
         {
             Header = "Treść komentarza *",
             AcceptsReturn = true,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             MinHeight = 120,
+            MinWidth = CommentComposerMinimumTextBoxWidth,
             TextWrapping = TextWrapping.Wrap,
         };
         _commentContentTextBox.TextChanged += OnCommentContentTextChanged;
