@@ -23,6 +23,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class AudioPlayerView : UserControl
 {
+    private const double CommentComposerMinimumTextBoxWidth = 320;
     private const double ResumePersistIntervalSeconds = 5d;
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
@@ -1522,7 +1523,11 @@ public sealed partial class AudioPlayerView : UserControl
         _isSynchronizingCommentComposer = true;
         try
         {
-            var host = new StackPanel { Spacing = 10 };
+            var host = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Spacing = 10,
+            };
 
             host.Children.Add(new TextBlock
             {
@@ -1551,6 +1556,8 @@ public sealed partial class AudioPlayerView : UserControl
             _commentAuthorNameTextBox = new TextBox
             {
                 Header = "Imię *",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                MinWidth = CommentComposerMinimumTextBoxWidth,
                 Text = _commentComposerViewModel.AuthorName,
             };
             _commentAuthorNameTextBox.TextChanged += OnCommentAuthorNameTextChanged;
@@ -1559,6 +1566,8 @@ public sealed partial class AudioPlayerView : UserControl
             _commentAuthorEmailTextBox = new TextBox
             {
                 Header = "Adres e-mail *",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                MinWidth = CommentComposerMinimumTextBoxWidth,
                 Text = _commentComposerViewModel.AuthorEmail,
                 InputScope = new InputScope
                 {
@@ -1573,7 +1582,9 @@ public sealed partial class AudioPlayerView : UserControl
                 Header = "Treść komentarza *",
                 Text = _commentComposerViewModel.Content,
                 AcceptsReturn = true,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 MinHeight = 120,
+                MinWidth = CommentComposerMinimumTextBoxWidth,
                 TextWrapping = TextWrapping.Wrap,
             };
             _commentContentTextBox.TextChanged += OnCommentContentTextChanged;
@@ -1595,6 +1606,7 @@ public sealed partial class AudioPlayerView : UserControl
                 BorderBrush = Application.Current.Resources["CardStrokeColorDefaultBrush"] as Brush,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(8),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = host,
             };
         }

@@ -126,7 +126,10 @@
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-    <Grid RowSpacing="12" MaxWidth="760">
+    <Grid
+        RowSpacing="12"
+        MaxWidth="760"
+        HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -322,6 +325,7 @@
         <StackPanel
             x:Name="ShowNotesPanel"
             Grid.Row="6"
+            HorizontalAlignment="Stretch"
             Spacing="8"
             Visibility="Collapsed" />
         

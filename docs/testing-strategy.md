@@ -402,7 +402,7 @@ Pozniej automatyzowac:
   - pełna treść dłuższego komentarza rozwija się po `Enter` albo aktywacji samego komentarza, bez osobnego przycisku `Szczegóły komentarza`
   - pola obowiązkowe nie pozwalają wysłać pustego komentarza i przenoszą fokus na pierwsze błędne pole
   - po odsłonięciu formularza komentarza fokus trafia najpierw na pole `Imię`, nawet jeśli poprzednie dane są już uzupełnione
-  - formularz komentarza nie zwęża pól edycji przy wysokim skalowaniu Windows, wąskim oknie albo małej rozdzielczości
+  - formularz komentarza w dialogu komentarzy i w odtwarzaczu nie zwęża pól edycji przy wysokim skalowaniu Windows, wąskim oknie albo małej rozdzielczości
   - po udanej wysyłce treść komentarza czyści się, a tryb odpowiedzi wraca do zwykłego komentarza
   - po udanej wysyłce lista komentarzy odświeża się z `WordPress`
 
