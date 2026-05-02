@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -20,6 +21,7 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
 
     private readonly IAppSettingsService _appSettingsService;
     private readonly IAudioDeviceCatalogService _audioDeviceCatalogService;
+    private readonly ILogger<WindowsVoiceMessageRecorder> _logger;
     private readonly DispatcherQueue? _dispatcherQueue;
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly List<StorageFile> _segmentFiles = [];
@@ -37,11 +39,13 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
 
     public WindowsVoiceMessageRecorder(
         IAppSettingsService appSettingsService,
-        IAudioDeviceCatalogService audioDeviceCatalogService
+        IAudioDeviceCatalogService audioDeviceCatalogService,
+        ILogger<WindowsVoiceMessageRecorder> logger
     )
     {
         _appSettingsService = appSettingsService;
         _audioDeviceCatalogService = audioDeviceCatalogService;
+        _logger = logger;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         MediaDevice.DefaultAudioCaptureDeviceChanged += OnDefaultAudioCaptureDeviceChanged;
     }
@@ -400,14 +404,16 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
             }
 
             MediaCapture? capture = null;
+            var hasPreferredInputDevice = false;
 
             try
             {
                 var settingsSnapshot = (await _appSettingsService.GetAsync(cancellationToken))
                     .Normalize();
                 var preferredInputDeviceId = settingsSnapshot.PreferredInputDeviceId;
+                hasPreferredInputDevice = !string.IsNullOrWhiteSpace(preferredInputDeviceId);
 
-                if (!string.IsNullOrWhiteSpace(preferredInputDeviceId))
+                if (hasPreferredInputDevice)
                 {
                     var inputDevices = await _audioDeviceCatalogService.GetInputDevicesAsync(
                         cancellationToken
@@ -462,19 +468,25 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
                 StartElapsedLoop();
                 return new VoiceMessageOperationResult(true, null);
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException exception)
             {
                 if (capture is not null)
                 {
                     DisposeCapture(capture);
                 }
 
+                LogMicrophoneFailure(
+                    "StartRecording",
+                    exception,
+                    hasPreferredInputDevice
+                );
+
                 return new VoiceMessageOperationResult(
                     false,
                     "Brak dostępu do mikrofonu. Przy pierwszej próbie Windows powinien pokazać systemowe pytanie o zgodę. Jeśli dostęp został już wcześniej odrzucony, włącz mikrofon dla aplikacji w ustawieniach prywatności Windows."
                 );
             }
-            catch
+            catch (Exception exception)
             {
                 if (capture is not null)
                 {
@@ -483,6 +495,14 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
 
                 var settingsSnapshot = (await _appSettingsService.GetAsync(cancellationToken))
                     .Normalize();
+                LogMicrophoneFailure(
+                    "StartRecording",
+                    exception,
+                    hasPreferredInputDevice: !string.IsNullOrWhiteSpace(
+                        settingsSnapshot.PreferredInputDeviceId
+                    )
+                );
+
                 if (!string.IsNullOrWhiteSpace(settingsSnapshot.PreferredInputDeviceId))
                 {
                     return new VoiceMessageOperationResult(
@@ -632,13 +652,25 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
             await capture.InitializeAsync(settings);
             return (true, false, capture);
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException exception)
         {
+            LogMicrophoneFailure(
+                "InitializeCapture",
+                exception,
+                hasPreferredInputDevice: !string.IsNullOrWhiteSpace(preferredInputDeviceId),
+                audioProcessing
+            );
             DisposeCapture(capture);
             return (false, true, null);
         }
-        catch
+        catch (Exception exception)
         {
+            LogMicrophoneFailure(
+                "InitializeCapture",
+                exception,
+                hasPreferredInputDevice: !string.IsNullOrWhiteSpace(preferredInputDeviceId),
+                audioProcessing
+            );
             DisposeCapture(capture);
             return (false, false, null);
         }
@@ -1217,5 +1249,22 @@ public sealed class WindowsVoiceMessageRecorder : IVoiceMessageRecorder
         return string.IsNullOrWhiteSpace(errorEventArgs.Message)
             ? "Nagrywanie zostało przerwane przez system albo mikrofon przestał być dostępny."
             : "Nagrywanie zostało przerwane. Sprawdź, czy mikrofon nadal jest dostępny i spróbuj ponownie.";
+    }
+
+    private void LogMicrophoneFailure(
+        string stage,
+        Exception exception,
+        bool hasPreferredInputDevice,
+        AudioProcessing? audioProcessing = null
+    )
+    {
+        _logger.LogWarning(
+            "Voice recorder microphone failure. Stage: {Stage}, AudioProcessing: {AudioProcessing}, HasPreferredInputDevice: {HasPreferredInputDevice}, ExceptionType: {ExceptionType}, HResult: {HResult}",
+            stage,
+            audioProcessing?.ToString() ?? "not-applicable",
+            hasPreferredInputDevice,
+            exception.GetType().FullName,
+            exception.HResult
+        );
     }
 }

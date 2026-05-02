@@ -42,6 +42,10 @@ New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
     -r ("win-" + $Platform.ToLowerInvariant()) `
     -o $publishDirectory `
     -p:Platform=$Platform `
+    -p:Version=$manifestVersion `
+    -p:AssemblyVersion=$manifestVersion `
+    -p:FileVersion=$manifestVersion `
+    -p:InformationalVersion=$manifestVersion `
     -p:TyfloCentrumDistributionMode=Unpackaged `
     --nologo
 

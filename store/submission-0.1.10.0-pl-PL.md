@@ -34,6 +34,8 @@ Resztę opisu skopiuj z:
 W tej wersji ujednolicono formularz dodawania komentarzy pod podcastami w odtwarzaczu z formularzem dostępnym w osobnym widoku komentarzy. Pola edycji mają stabilną minimalną szerokość i rozciągają się razem z panelem, dzięki czemu nie powinny zwężać się na komputerach z wysokim skalowaniem, małą rozdzielczością albo nietypowym rozmiarem okna.
 
 Zmiana dotyczy pól Imię, Adres e-mail oraz Treść komentarza i ma poprawić wygodę wpisywania komentarzy z klawiatury oraz czytnika ekranu.
+
+Usprawniono też diagnostykę zgłoszeń technicznych: raporty rozróżniają teraz wersję instalowaną klasycznym instalatorem od wersji ze Store, a problemy z uruchomieniem mikrofonu zapisują w logu bezpieczne informacje techniczne potrzebne do ustalenia przyczyny.
 ```
 
 ## Changelog vs poprzednia opublikowana wersja
@@ -41,6 +43,8 @@ Zmiana dotyczy pól Imię, Adres e-mail oraz Treść komentarza i ma poprawić w
 - dodano minimalną szerokość pól `Imię`, `Adres e-mail` i `Treść komentarza` także w playerze
 - wymuszono rozciąganie panelu komentarza i pól edycji w odtwarzaczu
 - rozszerzono scenariusz ręcznej walidacji formularza o dialog komentarzy i player
+- poprawiono raportowanie wersji i typu instalacji w diagnostyce zgłoszeń
+- dodano bezpieczne logowanie etapu i typu awarii przy uruchamianiu mikrofonu
 
 ## Product features
 Na ten release nie trzeba ich zmieniać. Aktualna wersja jest w:

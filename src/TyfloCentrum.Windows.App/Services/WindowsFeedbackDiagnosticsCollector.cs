@@ -14,6 +14,13 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
     private const int MaxTailLogBytes = 300_000;
     private const int MaxBase64Length = 8_000_000;
 
+    private readonly IAppRuntimeMode _appRuntimeMode;
+
+    public WindowsFeedbackDiagnosticsCollector(IAppRuntimeMode appRuntimeMode)
+    {
+        _appRuntimeMode = appRuntimeMode;
+    }
+
     public Task<FeedbackDiagnosticsSnapshot> CollectAsync(
         bool includeDiagnostics,
         bool includeLogFile,
@@ -22,16 +29,16 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var version = GetPackageVersion();
-        var diagnostics = includeDiagnostics ? BuildSafeDiagnostics(version) : EmptyDiagnostics;
+        var appIdentity = GetAppIdentity();
+        var diagnostics = includeDiagnostics ? BuildSafeDiagnostics(appIdentity) : EmptyDiagnostics;
         var logAttachment = includeLogFile ? TryPrepareLogAttachment(cancellationToken) : null;
 
         return Task.FromResult(
             new FeedbackDiagnosticsSnapshot(
-                version,
-                version,
+                appIdentity.Version,
+                appIdentity.Version,
                 "stable",
-                $"TyfloCentrum.Windows.App/{version}",
+                $"TyfloCentrum.Windows.App/{appIdentity.Version} ({appIdentity.Distribution})",
                 diagnostics,
                 logAttachment
             )
@@ -107,7 +114,7 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
         return output.ToArray();
     }
 
-    private static IReadOnlyDictionary<string, object?> BuildSafeDiagnostics(string version)
+    private static IReadOnlyDictionary<string, object?> BuildSafeDiagnostics(AppIdentityDiagnostics appIdentity)
     {
         return new Dictionary<string, object?>
         {
@@ -115,9 +122,10 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
             {
                 ["name"] = "TyfloCentrum",
                 ["package"] = "MichaDziwisz.TyfloCentrum",
-                ["version"] = version,
+                ["version"] = appIdentity.Version,
                 ["channel"] = "stable",
-                ["distribution"] = "msix",
+                ["distribution"] = appIdentity.Distribution,
+                ["packageIdentity"] = appIdentity.HasPackageIdentity,
                 ["dependency"] = ".NET Desktop Runtime",
             },
             ["os"] = new Dictionary<string, object?>
@@ -135,6 +143,13 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
         };
     }
 
+    private AppIdentityDiagnostics GetAppIdentity()
+    {
+        return _appRuntimeMode.HasPackageIdentity
+            ? new AppIdentityDiagnostics(GetPackageVersion(), "msix", true)
+            : new AppIdentityDiagnostics(GetAssemblyVersion(), "unpackaged", false);
+    }
+
     private static string GetPackageVersion()
     {
         try
@@ -144,9 +159,14 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
         }
         catch
         {
-            var assemblyVersion = typeof(App).Assembly.GetName().Version;
-            return assemblyVersion?.ToString() ?? "0.0.0.0";
+            return GetAssemblyVersion();
         }
+    }
+
+    private static string GetAssemblyVersion()
+    {
+        var assemblyVersion = typeof(App).Assembly.GetName().Version;
+        return assemblyVersion?.ToString() ?? "0.0.0.0";
     }
 
     private static string GetWindowsVersion()
@@ -168,4 +188,10 @@ public sealed class WindowsFeedbackDiagnosticsCollector : IFeedbackDiagnosticsCo
 
     private static readonly IReadOnlyDictionary<string, object?> EmptyDiagnostics =
         new Dictionary<string, object?>();
+
+    private sealed record AppIdentityDiagnostics(
+        string Version,
+        string Distribution,
+        bool HasPackageIdentity
+    );
 }
