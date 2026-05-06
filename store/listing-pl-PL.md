@@ -19,11 +19,7 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji rozbudowano obsługę komentarzy podcastów. Można już czytać komentarze bezpośrednio z menu kontekstowego podcastu, dodawać nowe komentarze i odpowiadać na istniejące zarówno z poziomu listy komentarzy, jak i bezpośrednio w odtwarzaczu. Aplikacja pokazuje też wynik publikacji komentarza zgodnie z odpowiedzią WordPressa, na przykład że komentarz został opublikowany, przekazany do moderacji albo zakwalifikowany jako spam.
-
-Usprawniono również sam formularz komentarza i jego dostępność. Formularz nie otwiera się już automatycznie przy samym wejściu w komentarze, po udanym wysłaniu zamyka się, fokus wraca w logiczne miejsce, a pola formularza są czytane krócej i bez dublowania komunikatów. Uproszczono też widok komentarzy, usuwając zbędny przycisk szczegółów i zostawiając rozwijanie treści bezpośrednio na komentarzu.
-
-Poprawiono też stabilność dodatków podcastu. Komentarze, znaczniki czasu i odnośniki uruchamiane z menu kontekstowego podcastu działają teraz spójnie z widokiem w odtwarzaczu, a sam odtwarzacz i listy komentarzy lepiej współpracują z klawiaturą oraz czytnikami ekranu.
+W tej wersji poprawiono zachowanie odtwarzacza podcastów na komputerach z wysokim skalowaniem Windows, mniejszą rozdzielczością albo nietypowym rozmiarem okna. Dolne sekcje odtwarzacza, w tym skróty, dodatki odcinka, komentarze, formularz komentarza i przyciski akcji, nie powinny być już ucinane; zawartość można przewinąć.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
