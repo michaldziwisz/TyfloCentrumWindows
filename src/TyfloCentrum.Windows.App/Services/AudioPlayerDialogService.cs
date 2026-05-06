@@ -8,6 +8,9 @@ namespace TyfloCentrum.Windows.App.Services;
 
 public sealed class AudioPlayerDialogService
 {
+    private const double DialogChromeReservedHeight = 220;
+    private const double MinimumScrollableContentHeight = 320;
+
     private readonly IServiceProvider _serviceProvider;
 
     public AudioPlayerDialogService(IServiceProvider serviceProvider)
@@ -38,6 +41,17 @@ public sealed class AudioPlayerDialogService
             return false;
         }
 
+        var scrollHost = new ScrollViewer
+        {
+            Content = view,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            HorizontalScrollMode = ScrollMode.Disabled,
+            IsTabStop = false,
+            MaxHeight = CalculateScrollableContentMaxHeight(xamlRoot),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollMode = ScrollMode.Auto,
+        };
+
         var dialog = new ContentDialog
         {
             XamlRoot = xamlRoot,
@@ -45,7 +59,7 @@ public sealed class AudioPlayerDialogService
             CloseButtonText = "Zamknij",
             DefaultButton = ContentDialogButton.Close,
             FullSizeDesired = true,
-            Content = view,
+            Content = scrollHost,
         };
 
         try
@@ -66,5 +80,11 @@ public sealed class AudioPlayerDialogService
         {
             await view.StopAndDisposePlayerAsync();
         }
+    }
+
+    private static double CalculateScrollableContentMaxHeight(XamlRoot xamlRoot)
+    {
+        var availableHeight = xamlRoot.Size.Height - DialogChromeReservedHeight;
+        return Math.Max(MinimumScrollableContentHeight, availableHeight);
     }
 }

@@ -328,6 +328,7 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - player `Tyfloradia` pozwala zmienić głośność bez wychodzenia z dialogu
   - przyciski transportu i suwak pozycji są jawnie widoczne jako osobny pasek sterowania także przy nawigacji samą klawiaturą
+  - przy wysokim skalowaniu Windows albo małej efektywnej wysokości ekranu odtwarzacz nie ucina dolnych sekcji; zawartość dialogu można przewinąć do skrótów, dodatków, komentarzy, formularza komentarza i przycisków akcji
   - przycisk `Przesyłaj do urządzenia` pokazuje pełną nazwę, bez ucięcia do skrótu
   - przycisk `Przesyłaj do urządzenia` otwiera wybór urządzenia zewnętrznego dla podcastu i `Tyfloradia`, a po połączeniu pozwala też rozłączyć przesyłanie
   - komentarz z sekcją `Znaczniki czasu` daje listę markerów w kolejności rosnącej
