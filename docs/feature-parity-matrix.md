@@ -8,7 +8,7 @@
 
 | Obszar | Funkcja w iOS | Odpowiednik w Windows | Priorytet | Status | Uwagi |
 |-------|----------------|-----------------------|-----------|--------|-------|
-| Shell | Zakladki glowne | shell nawigacyjny `WinUI 3` | wysoki | in_progress | działają `Nowości`, `Podcasty`, `Artykuły`, `Szukaj`, `Ulubione`, `Tyfloradio`, `Ustawienia`, skróty `Alt+1` do `Alt+7` i stały, zawsze rozwinięty panel nawigacji |
+| Shell | Zakladki glowne | shell nawigacyjny `WinUI 3` | wysoki | in_progress | działają `Nowości`, `Podcasty`, `Artykuły`, `Szukaj`, `Ulubione`, `Tyfloradio`, `Ramówka Tyfloradia`, `Ustawienia`, `Zgłoś błąd lub sugestię`, skróty `Alt+1` do `Alt+9` i stały, zawsze rozwinięty panel nawigacji |
 | Nowosci | wspolny feed | feed mieszany | wysoki | in_progress | lista działa już z domyślną akcją na `Enter`, menu kontekstowym i automatycznym dociąganiem starszych treści przy przewijaniu |
 | Podcasty | kategorie i listy | kategorie i listy | wysoki | in_progress | kategorie, lista, domyślne odtwarzanie na `Enter`, menu kontekstowe, pobieranie `mp3` i automatyczne dociąganie starszych treści są gotowe |
 | Artykuly | kategorie i listy | kategorie i listy | wysoki | in_progress | kategorie, lista, otwieranie artykułu w aplikacji na `Enter`, widok czytania, menu kontekstowe, pobieranie do pojedynczego `html` i automatyczne dociąganie starszych treści są gotowe |
@@ -29,5 +29,5 @@
 | Dostepnosc | komunikaty VoiceOver | UIA + status announcements | wysoki | planned | kluczowe dla `1.0` |
 | Push | iOS push | Windows push | sredni | in_progress | działa lokalny polling z toastami Windows, kliencka warstwa WNS oraz osobny backend `TyfloCentrum.PushService` z pollingiem i wysyłką do `WNS`; do pełnego E2E brakuje produkcyjnej konfiguracji Azure, mapowania PFN i wdrożenia serwera |
 | AirPlay | wybór urzadzenia | systemowy routing audio | niski | planned | adaptacja, nie kopia 1:1 |
-| Magic Tap | globalna akcja VO | skroty klawiaturowe | sredni | in_progress | działają skróty sekcji `Alt+1` do `Alt+7` i skróty odtwarzacza `Ctrl+spacja`, `Ctrl+strzałki` |
+| Magic Tap | globalna akcja VO | skroty klawiaturowe | sredni | in_progress | działają skróty sekcji `Alt+1` do `Alt+9` i skróty odtwarzacza `Ctrl+spacja`, `Ctrl+strzałki` |
 | Tryb ucha | proximity recording | brak odpowiednika lub uproszczenie | niski | deferred | tylko jesli niski koszt |

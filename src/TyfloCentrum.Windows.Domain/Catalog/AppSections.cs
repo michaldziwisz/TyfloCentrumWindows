@@ -56,24 +56,24 @@ public static class AppSections
         "radio-schedule",
         "Ramówka Tyfloradia",
         "Ramówka tygodnia w widoku HTML.",
-        9,
-        "Alt+9"
+        7,
+        "Alt+7"
     );
 
     public static readonly AppSection Settings = new(
         "settings",
         "Ustawienia",
         "Preferencje audio, urządzeń i odtwarzania dla tej aplikacji.",
-        7,
-        "Alt+7"
+        8,
+        "Alt+8"
     );
 
     public static readonly AppSection Feedback = new(
         "feedback",
         "Zgłoś błąd lub sugestię",
         "Publiczne zgłoszenie na GitHub z bezpieczną diagnostyką i opcjonalnym prywatnym logiem technicznym.",
-        8,
-        "Alt+8"
+        9,
+        "Alt+9"
     );
 
     public static IReadOnlyList<AppSection> All { get; } = new[]
@@ -84,8 +84,8 @@ public static class AppSections
         Search,
         Favorites,
         Radio,
+        RadioSchedule,
         Settings,
         Feedback,
-        RadioSchedule,
     };
 }

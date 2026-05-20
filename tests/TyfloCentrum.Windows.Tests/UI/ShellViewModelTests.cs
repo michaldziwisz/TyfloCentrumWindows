@@ -19,9 +19,9 @@ public sealed class ShellViewModelTests
                 "Szukaj (Alt+4)",
                 "Ulubione (Alt+5)",
                 "Tyfloradio (Alt+6)",
-                "Ustawienia (Alt+7)",
-                "Zgłoś błąd lub sugestię (Alt+8)",
-                "Ramówka Tyfloradia (Alt+9)",
+                "Ramówka Tyfloradia (Alt+7)",
+                "Ustawienia (Alt+8)",
+                "Zgłoś błąd lub sugestię (Alt+9)",
             ],
             viewModel.Sections.Select(section => section.DisplayTitle)
         );
@@ -49,22 +49,32 @@ public sealed class ShellViewModelTests
     }
 
     [Fact]
-    public void GetSectionByShortcutNumber_returns_feedback_section_for_alt_8()
+    public void GetSectionByShortcutNumber_returns_radio_schedule_section_for_alt_7()
+    {
+        var viewModel = new ShellViewModel();
+
+        var section = viewModel.GetSectionByShortcutNumber(7);
+
+        Assert.Equal(AppSections.RadioSchedule, section);
+    }
+
+    [Fact]
+    public void GetSectionByShortcutNumber_returns_settings_section_for_alt_8()
     {
         var viewModel = new ShellViewModel();
 
         var section = viewModel.GetSectionByShortcutNumber(8);
 
-        Assert.Equal(AppSections.Feedback, section);
+        Assert.Equal(AppSections.Settings, section);
     }
 
     [Fact]
-    public void GetSectionByShortcutNumber_returns_radio_schedule_section_for_alt_9()
+    public void GetSectionByShortcutNumber_returns_feedback_section_for_alt_9()
     {
         var viewModel = new ShellViewModel();
 
         var section = viewModel.GetSectionByShortcutNumber(9);
 
-        Assert.Equal(AppSections.RadioSchedule, section);
+        Assert.Equal(AppSections.Feedback, section);
     }
 }

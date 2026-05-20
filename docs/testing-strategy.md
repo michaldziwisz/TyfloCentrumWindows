@@ -205,7 +205,7 @@ Pozniej automatyzowac:
 ### Modul `Tyfloradio`
 - klawiatura:
   - przyciski `Skontaktuj się z Tyfloradiem` i `Nagraj głosówkę` pozostają osiągalne z klawiatury niezależnie od statusu audycji
-  - `Alt+9` przełącza bezpośrednio do sekcji `Ramówka Tyfloradia`
+  - `Alt+7` przełącza bezpośrednio do sekcji `Ramówka Tyfloradia`
   - `Tab` pozwala dojść do focusowalnego regionu `Status audycji interaktywnej` i do przycisku `Pokaż ramówkę`
 - `Narrator`:
   - odczytuje pełny komunikat błędu przy próbie otwarcia kontaktu tekstowego albo głosówki poza audycją interaktywną
@@ -221,6 +221,7 @@ Pozniej automatyzowac:
 
 ### Modul `Ustawienia`
 - klawiatura:
+  - `Alt+8` przełącza do sekcji ustawień
   - focus przechodzi przez przyciski akcji, pola wyboru i przełącznik w logicznej kolejności
   - `Escape` wraca do listy sekcji głównych
 - `Narrator`:
@@ -252,7 +253,7 @@ Pozniej automatyzowac:
 
 ### Modul `Zgłoś błąd lub sugestię`
 - klawiatura:
-  - `Alt+8` przełącza do sekcji zgłoszeń
+  - `Alt+9` przełącza do sekcji zgłoszeń
   - `Enter` na liście sekcji przechodzi najpierw do pola `Typ zgłoszenia`, bez pomijania wyboru kategorii
   - `Tab` przechodzi kolejno przez typ zgłoszenia, tytuł, opis, pola wyboru i przyciski akcji
   - `Escape` z formularza wraca do listy sekcji głównych
