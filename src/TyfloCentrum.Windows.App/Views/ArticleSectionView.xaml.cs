@@ -455,14 +455,9 @@ public sealed partial class ArticleSectionView : UserControl
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
         flyout.Items.Add(shareItem);
 
-        var favoriteItem = new MenuFlyoutItem
-        {
-            Text = ContentFavoriteService.GetToggleLabel(isFavorite),
-        };
-        AutomationProperties.SetName(
-            favoriteItem,
-            $"{ContentFavoriteService.GetToggleLabel(isFavorite)}: {item.Title}"
-        );
+        var favoriteLabel = $"{ContentFavoriteService.GetToggleLabel(isFavorite)} (Ctrl+D)";
+        var favoriteItem = new MenuFlyoutItem { Text = favoriteLabel };
+        AutomationProperties.SetName(favoriteItem, $"{favoriteLabel}: {item.Title}");
         favoriteItem.Click += async (_, _) => await ToggleFavoriteAsync(item);
         flyout.Items.Add(favoriteItem);
 

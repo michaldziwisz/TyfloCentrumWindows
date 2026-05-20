@@ -21,6 +21,7 @@ public sealed class ShellViewModelTests
                 "Tyfloradio (Alt+6)",
                 "Ustawienia (Alt+7)",
                 "Zgłoś błąd lub sugestię (Alt+8)",
+                "Ramówka Tyfloradia (Alt+9)",
             ],
             viewModel.Sections.Select(section => section.DisplayTitle)
         );
@@ -55,5 +56,15 @@ public sealed class ShellViewModelTests
         var section = viewModel.GetSectionByShortcutNumber(8);
 
         Assert.Equal(AppSections.Feedback, section);
+    }
+
+    [Fact]
+    public void GetSectionByShortcutNumber_returns_radio_schedule_section_for_alt_9()
+    {
+        var viewModel = new ShellViewModel();
+
+        var section = viewModel.GetSectionByShortcutNumber(9);
+
+        Assert.Equal(AppSections.RadioSchedule, section);
     }
 }

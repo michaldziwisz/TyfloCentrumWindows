@@ -298,6 +298,20 @@ public sealed partial class PodcastSectionView : UserControl
                     e.Handled = true;
                     await ToggleFavoriteAsync(selectedItem);
                     return;
+                case VirtualKey.K:
+                    e.Handled = true;
+                    await ShowPodcastShortcutSectionAsync(
+                        PodcastShowNotesSection.Comments,
+                        selectedItem
+                    );
+                    return;
+                case VirtualKey.T:
+                    e.Handled = true;
+                    await ShowPodcastShortcutSectionAsync(
+                        PodcastShowNotesSection.ChapterMarkers,
+                        selectedItem
+                    );
+                    return;
                 case VirtualKey.S:
                     e.Handled = true;
                     await DownloadItemAsync(selectedItem);
@@ -431,11 +445,11 @@ public sealed partial class PodcastSectionView : UserControl
 
         var favoriteItem = new MenuFlyoutItem
         {
-            Text = ContentFavoriteService.GetToggleLabel(isFavorite),
+            Text = GetFavoriteMenuText(isFavorite),
         };
         AutomationProperties.SetName(
             favoriteItem,
-            $"{ContentFavoriteService.GetToggleLabel(isFavorite)}: {item.Title}"
+            $"{GetFavoriteMenuText(isFavorite)}: {item.Title}"
         );
         favoriteItem.Click += async (_, _) => await ToggleFavoriteAsync(item);
         flyout.Items.Add(favoriteItem);
@@ -451,13 +465,13 @@ public sealed partial class PodcastSectionView : UserControl
     {
         var commentsItem = new MenuFlyoutItem
         {
-            Text = showNotes.HasComments ? "Pokaż komentarze" : "Dodaj komentarz",
+            Text = showNotes.HasComments ? "Pokaż komentarze (Ctrl+K)" : "Dodaj komentarz (Ctrl+K)",
         };
         AutomationProperties.SetName(
             commentsItem,
             showNotes.HasComments
-                ? $"Pokaż komentarze podcastu: {item.Title}"
-                : $"Dodaj komentarz do podcastu: {item.Title}"
+                ? $"Pokaż komentarze podcastu (Ctrl+K): {item.Title}"
+                : $"Dodaj komentarz do podcastu (Ctrl+K): {item.Title}"
         );
         commentsItem.Click += async (_, _) =>
             await ShowPodcastShowNotesSectionAsync(PodcastShowNotesSection.Comments, item, showNotes);
@@ -465,10 +479,10 @@ public sealed partial class PodcastSectionView : UserControl
 
         if (showNotes.HasChapterMarkers)
         {
-            var chapterMarkersItem = new MenuFlyoutItem { Text = "Pokaż znaczniki czasu" };
+            var chapterMarkersItem = new MenuFlyoutItem { Text = "Pokaż znaczniki czasu (Ctrl+T)" };
             AutomationProperties.SetName(
                 chapterMarkersItem,
-                $"Pokaż znaczniki czasu podcastu: {item.Title}"
+                $"Pokaż znaczniki czasu podcastu (Ctrl+T): {item.Title}"
             );
             chapterMarkersItem.Click += async (_, _) =>
                 await ShowPodcastShowNotesSectionAsync(
@@ -506,6 +520,27 @@ public sealed partial class PodcastSectionView : UserControl
         {
             return new PodcastShowNotesSnapshot([], [], []);
         }
+    }
+
+    private async Task ShowPodcastShortcutSectionAsync(
+        PodcastShowNotesSection section,
+        ContentPostItemViewModel item
+    )
+    {
+        var showNotes = await TryGetPodcastShowNotesAsync(item.PostId);
+
+        if (section == PodcastShowNotesSection.ChapterMarkers && !showNotes.HasChapterMarkers)
+        {
+            AutomationAnnouncementHelper.Announce(
+                ItemsList,
+                $"Podcast nie ma znaczników czasu: {item.Title}.",
+                important: true
+            );
+            ListViewFocusHelper.RestoreFocus(ItemsList, item);
+            return;
+        }
+
+        await ShowPodcastShowNotesSectionAsync(section, item, showNotes);
     }
 
     private async Task ShowPodcastShowNotesSectionAsync(
@@ -651,6 +686,11 @@ public sealed partial class PodcastSectionView : UserControl
                 "Nie udało się zaktualizować ulubionego wpisu."
             );
         }
+    }
+
+    private static string GetFavoriteMenuText(bool isFavorite)
+    {
+        return $"{ContentFavoriteService.GetToggleLabel(isFavorite)} (Ctrl+D)";
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

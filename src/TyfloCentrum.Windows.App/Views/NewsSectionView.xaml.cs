@@ -190,6 +190,20 @@ public sealed partial class NewsSectionView : UserControl
                     e.Handled = true;
                     await CopyPodcastAudioLinkAsync(selectedItem);
                     return;
+                case VirtualKey.K when selectedItem.SupportsPlayback:
+                    e.Handled = true;
+                    await ShowPodcastShortcutSectionAsync(
+                        PodcastShowNotesSection.Comments,
+                        selectedItem
+                    );
+                    return;
+                case VirtualKey.T when selectedItem.SupportsPlayback:
+                    e.Handled = true;
+                    await ShowPodcastShortcutSectionAsync(
+                        PodcastShowNotesSection.ChapterMarkers,
+                        selectedItem
+                    );
+                    return;
                 case VirtualKey.U:
                     e.Handled = true;
                     await ShareItemAsync(selectedItem);
@@ -349,14 +363,9 @@ public sealed partial class NewsSectionView : UserControl
         shareItem.Click += async (_, _) => await ShareItemAsync(item);
         flyout.Items.Add(shareItem);
 
-        var favoriteItem = new MenuFlyoutItem
-        {
-            Text = ContentFavoriteService.GetToggleLabel(isFavorite),
-        };
-        AutomationProperties.SetName(
-            favoriteItem,
-            $"{ContentFavoriteService.GetToggleLabel(isFavorite)}: {item.Title}"
-        );
+        var favoriteLabel = GetFavoriteMenuText(isFavorite);
+        var favoriteItem = new MenuFlyoutItem { Text = favoriteLabel };
+        AutomationProperties.SetName(favoriteItem, $"{favoriteLabel}: {item.Title}");
         favoriteItem.Click += async (_, _) => await ToggleFavoriteAsync(item);
         flyout.Items.Add(favoriteItem);
 
@@ -371,13 +380,13 @@ public sealed partial class NewsSectionView : UserControl
     {
         var commentsItem = new MenuFlyoutItem
         {
-            Text = showNotes.HasComments ? "Pokaż komentarze" : "Dodaj komentarz",
+            Text = showNotes.HasComments ? "Pokaż komentarze (Ctrl+K)" : "Dodaj komentarz (Ctrl+K)",
         };
         AutomationProperties.SetName(
             commentsItem,
             showNotes.HasComments
-                ? $"Pokaż komentarze podcastu: {item.Title}"
-                : $"Dodaj komentarz do podcastu: {item.Title}"
+                ? $"Pokaż komentarze podcastu (Ctrl+K): {item.Title}"
+                : $"Dodaj komentarz do podcastu (Ctrl+K): {item.Title}"
         );
         commentsItem.Click += async (_, _) =>
             await ShowPodcastShowNotesSectionAsync(PodcastShowNotesSection.Comments, item, showNotes);
@@ -385,10 +394,10 @@ public sealed partial class NewsSectionView : UserControl
 
         if (showNotes.HasChapterMarkers)
         {
-            var chapterMarkersItem = new MenuFlyoutItem { Text = "Pokaż znaczniki czasu" };
+            var chapterMarkersItem = new MenuFlyoutItem { Text = "Pokaż znaczniki czasu (Ctrl+T)" };
             AutomationProperties.SetName(
                 chapterMarkersItem,
-                $"Pokaż znaczniki czasu podcastu: {item.Title}"
+                $"Pokaż znaczniki czasu podcastu (Ctrl+T): {item.Title}"
             );
             chapterMarkersItem.Click += async (_, _) =>
                 await ShowPodcastShowNotesSectionAsync(
@@ -426,6 +435,26 @@ public sealed partial class NewsSectionView : UserControl
         {
             return new PodcastShowNotesSnapshot([], [], []);
         }
+    }
+
+    private async Task ShowPodcastShortcutSectionAsync(
+        PodcastShowNotesSection section,
+        NewsFeedItemViewModel item
+    )
+    {
+        var showNotes = await TryGetPodcastShowNotesAsync(item.PostId);
+        if (section == PodcastShowNotesSection.ChapterMarkers && !showNotes.HasChapterMarkers)
+        {
+            AutomationAnnouncementHelper.Announce(
+                NewsList,
+                $"Podcast nie ma znaczników czasu: {item.Title}.",
+                important: true
+            );
+            ListViewFocusHelper.RestoreFocus(NewsList, item);
+            return;
+        }
+
+        await ShowPodcastShowNotesSectionAsync(section, item, showNotes);
     }
 
     private async Task ShowPodcastShowNotesSectionAsync(
@@ -562,6 +591,11 @@ public sealed partial class NewsSectionView : UserControl
         }
 
         ListViewFocusHelper.RestoreFocus(NewsList, item);
+    }
+
+    private static string GetFavoriteMenuText(bool isFavorite)
+    {
+        return $"{ContentFavoriteService.GetToggleLabel(isFavorite)} (Ctrl+D)";
     }
 
     private async Task DownloadItemAsync(NewsFeedItemViewModel item)

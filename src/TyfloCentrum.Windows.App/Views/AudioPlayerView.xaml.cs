@@ -96,6 +96,7 @@ public sealed partial class AudioPlayerView : UserControl
             .SupportedValues.Select(value => new PlaybackRateOption(PlaybackRateCatalog.FormatLabel(value), value))
             .ToArray();
         InitializeComponent();
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         PlaybackRateComboBox.ItemsSource = _playbackRates;
         PlaybackRateComboBox.DisplayMemberPath = nameof(PlaybackRateOption.Label);
         PlaybackRateComboBox.SelectedItem = _playbackRates.First(option =>

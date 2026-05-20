@@ -86,6 +86,30 @@ public sealed class FeedbackSectionViewModelTests
     }
 
     [Fact]
+    public async Task SubmitAsync_clears_previous_public_issue_on_retry_failure()
+    {
+        var viewModel = new FeedbackSectionViewModel(
+            new FakeFeedbackSubmissionService
+            {
+                Result = new FeedbackSubmissionResult(false, "Błąd serwera", null, null),
+            },
+            new FakeExternalLinkLauncher()
+        )
+        {
+            Title = "Brak dźwięku",
+            Description = "Po wejściu do playera nic nie słychać.",
+            PublicIssueUrl = "https://github.com/example/repo/issues/5",
+        };
+
+        var result = await viewModel.SubmitAsync();
+
+        Assert.False(result);
+        Assert.Null(viewModel.PublicIssueUrl);
+        Assert.False(viewModel.HasPublicIssueUrl);
+        Assert.False(viewModel.CanOpenPublicIssue);
+    }
+
+    [Fact]
     public async Task SubmitAsync_blocks_optional_email_without_explicit_consent()
     {
         var viewModel = new FeedbackSectionViewModel(

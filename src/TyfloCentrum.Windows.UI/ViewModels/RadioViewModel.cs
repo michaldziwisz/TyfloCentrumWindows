@@ -45,6 +45,9 @@ public partial class RadioViewModel : ObservableObject
     private string? scheduleText;
 
     [ObservableProperty]
+    private string scheduleHtmlDocument = BuildScheduleHtmlDocument(null, "Ładowanie ramówki…");
+
+    [ObservableProperty]
     private string? statusAnnouncement;
 
     [ObservableProperty]
@@ -120,6 +123,10 @@ public partial class RadioViewModel : ObservableObject
             LiveStatusMessage = BuildLiveStatusMessage(availability.Available, availability.Title);
             ScheduleText = NormalizeScheduleText(schedule.Text);
             ErrorMessage = schedule.Error;
+            ScheduleHtmlDocument = BuildScheduleHtmlDocument(
+                schedule.Text,
+                BuildScheduleFallbackDisplayText(ScheduleText, ErrorMessage)
+            );
             StatusAnnouncement = ErrorMessage
                 ?? (availability.Available
                     ? "Dane Tyfloradia zostały odświeżone."
@@ -136,6 +143,7 @@ public partial class RadioViewModel : ObservableObject
             LiveStatusMessage = "Nie udało się pobrać bieżącego statusu Tyfloradia.";
             ScheduleText = null;
             ErrorMessage = "Nie udało się pobrać danych Tyfloradia. Spróbuj ponownie.";
+            ScheduleHtmlDocument = BuildScheduleHtmlDocument(null, ErrorMessage);
             StatusAnnouncement = ErrorMessage;
             HasLoaded = true;
         }
@@ -273,6 +281,116 @@ public partial class RadioViewModel : ObservableObject
         return normalized.Trim();
     }
 
+    private static string BuildScheduleFallbackDisplayText(string? scheduleText, string? errorMessage)
+    {
+        if (!string.IsNullOrWhiteSpace(scheduleText))
+        {
+            return scheduleText;
+        }
+
+        if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            return errorMessage;
+        }
+
+        return "Brak dostępnej ramówki.";
+    }
+
+    private static string BuildScheduleHtmlDocument(string? rawSchedule, string fallbackText)
+    {
+        var body = BuildScheduleHtmlBody(rawSchedule, fallbackText);
+        return $$"""
+            <!doctype html>
+            <html lang="pl">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>Ramówka Tyfloradia</title>
+              <style>
+                :root { color-scheme: light dark; }
+                body {
+                  font-family: "Segoe UI", sans-serif;
+                  font-size: 18px;
+                  line-height: 1.55;
+                  margin: 24px;
+                }
+                main {
+                  max-width: 48rem;
+                }
+                h1 {
+                  font-size: 1.45rem;
+                  margin: 0 0 1rem;
+                }
+                a {
+                  color: LinkText;
+                }
+                main:focus {
+                  outline: 3px solid Highlight;
+                  outline-offset: 4px;
+                }
+                p, ul, ol, table {
+                  margin-block: 0 1rem;
+                }
+                table {
+                  border-collapse: collapse;
+                }
+                th, td {
+                  border: 1px solid CanvasText;
+                  padding: 0.35rem 0.5rem;
+                }
+              </style>
+            </head>
+            <body>
+              <main id="schedule-root" tabindex="0">
+                <h1>Ramówka Tyfloradia</h1>
+                {{body}}
+              </main>
+            </body>
+            </html>
+            """;
+    }
+
+    private static string BuildScheduleHtmlBody(string? rawSchedule, string fallbackText)
+    {
+        if (string.IsNullOrWhiteSpace(rawSchedule))
+        {
+            return PlainTextToHtml(fallbackText);
+        }
+
+        var normalized = NormalizeRawScheduleMarkup(rawSchedule.Trim());
+        if (!LooksLikeHtml(normalized))
+        {
+            return PlainTextToHtml(WebUtility.HtmlDecode(normalized));
+        }
+
+        normalized = UnsafeScheduleElementRegex().Replace(normalized, string.Empty);
+        normalized = EventAttributeRegex().Replace(normalized, string.Empty);
+        normalized = JavaScriptUrlRegex().Replace(normalized, "href=\"#\"");
+        return normalized;
+    }
+
+    private static string NormalizeRawScheduleMarkup(string value)
+    {
+        var normalized = value.Replace("\r\n", "\n", StringComparison.Ordinal);
+        normalized = normalized.Replace("\r", "\n", StringComparison.Ordinal);
+        normalized = normalized.Replace("\\r\\n", "\n", StringComparison.Ordinal);
+        normalized = normalized.Replace("\\n", "\n", StringComparison.Ordinal);
+        normalized = normalized.Replace("\\r", "\n", StringComparison.Ordinal);
+        return normalized;
+    }
+
+    private static string PlainTextToHtml(string value)
+    {
+        var normalized = NormalizeRawScheduleMarkup(value);
+        var encoded = WebUtility.HtmlEncode(normalized);
+        return encoded.Replace("\n", "<br>", StringComparison.Ordinal);
+    }
+
+    private static bool LooksLikeHtml(string value)
+    {
+        return HtmlTagProbeRegex().IsMatch(value);
+    }
+
     [GeneratedRegex(@"(?i)<br\s*/?>", RegexOptions.Compiled)]
     private static partial Regex ScheduleBreakRegex();
 
@@ -284,4 +402,19 @@ public partial class RadioViewModel : ObservableObject
 
     [GeneratedRegex(@"\n{3,}", RegexOptions.Compiled)]
     private static partial Regex MultiBlankLineRegex();
+
+    [GeneratedRegex(@"<\s*[a-z][^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex HtmlTagProbeRegex();
+
+    [GeneratedRegex(
+        @"(?is)<\s*(script|style|iframe|object|embed)[^>]*>.*?<\s*/\s*\1\s*>",
+        RegexOptions.Compiled
+    )]
+    private static partial Regex UnsafeScheduleElementRegex();
+
+    [GeneratedRegex(@"\s+on[a-z]+\s*=\s*(""[^""]*""|'[^']*'|[^\s>]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex EventAttributeRegex();
+
+    [GeneratedRegex(@"href\s*=\s*(""|')\s*javascript:[^""']*\1", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex JavaScriptUrlRegex();
 }

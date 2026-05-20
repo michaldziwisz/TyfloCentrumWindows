@@ -73,6 +73,7 @@ public sealed class SygnalistaFeedbackSubmissionServiceTests
         );
 
         Assert.True(result.Success);
+        Assert.Equal("https://github.com/example/repo/issues/17", result.PublicIssueUrl);
         Assert.Equal("https://sygnalista.example/v1/report", capturedUrl);
         Assert.Equal("TyfloCentrum.Windows.App/0.1.3.0", capturedUserAgent);
         Assert.Equal("secret-token", capturedAppToken);
@@ -139,6 +140,56 @@ public sealed class SygnalistaFeedbackSubmissionServiceTests
         Assert.False(root.TryGetProperty("email", out _));
         Assert.False(root.TryGetProperty("diagnostics", out _));
         Assert.False(root.TryGetProperty("logs", out _));
+    }
+
+    [Fact]
+    public async Task SubmitAsync_treats_public_issue_url_as_success_even_when_ok_is_false()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "ok": false,
+                      "reportId": "rep-999",
+                      "issue": {
+                        "number": 19,
+                        "url": "https://api.github.com/repos/example/repo/issues/19",
+                        "html_url": "https://github.com/example/repo/issues/19"
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json"
+                ),
+            }
+        );
+        var service = new SygnalistaFeedbackSubmissionService(
+            new HttpClient(handler),
+            new TyfloCentrumEndpointsOptions
+            {
+                SygnalistaBaseUrl = new Uri("https://sygnalista.example/"),
+                SygnalistaAppId = "tyflocentrum",
+            },
+            new FakeFeedbackDiagnosticsCollector()
+        );
+
+        var result = await service.SubmitAsync(
+            new FeedbackSubmissionRequest(
+                FeedbackSubmissionKind.Suggestion,
+                "Drobna poprawka",
+                "Zgłoszenie powinno być uznane za wysłane, gdy issue już istnieje.",
+                null,
+                false,
+                false
+            )
+        );
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
+        Assert.Equal("https://github.com/example/repo/issues/19", result.PublicIssueUrl);
+        Assert.Equal("rep-999", result.ReportId);
     }
 
     [Fact]

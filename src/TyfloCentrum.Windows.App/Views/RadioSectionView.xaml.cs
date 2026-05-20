@@ -15,6 +15,7 @@ public sealed partial class RadioSectionView : UserControl
     private readonly ContactTextMessageDialogService _contactTextMessageDialogService;
     private readonly ContactVoiceMessageDialogService _contactVoiceMessageDialogService;
     private string? _lastAnnouncedStatusMessage;
+    private string? _lastRenderedScheduleHtmlDocument;
 
     public event EventHandler? ExitToSectionListRequested;
 
@@ -40,6 +41,12 @@ public sealed partial class RadioSectionView : UserControl
     public void FocusPrimaryContent()
     {
         ListenButton.Focus(FocusState.Programmatic);
+    }
+
+    public async Task FocusScheduleContentAsync()
+    {
+        await ViewModel.LoadIfNeededAsync();
+        await ShowScheduleAsync();
     }
 
     public async Task PrepareForScreenshotAsync()
@@ -133,6 +140,15 @@ public sealed partial class RadioSectionView : UserControl
         }
 
         UpdateVisualState();
+
+        if (
+            e.PropertyName is nameof(RadioViewModel.ScheduleHtmlDocument)
+                or nameof(RadioViewModel.ScheduleDisplayText)
+            && (ScheduleBrowser.Visibility == Visibility.Visible || ScheduleEditor.Visibility == Visibility.Visible)
+        )
+        {
+            _ = ShowScheduleAsync();
+        }
     }
 
     private void UpdateVisualState()
@@ -185,12 +201,62 @@ public sealed partial class RadioSectionView : UserControl
 
     private async void OnOpenScheduleClick(object sender, RoutedEventArgs e)
     {
-        ScheduleEditor.Visibility = Visibility.Visible;
-        ScheduleEditor.UpdateLayout();
-        await Task.Yield();
-        ScheduleEditor.StartBringIntoView();
-        ScheduleEditor.Focus(FocusState.Programmatic);
-        ScheduleEditor.Select(0, 0);
+        await ShowScheduleAsync();
+    }
+
+    private async Task ShowScheduleAsync()
+    {
+        if (!ViewModel.HasScheduleText)
+        {
+            ScheduleBrowser.Visibility = Visibility.Collapsed;
+            ScheduleEditor.Visibility = Visibility.Visible;
+            ScheduleEditor.UpdateLayout();
+            await Task.Yield();
+            ScheduleEditor.StartBringIntoView();
+            ScheduleEditor.Focus(FocusState.Programmatic);
+            ScheduleEditor.Select(0, 0);
+            return;
+        }
+
+        ScheduleEditor.Visibility = Visibility.Collapsed;
+        ScheduleBrowser.Visibility = Visibility.Visible;
+        ScheduleBrowser.UpdateLayout();
+
+        try
+        {
+            await ScheduleBrowser.EnsureCoreWebView2Async();
+            if (ScheduleBrowser.CoreWebView2 is not null)
+            {
+                ScheduleBrowser.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                ScheduleBrowser.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            }
+
+            if (
+                !string.Equals(
+                    _lastRenderedScheduleHtmlDocument,
+                    ViewModel.ScheduleHtmlDocument,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                ScheduleBrowser.NavigateToString(ViewModel.ScheduleHtmlDocument);
+                _lastRenderedScheduleHtmlDocument = ViewModel.ScheduleHtmlDocument;
+            }
+
+            await Task.Yield();
+            ScheduleBrowser.StartBringIntoView();
+            ScheduleBrowser.Focus(FocusState.Programmatic);
+        }
+        catch
+        {
+            ScheduleBrowser.Visibility = Visibility.Collapsed;
+            ScheduleEditor.Visibility = Visibility.Visible;
+            ScheduleEditor.UpdateLayout();
+            await Task.Yield();
+            ScheduleEditor.StartBringIntoView();
+            ScheduleEditor.Focus(FocusState.Programmatic);
+            ScheduleEditor.Select(0, 0);
+        }
     }
 
     private void OnScheduleButtonKeyDown(object sender, KeyRoutedEventArgs e)

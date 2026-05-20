@@ -51,6 +51,9 @@ public sealed class RadioViewModelTests
             "Ramówka. 12:00 Start\n13:00 Dalej\n14:00 Koniec",
             viewModel.ScheduleAccessibleText
         );
+        Assert.Contains("<title>Ramówka Tyfloradia</title>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("12:00 Start<br>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("13:00 Dalej", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -74,6 +77,31 @@ public sealed class RadioViewModelTests
             viewModel.ScheduleText
         );
         Assert.Equal(viewModel.ScheduleText, viewModel.ScheduleDisplayText);
+        Assert.Contains("Witajcie,<br>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("TyfloPrzegląd.", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task LoadIfNeededAsync_sanitizes_schedule_html_document()
+    {
+        var service = new FakeRadioService
+        {
+            Availability = new RadioAvailability(false, null),
+            Schedule = new RadioScheduleInfo(
+                true,
+                "<p onclick=\"evil()\">Start</p><script>alert(1)</script><a href=\"javascript:evil()\">link</a>",
+                null
+            ),
+        };
+        var viewModel = new RadioViewModel(service, new FakeAudioPlaybackRequestFactory());
+
+        await viewModel.LoadIfNeededAsync();
+
+        Assert.Contains("<p>Start</p>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("href=\"#\"", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.DoesNotContain("<script", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("onclick", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("javascript:", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

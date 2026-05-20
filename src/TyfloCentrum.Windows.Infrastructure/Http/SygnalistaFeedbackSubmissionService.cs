@@ -102,13 +102,18 @@ public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionSer
             cancellationToken
         );
 
-        return payload?.Ok == true && payload.Issue is not null
-            ? new FeedbackSubmissionResult(
+        if (!string.IsNullOrWhiteSpace(payload?.Issue?.PublicUrl))
+        {
+            return new FeedbackSubmissionResult(
                 true,
                 null,
-                payload.Issue.HtmlUrl,
+                payload.Issue.PublicUrl,
                 payload.ReportId
-            )
+            );
+        }
+
+        return payload?.Ok == true
+            ? new FeedbackSubmissionResult(true, null, null, payload.ReportId)
             : new FeedbackSubmissionResult(
                 false,
                 "Serwer zgłoszeń zwrócił nieprawidłową odpowiedź.",
@@ -173,9 +178,13 @@ public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionSer
 
     private sealed record IssueResponse(
         int Number,
-        string Url,
-        [property: System.Text.Json.Serialization.JsonPropertyName("html_url")] string HtmlUrl
-    );
+        string? Url,
+        [property: System.Text.Json.Serialization.JsonPropertyName("html_url")] string? HtmlUrl,
+        [property: System.Text.Json.Serialization.JsonPropertyName("htmlUrl")] string? HtmlUrlCamelCase
+    )
+    {
+        public string? PublicUrl => !string.IsNullOrWhiteSpace(HtmlUrl) ? HtmlUrl : HtmlUrlCamelCase;
+    }
 
     private sealed record ErrorEnvelope(ErrorBody? Error);
 

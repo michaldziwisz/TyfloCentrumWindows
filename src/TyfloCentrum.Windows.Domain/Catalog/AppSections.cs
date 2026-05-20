@@ -52,6 +52,14 @@ public static class AppSections
         "Alt+6"
     );
 
+    public static readonly AppSection RadioSchedule = new(
+        "radio-schedule",
+        "Ramówka Tyfloradia",
+        "Ramówka tygodnia w widoku HTML.",
+        9,
+        "Alt+9"
+    );
+
     public static readonly AppSection Settings = new(
         "settings",
         "Ustawienia",
@@ -78,5 +86,6 @@ public static class AppSections
         Radio,
         Settings,
         Feedback,
+        RadioSchedule,
     };
 }

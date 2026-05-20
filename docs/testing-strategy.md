@@ -127,7 +127,7 @@ Pozniej automatyzowac:
 ### Modul `Shell`
 - klawiatura:
   - aplikacja uruchamia się w oknie zmaksymalizowanym
-  - `Alt+1` do `Alt+8` przełącza sekcje bez użycia myszy
+  - `Alt+1` do `Alt+9` przełącza sekcje bez użycia myszy
   - strzałka w górę i strzałka w dół przełącza aktywną sekcję na liście sekcji
   - wpisanie pierwszej litery sekcji przenosi fokus do kolejnej sekcji zaczynającej się od tej litery
   - `Enter` na liście sekcji przechodzi do głównej kontroli bieżącej sekcji, jak `Tab`
@@ -147,6 +147,8 @@ Pozniej automatyzowac:
   - wpisanie pierwszej litery tytułu przenosi fokus do kolejnej nowości zaczynającej się od tej litery
   - `Ctrl+C` kopiuje adres strony podcastu albo artykułu dla zaznaczonego elementu
   - `Ctrl+P` kopiuje adres pliku podcastu dla zaznaczonego podcastu
+  - `Ctrl+K` otwiera komentarze dla zaznaczonego podcastu
+  - `Ctrl+T` otwiera znaczniki czasu dla zaznaczonego podcastu
   - `Escape` z listy nowości przenosi fokus do listy sekcji głównych
 - `Narrator`:
   - odczytuje nazwe sekcji
@@ -181,7 +183,8 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - zmiana kategorii przeładowuje listę treści dla wybranej kategorii
   - po przeładowaniu lista kategorii zachowuje zaznaczenie i fokus na aktywnej pozycji
-  - w listach `Podcastów` i `Artykułów` menu kontekstowe pokazuje skróty `Ctrl+S`, `Ctrl+U`, `Ctrl+C`, a dla podcastów także `Ctrl+P`
+  - w listach `Podcastów` i `Artykułów` menu kontekstowe pokazuje skróty `Ctrl+S`, `Ctrl+U`, `Ctrl+C`, a dla podcastów także `Ctrl+P`, `Ctrl+K` i `Ctrl+T`
+  - menu kontekstowe przy przełączaniu ulubionych pokazuje skrót `Ctrl+D`
   - po automatycznym doczytaniu kolejnych pozycji w `Podcastach` albo `Artykułach` fokus i zaznaczenie zostają na tym samym wpisie
   - pozostawienie sekcji `Podcastów` albo `Artykułów` otwartej przez kilka minut powoduje automatyczne pojawienie się nowo opublikowanej treści bez restartu aplikacji
 
@@ -202,6 +205,7 @@ Pozniej automatyzowac:
 ### Modul `Tyfloradio`
 - klawiatura:
   - przyciski `Skontaktuj się z Tyfloradiem` i `Nagraj głosówkę` pozostają osiągalne z klawiatury niezależnie od statusu audycji
+  - `Alt+9` przełącza bezpośrednio do sekcji `Ramówka Tyfloradia`
   - `Tab` pozwala dojść do focusowalnego regionu `Status audycji interaktywnej` i do przycisku `Pokaż ramówkę`
 - `Narrator`:
   - odczytuje pełny komunikat błędu przy próbie otwarcia kontaktu tekstowego albo głosówki poza audycją interaktywną
@@ -211,7 +215,8 @@ Pozniej automatyzowac:
 - funkcjonalnie:
   - zamknięcie formularza kontaktu bez wysyłki nie pokazuje błędu
   - rzeczywisty problem z otwarciem formularza kontaktu tekstowego albo głosowego pokazuje czytelny komunikat
-  - bieżący status Tyfloradia jest dostępny z klawiatury, a przycisk `Pokaż ramówkę Tyfloradia` odsłania w tej samej sekcji wielowierszowe pole tylko do odczytu i przenosi do niego fokus
+  - bieżący status Tyfloradia jest dostępny z klawiatury, a przycisk `Pokaż ramówkę Tyfloradia` odsłania ramówkę w widoku HTML i przenosi do niego fokus
+  - sekcja główna `Ramówka Tyfloradia` ładuje dane Tyfloradia i od razu przenosi fokus do widoku HTML ramówki
   - przy braku opublikowanej ramówki przycisk `Pokaż ramówkę Tyfloradia` odsłania pole z komunikatem `Brak dostępnej ramówki.`
 
 ### Modul `Ustawienia`
@@ -263,6 +268,7 @@ Pozniej automatyzowac:
   - publiczne zgłoszenie zawiera tylko tytuł, opis i bezpieczną diagnostykę jawną
   - opcjonalny log techniczny trafia wyłącznie do prywatnego repo intake
   - klient zawsze wysyła nagłówek `User-Agent`
+  - odpowiedź serwera z publicznym URL issue jest traktowana jako udana wysyłka i nie pokazuje błędu
 
 ### Modul `TyfloŚwiat`
 - klawiatura:
@@ -338,6 +344,7 @@ Pozniej automatyzowac:
   - przycisk kopiowania zapisuje adres odnośnika do schowka systemowego
   - przycisk udostępniania otwiera systemowe udostępnianie dla wybranego odnośnika
   - temat i odnośnik można dodać oraz usunąć z ulubionych bez zamykania playera
+  - przycisk `Dodaj komentarz` nie pokazuje błędnej podpowiedzi skrótu `Ctrl+spacja`
   - po zamknięciu dialogu i ponownym otwarciu podcast wznawia się od ostatniej zapisanej pozycji
   - po dojściu odcinka do końca i ponownym otwarciu player startuje od początku, a nie od końcówki
   - skróty klawiaturowe działają także wtedy, gdy focus jest na obszarze playera, a nie na konkretnym przycisku
@@ -347,6 +354,8 @@ Pozniej automatyzowac:
   - `Escape` z listy treści cofa fokus do listy kategorii albo pola wyszukiwania
   - kolejny `Escape` cofa fokus do listy sekcji głównych
   - `Ctrl+D` na zaznaczonym wpisie przełącza ulubione bez odrywania rąk od klawiatury
+  - `Ctrl+K` na zaznaczonym podcaście otwiera komentarze
+  - `Ctrl+T` na zaznaczonym podcaście otwiera znaczniki czasu
   - `Enter` na liście kategorii przechodzi do listy treści bez dodatkowego potwierdzania kategorii
   - `Enter` na zaznaczonym wpisie wykonuje jego akcję domyślną
   - wpisanie pierwszej litery tytułu przenosi fokus do kolejnego pasującego wpisu także w `Szukaj`
@@ -356,7 +365,8 @@ Pozniej automatyzowac:
   - odczytuje listy bez technicznego słowa `lista`, a typ treści tylko zgodnie z ustawieniem dostępności
 - funkcjonalnie:
   - listy nie pokazują już osobnego, stałego wiersza `Podcast` albo `Artykuł` nad tytułem
-  - menu kontekstowe podcastu pokazuje `Pokaż komentarze`, `Pokaż znaczniki czasu` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
+  - menu kontekstowe podcastu pokazuje `Pokaż komentarze (Ctrl+K)`, `Pokaż znaczniki czasu (Ctrl+T)` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
+  - menu kontekstowe przełączania ulubionych pokazuje skrót `Ctrl+D`
   - w playerze pełne nazwy przycisków dodatków podcastu są zawsze widoczne, bez ucinania tekstu do samego `Pokaż`
   - `Pokaż znaczniki czasu` otwiera listę samych znaczników bez wchodzenia do playera
   - lista samych znaczników ma takie samo menu kontekstowe jak w playerze, w tym `Przejdź` i `Dodaj do ulubionych`

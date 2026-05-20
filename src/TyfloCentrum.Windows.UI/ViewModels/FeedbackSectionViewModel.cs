@@ -97,6 +97,7 @@ public partial class FeedbackSectionViewModel : ObservableObject
 
         IsSubmitting = true;
         ErrorMessage = null;
+        PublicIssueUrl = null;
         StatusMessage = "Wysyłanie zgłoszenia…";
         NotifyStateChanged();
 

@@ -166,6 +166,7 @@ public sealed partial class ShellPage : Page
             VirtualKey.Number6 => 6,
             VirtualKey.Number7 => 7,
             VirtualKey.Number8 => 8,
+            VirtualKey.Number9 => 9,
             _ => 0,
         };
 
@@ -188,7 +189,7 @@ public sealed partial class ShellPage : Page
     {
         KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
 
-        for (var shortcutNumber = 1; shortcutNumber <= 8; shortcutNumber++)
+        for (var shortcutNumber = 1; shortcutNumber <= 9; shortcutNumber++)
         {
             var key = shortcutNumber switch
             {
@@ -200,6 +201,7 @@ public sealed partial class ShellPage : Page
                 6 => VirtualKey.Number6,
                 7 => VirtualKey.Number7,
                 8 => VirtualKey.Number8,
+                9 => VirtualKey.Number9,
                 _ => throw new ArgumentOutOfRangeException(nameof(shortcutNumber)),
             };
 
@@ -251,6 +253,10 @@ public sealed partial class ShellPage : Page
                 break;
             case "radio":
                 await GetRadioSectionView().PrepareForScreenshotAsync();
+                break;
+            case "radio-schedule":
+                await GetRadioSectionView().PrepareForScreenshotAsync();
+                await GetRadioSectionView().FocusScheduleContentAsync();
                 break;
             default:
                 await Task.Delay(1200);
@@ -438,6 +444,9 @@ public sealed partial class ShellPage : Page
             case "radio":
                 GetRadioSectionView().FocusPrimaryContent();
                 break;
+            case "radio-schedule":
+                _ = GetRadioSectionView().FocusScheduleContentAsync();
+                break;
             case "settings":
                 GetSettingsSectionView().FocusPrimaryContent();
                 break;
@@ -457,6 +466,7 @@ public sealed partial class ShellPage : Page
             "search" => GetSearchSectionView(),
             "favorites" => GetFavoritesSectionView(),
             "radio" => GetRadioSectionView(),
+            "radio-schedule" => GetRadioSectionView(),
             "settings" => GetSettingsSectionView(),
             "feedback" => GetFeedbackSectionView(),
             _ => CreatePlaceholderContent(),
