@@ -130,6 +130,7 @@
                         AutomationProperties.AutomationId="radio.scheduleBrowser"
                         AutomationProperties.Name="Czytnik ramówki Tyfloradia"
                         MinHeight="360"
+                        NavigationStarting="OnScheduleBrowserNavigationStarting"
                         Visibility="Collapsed" />
                     <TextBox
                         x:Name="ScheduleEditor"

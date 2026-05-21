@@ -35,7 +35,9 @@ public sealed partial class FeedbackSectionView : UserControl
     private async void OnSubmitClick(object sender, RoutedEventArgs e)
     {
         await Task.Yield();
-        await ViewModel.SubmitAsync();
+        var submitted = await ViewModel.SubmitAsync();
+        await ShowSubmissionResultDialogAsync(submitted);
+
         if (ViewModel.HasPublicIssueUrl)
         {
             OpenIssueButton.Focus(FocusState.Programmatic);
@@ -105,6 +107,44 @@ public sealed partial class FeedbackSectionView : UserControl
         IncludeLogCheckBox.IsEnabled = !ViewModel.IsSubmitting;
     }
 
+    private async Task ShowSubmissionResultDialogAsync(bool submitted)
+    {
+        if (XamlRoot is null)
+        {
+            return;
+        }
+
+        var hasPublicIssueUrl = ViewModel.HasPublicIssueUrl;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = submitted
+                ? "Gotowe"
+                : "Problem z wysyłką",
+            Content = new TextBlock
+            {
+                Text = ViewModel.StatusMessage
+                    ?? (submitted
+                        ? "Zgłoszenie wysłane pomyślnie."
+                        : "Nie udało się wysłać zgłoszenia. Spróbuj ponownie później."),
+                TextWrapping = TextWrapping.WrapWholeWords,
+            },
+            CloseButtonText = "Zamknij",
+            DefaultButton = ContentDialogButton.Close,
+        };
+
+        if (submitted && hasPublicIssueUrl)
+        {
+            dialog.PrimaryButtonText = "Otwórz publiczne zgłoszenie";
+        }
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary && hasPublicIssueUrl)
+        {
+            await ViewModel.OpenPublicIssueAsync();
+        }
+    }
+
     private void SyncDescriptionEditorFromViewModel()
     {
         var currentValue = GetDescriptionEditorText();
@@ -114,12 +154,15 @@ public sealed partial class FeedbackSectionView : UserControl
         }
 
         _isSynchronizingDescriptionEditor = true;
+        var wasReadOnly = DescriptionEditor.IsReadOnly;
         try
         {
+            DescriptionEditor.IsReadOnly = false;
             DescriptionEditor.Document.SetText(TextSetOptions.None, ViewModel.Description ?? string.Empty);
         }
         finally
         {
+            DescriptionEditor.IsReadOnly = wasReadOnly;
             _isSynchronizingDescriptionEditor = false;
         }
     }

@@ -217,6 +217,8 @@ Pozniej automatyzowac:
   - rzeczywisty problem z otwarciem formularza kontaktu tekstowego albo głosowego pokazuje czytelny komunikat
   - bieżący status Tyfloradia jest dostępny z klawiatury, a przycisk `Pokaż ramówkę Tyfloradia` odsłania ramówkę w widoku HTML i przenosi do niego fokus
   - sekcja główna `Ramówka Tyfloradia` ładuje dane Tyfloradia i od razu przenosi fokus do widoku HTML ramówki
+  - `Escape` w otwartej ramówce zamyka samą ramówkę i wraca na przycisk `Pokaż ramówkę Tyfloradia`
+  - linki w ramówce są interaktywne i otwierają się przez systemową obsługę linków
   - przy braku opublikowanej ramówki przycisk `Pokaż ramówkę Tyfloradia` odsłania pole z komunikatem `Brak dostępnej ramówki.`
 
 ### Modul `Ustawienia`
@@ -270,6 +272,7 @@ Pozniej automatyzowac:
   - opcjonalny log techniczny trafia wyłącznie do prywatnego repo intake
   - klient zawsze wysyła nagłówek `User-Agent`
   - odpowiedź serwera z publicznym URL issue jest traktowana jako udana wysyłka i nie pokazuje błędu
+  - jeśli Sygnalista utworzył issue, aplikacja nie pokazuje błędu nawet przy nietypowym statusie HTTP albo niepełnej odpowiedzi JSON
 
 ### Modul `TyfloŚwiat`
 - klawiatura:

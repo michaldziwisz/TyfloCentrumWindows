@@ -2,8 +2,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.Web.WebView2.Core;
 using System.ComponentModel;
 using TyfloCentrum.Windows.App.Services;
+using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 using Windows.System;
 
@@ -14,8 +16,11 @@ public sealed partial class RadioSectionView : UserControl
     private readonly AudioPlayerDialogService _audioPlayerDialogService;
     private readonly ContactTextMessageDialogService _contactTextMessageDialogService;
     private readonly ContactVoiceMessageDialogService _contactVoiceMessageDialogService;
+    private readonly IExternalLinkLauncher _externalLinkLauncher;
     private string? _lastAnnouncedStatusMessage;
     private string? _lastRenderedScheduleHtmlDocument;
+    private bool _scheduleBrowserMessageHandlerAttached;
+    private bool _isPrimaryScheduleMode;
 
     public event EventHandler? ExitToSectionListRequested;
 
@@ -23,12 +28,14 @@ public sealed partial class RadioSectionView : UserControl
         RadioViewModel viewModel,
         AudioPlayerDialogService audioPlayerDialogService,
         ContactTextMessageDialogService contactTextMessageDialogService,
-        ContactVoiceMessageDialogService contactVoiceMessageDialogService
+        ContactVoiceMessageDialogService contactVoiceMessageDialogService,
+        IExternalLinkLauncher externalLinkLauncher
     )
     {
         _audioPlayerDialogService = audioPlayerDialogService;
         _contactTextMessageDialogService = contactTextMessageDialogService;
         _contactVoiceMessageDialogService = contactVoiceMessageDialogService;
+        _externalLinkLauncher = externalLinkLauncher;
         ViewModel = viewModel;
         InitializeComponent();
         DataContext = ViewModel;
@@ -40,11 +47,19 @@ public sealed partial class RadioSectionView : UserControl
 
     public void FocusPrimaryContent()
     {
+        SetPrimaryScheduleMode(false);
         ListenButton.Focus(FocusState.Programmatic);
+    }
+
+    public void SetPrimaryScheduleMode(bool isPrimaryScheduleMode)
+    {
+        _isPrimaryScheduleMode = isPrimaryScheduleMode;
+        UpdateVisualState();
     }
 
     public async Task FocusScheduleContentAsync()
     {
+        SetPrimaryScheduleMode(true);
         await ViewModel.LoadIfNeededAsync();
         await ShowScheduleAsync();
     }
@@ -136,7 +151,7 @@ public sealed partial class RadioSectionView : UserControl
     {
         if (e.PropertyName == nameof(RadioViewModel.StatusAnnouncement))
         {
-            AnnounceStatusMessage(ViewModel.StatusAnnouncement);
+            AnnounceStatusMessageIfNeeded(ViewModel.StatusAnnouncement);
         }
 
         UpdateVisualState();
@@ -160,9 +175,9 @@ public sealed partial class RadioSectionView : UserControl
         ErrorBar.IsOpen = ViewModel.HasError;
         ErrorBar.Message = ViewModel.ErrorMessage;
 
-        AnnouncementTextBlock.Visibility = string.IsNullOrWhiteSpace(ViewModel.StatusAnnouncement)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
+        AnnouncementTextBlock.Visibility = ShouldExposeStatusAnnouncement(ViewModel.StatusAnnouncement)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
         RefreshButton.IsEnabled = !ViewModel.IsLoading;
         ListenButton.IsEnabled = !ViewModel.IsLoading;
@@ -171,9 +186,15 @@ public sealed partial class RadioSectionView : UserControl
         ScheduleButton.IsEnabled = ViewModel.CanOpenSchedule;
     }
 
-    private void AnnounceStatusMessage(string? message)
+    private void AnnounceStatusMessageIfNeeded(string? message)
     {
         if (string.IsNullOrWhiteSpace(message))
+        {
+            _lastAnnouncedStatusMessage = null;
+            return;
+        }
+
+        if (!ShouldExposeStatusAnnouncement(message))
         {
             _lastAnnouncedStatusMessage = null;
             return;
@@ -188,6 +209,22 @@ public sealed partial class RadioSectionView : UserControl
         AutomationAnnouncementHelper.Announce(AnnouncementTextBlock, message, important: true);
     }
 
+    private bool ShouldExposeStatusAnnouncement(string? message)
+    {
+        return !string.IsNullOrWhiteSpace(message)
+            && (!_isPrimaryScheduleMode || IsScheduleRelevantAnnouncement(message));
+    }
+
+    private bool IsScheduleRelevantAnnouncement(string message)
+    {
+        return ViewModel.HasError
+            && !string.Equals(
+                message,
+                "Tyfloradio nie prowadzi teraz audycji interaktywnej.",
+                StringComparison.Ordinal
+            );
+    }
+
     private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key != VirtualKey.Escape || !FocusNavigationHelper.IsFocusWithin(this))
@@ -196,11 +233,18 @@ public sealed partial class RadioSectionView : UserControl
         }
 
         e.Handled = true;
+        if (IsScheduleVisible())
+        {
+            CloseSchedule();
+            return;
+        }
+
         ExitToSectionListRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private async void OnOpenScheduleClick(object sender, RoutedEventArgs e)
     {
+        SetPrimaryScheduleMode(false);
         await ShowScheduleAsync();
     }
 
@@ -229,6 +273,12 @@ public sealed partial class RadioSectionView : UserControl
             {
                 ScheduleBrowser.CoreWebView2.Settings.IsStatusBarEnabled = false;
                 ScheduleBrowser.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                if (!_scheduleBrowserMessageHandlerAttached)
+                {
+                    ScheduleBrowser.CoreWebView2.WebMessageReceived += OnScheduleBrowserWebMessageReceived;
+                    ScheduleBrowser.CoreWebView2.NewWindowRequested += OnScheduleBrowserNewWindowRequested;
+                    _scheduleBrowserMessageHandlerAttached = true;
+                }
             }
 
             if (
@@ -257,6 +307,120 @@ public sealed partial class RadioSectionView : UserControl
             ScheduleEditor.Focus(FocusState.Programmatic);
             ScheduleEditor.Select(0, 0);
         }
+    }
+
+    private async void OnScheduleBrowserNavigationStarting(
+        WebView2 sender,
+        CoreWebView2NavigationStartingEventArgs args
+    )
+    {
+        if (!TryGetExternalScheduleLink(args.Uri, out var target))
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        await OpenScheduleLinkAsync(target);
+    }
+
+    private async void OnScheduleBrowserNewWindowRequested(
+        CoreWebView2 sender,
+        CoreWebView2NewWindowRequestedEventArgs args
+    )
+    {
+        if (!TryGetExternalScheduleLink(args.Uri, out var target))
+        {
+            return;
+        }
+
+        args.Handled = true;
+        await OpenScheduleLinkAsync(target);
+    }
+
+    private async void OnScheduleBrowserWebMessageReceived(
+        CoreWebView2 sender,
+        CoreWebView2WebMessageReceivedEventArgs args
+    )
+    {
+        var message = args.TryGetWebMessageAsString();
+        if (string.Equals(message, "closeSchedule", StringComparison.Ordinal))
+        {
+            CloseSchedule();
+            return;
+        }
+
+        const string openExternalPrefix = "openExternal:";
+        if (!message.StartsWith(openExternalPrefix, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var target = message[openExternalPrefix.Length..];
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            return;
+        }
+
+        await OpenScheduleLinkAsync(target);
+    }
+
+    private async Task OpenScheduleLinkAsync(string target)
+    {
+        var launched = await _externalLinkLauncher.LaunchAsync(target);
+        if (!launched)
+        {
+            AutomationAnnouncementHelper.Announce(
+                AnnouncementTextBlock,
+                "Nie udało się otworzyć linku z ramówki Tyfloradia.",
+                important: true
+            );
+        }
+    }
+
+    private void CloseSchedule()
+    {
+        ScheduleBrowser.Visibility = Visibility.Collapsed;
+        ScheduleEditor.Visibility = Visibility.Collapsed;
+        if (_isPrimaryScheduleMode)
+        {
+            _isPrimaryScheduleMode = false;
+            ExitToSectionListRequested?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        ScheduleButton.Focus(FocusState.Programmatic);
+        AutomationAnnouncementHelper.Announce(
+            AnnouncementTextBlock,
+            "Zamknięto ramówkę Tyfloradia.",
+            important: true
+        );
+    }
+
+    private bool IsScheduleVisible()
+    {
+        return ScheduleBrowser.Visibility == Visibility.Visible
+            || ScheduleEditor.Visibility == Visibility.Visible;
+    }
+
+    private static bool TryGetExternalScheduleLink(string? candidate, out string target)
+    {
+        target = string.Empty;
+        if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        if (
+            uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+            || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            || uri.Scheme.Equals(Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            target = uri.AbsoluteUri;
+            return true;
+        }
+
+        return false;
     }
 
     private void OnScheduleButtonKeyDown(object sender, KeyRoutedEventArgs e)

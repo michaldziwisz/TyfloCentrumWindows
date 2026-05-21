@@ -1,11 +1,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 
 namespace TyfloCentrum.Windows.Infrastructure.Http;
 
-public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionService
+public sealed partial class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -91,60 +92,78 @@ public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionSer
             cancellationToken
         );
 
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (TryBuildSuccessResult(responseBody, response.IsSuccessStatusCode, out var result))
+        {
+            return result;
+        }
+
         if (!response.IsSuccessStatusCode)
         {
-            var error = await TryReadErrorAsync(response, cancellationToken);
+            var error = TryReadError(response, responseBody);
             return new FeedbackSubmissionResult(false, error, null, null);
         }
 
-        var payload = await response.Content.ReadFromJsonAsync<ReportResponse>(
-            SerializerOptions,
-            cancellationToken
-        );
+        return new FeedbackSubmissionResult(true, null, null, null);
+    }
 
+    private static bool TryBuildSuccessResult(
+        string responseBody,
+        bool isSuccessStatusCode,
+        out FeedbackSubmissionResult result
+    )
+    {
+        var payload = TryDeserialize<ReportResponse>(responseBody);
         if (!string.IsNullOrWhiteSpace(payload?.Issue?.PublicUrl))
         {
-            return new FeedbackSubmissionResult(
+            result = new FeedbackSubmissionResult(
                 true,
                 null,
                 payload.Issue.PublicUrl,
                 payload.ReportId
             );
+            return true;
         }
 
-        return payload?.Ok == true
-            ? new FeedbackSubmissionResult(true, null, null, payload.ReportId)
-            : new FeedbackSubmissionResult(
-                false,
-                "Serwer zgłoszeń zwrócił nieprawidłową odpowiedź.",
-                null,
-                null
-            );
+        if (payload?.Ok == true)
+        {
+            result = new FeedbackSubmissionResult(true, null, null, payload.ReportId);
+            return true;
+        }
+
+        var publicIssueUrl = ExtractPublicIssueUrl(responseBody);
+        if (!string.IsNullOrWhiteSpace(publicIssueUrl))
+        {
+            result = new FeedbackSubmissionResult(true, null, publicIssueUrl, payload?.ReportId);
+            return true;
+        }
+
+        if (isSuccessStatusCode)
+        {
+            result = new FeedbackSubmissionResult(true, null, null, payload?.ReportId);
+            return true;
+        }
+
+        result = new FeedbackSubmissionResult(
+            false,
+            "Serwer zgłoszeń zwrócił nieprawidłową odpowiedź.",
+            null,
+            null
+        );
+        return false;
     }
 
-    private static async Task<string> TryReadErrorAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken
-    )
+    private static string TryReadError(HttpResponseMessage response, string responseBody)
     {
-        try
+        var payload = TryDeserialize<ErrorEnvelope>(responseBody);
+        if (!string.IsNullOrWhiteSpace(payload?.Error?.Message))
         {
-            var payload = await response.Content.ReadFromJsonAsync<ErrorEnvelope>(
-                SerializerOptions,
-                cancellationToken
-            );
-            if (!string.IsNullOrWhiteSpace(payload?.Error?.Message))
+            if (payload.Error.Message.StartsWith("Unknown app.id:", StringComparison.Ordinal))
             {
-                if (payload.Error.Message.StartsWith("Unknown app.id:", StringComparison.Ordinal))
-                {
-                    return "Obsługa zgłoszeń jest jeszcze włączana po stronie serwera. Spróbuj ponownie później.";
-                }
-
-                return payload.Error.Message;
+                return "Obsługa zgłoszeń jest jeszcze włączana po stronie serwera. Spróbuj ponownie później.";
             }
-        }
-        catch
-        {
+
+            return payload.Error.Message;
         }
 
         return response.StatusCode switch
@@ -155,6 +174,34 @@ public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionSer
                 "Wysłano zbyt wiele zgłoszeń w krótkim czasie. Spróbuj ponownie za chwilę.",
             _ => "Nie udało się wysłać zgłoszenia. Spróbuj ponownie później.",
         };
+    }
+
+    private static T? TryDeserialize<T>(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return default;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(responseBody, SerializerOptions);
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+    }
+
+    private static string? ExtractPublicIssueUrl(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        var match = PublicIssueUrlRegex().Match(responseBody);
+        return match.Success ? match.Value : null;
     }
 
     private sealed record AppDescriptor(
@@ -189,4 +236,7 @@ public sealed class SygnalistaFeedbackSubmissionService : IFeedbackSubmissionSer
     private sealed record ErrorEnvelope(ErrorBody? Error);
 
     private sealed record ErrorBody(string? Code, string? Message);
+
+    [GeneratedRegex(@"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+", RegexOptions.Compiled)]
+    private static partial Regex PublicIssueUrlRegex();
 }

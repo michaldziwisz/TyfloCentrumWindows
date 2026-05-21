@@ -26,7 +26,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAudioPlaybackRequestFactory, AudioPlaybackRequestFactory>();
         services.AddHttpClient<IFeedbackSubmissionService, SygnalistaFeedbackSubmissionService>(client =>
         {
-            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
+            // Feedback submission writes diagnostics and creates a public GitHub issue before responding.
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromMinutes(2));
         });
         services.AddHttpClient<IPushNotificationRegistrationSyncService, PushNotificationRegistrationSyncService>(client =>
         {

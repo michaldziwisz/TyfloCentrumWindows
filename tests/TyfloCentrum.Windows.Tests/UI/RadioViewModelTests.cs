@@ -54,6 +54,8 @@ public sealed class RadioViewModelTests
         Assert.Contains("<title>Ramówka Tyfloradia</title>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
         Assert.Contains("12:00 Start<br>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
         Assert.Contains("13:00 Dalej", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("postMessage('closeSchedule')", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
+        Assert.Contains("postMessage('openExternal:' + href)", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -82,6 +84,29 @@ public sealed class RadioViewModelTests
     }
 
     [Fact]
+    public async Task LoadIfNeededAsync_turns_plain_schedule_urls_into_links()
+    {
+        var service = new FakeRadioService
+        {
+            Availability = new RadioAvailability(false, null),
+            Schedule = new RadioScheduleInfo(
+                true,
+                "Szczegóły: https://tyflopodcast.net/test?x=1&y=2.",
+                null
+            ),
+        };
+        var viewModel = new RadioViewModel(service, new FakeAudioPlaybackRequestFactory());
+
+        await viewModel.LoadIfNeededAsync();
+
+        Assert.Contains(
+            "<a href=\"https://tyflopodcast.net/test?x=1&amp;y=2\">https://tyflopodcast.net/test?x=1&amp;y=2</a>.",
+            viewModel.ScheduleHtmlDocument,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public async Task LoadIfNeededAsync_sanitizes_schedule_html_document()
     {
         var service = new FakeRadioService
@@ -99,7 +124,8 @@ public sealed class RadioViewModelTests
 
         Assert.Contains("<p>Start</p>", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
         Assert.Contains("href=\"#\"", viewModel.ScheduleHtmlDocument, StringComparison.Ordinal);
-        Assert.DoesNotContain("<script", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<script>alert", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("alert(1)", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("onclick", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("javascript:", viewModel.ScheduleHtmlDocument, StringComparison.OrdinalIgnoreCase);
     }

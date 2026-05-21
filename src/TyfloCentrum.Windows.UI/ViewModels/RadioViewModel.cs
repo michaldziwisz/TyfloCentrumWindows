@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
@@ -324,6 +325,10 @@ public partial class RadioViewModel : ObservableObject
                 a {
                   color: LinkText;
                 }
+                a:focus {
+                  outline: 3px solid Highlight;
+                  outline-offset: 2px;
+                }
                 main:focus {
                   outline: 3px solid Highlight;
                   outline-offset: 4px;
@@ -345,6 +350,27 @@ public partial class RadioViewModel : ObservableObject
                 <h1>Ramówka Tyfloradia</h1>
                 {{body}}
               </main>
+              <script>
+                (function () {
+                  const webview = window.chrome && window.chrome.webview;
+                  const root = document.getElementById('schedule-root');
+                  if (root) { setTimeout(() => root.focus(), 0); }
+                  document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && webview) {
+                      event.preventDefault();
+                      webview.postMessage('closeSchedule');
+                    }
+                  });
+                  document.addEventListener('click', event => {
+                    const anchor = event.target.closest('a[href]');
+                    if (!anchor || !webview) { return; }
+                    const href = anchor.href || anchor.getAttribute('href');
+                    if (!href || href === '#') { return; }
+                    event.preventDefault();
+                    webview.postMessage('openExternal:' + href);
+                  });
+                }());
+              </script>
             </body>
             </html>
             """;
@@ -382,13 +408,55 @@ public partial class RadioViewModel : ObservableObject
     private static string PlainTextToHtml(string value)
     {
         var normalized = NormalizeRawScheduleMarkup(value);
-        var encoded = WebUtility.HtmlEncode(normalized);
-        return encoded.Replace("\n", "<br>", StringComparison.Ordinal);
+        var builder = new StringBuilder();
+        var currentIndex = 0;
+
+        foreach (Match match in PlainUrlRegex().Matches(normalized))
+        {
+            builder.Append(EncodeScheduleTextSegment(normalized[currentIndex..match.Index]));
+
+            var linkText = match.Value;
+            var linkTarget = TrimLinkTrailingPunctuation(linkText, out var trailingText);
+            var encodedLink = WebUtility.HtmlEncode(linkTarget);
+            builder.Append("<a href=\"");
+            builder.Append(encodedLink);
+            builder.Append("\">");
+            builder.Append(encodedLink);
+            builder.Append("</a>");
+            builder.Append(EncodeScheduleTextSegment(trailingText));
+
+            currentIndex = match.Index + match.Length;
+        }
+
+        builder.Append(EncodeScheduleTextSegment(normalized[currentIndex..]));
+        return builder.ToString();
     }
 
     private static bool LooksLikeHtml(string value)
     {
         return HtmlTagProbeRegex().IsMatch(value);
+    }
+
+    private static string EncodeScheduleTextSegment(string value)
+    {
+        return WebUtility.HtmlEncode(value).Replace("\n", "<br>", StringComparison.Ordinal);
+    }
+
+    private static string TrimLinkTrailingPunctuation(string value, out string trailingText)
+    {
+        var end = value.Length;
+        while (end > 0 && IsTrailingLinkPunctuation(value[end - 1]))
+        {
+            end--;
+        }
+
+        trailingText = value[end..];
+        return value[..end];
+    }
+
+    private static bool IsTrailingLinkPunctuation(char value)
+    {
+        return value is '.' or ',' or ';' or ':' or '!' or '?' or ')' or ']';
     }
 
     [GeneratedRegex(@"(?i)<br\s*/?>", RegexOptions.Compiled)]
@@ -417,4 +485,7 @@ public partial class RadioViewModel : ObservableObject
 
     [GeneratedRegex(@"href\s*=\s*(""|')\s*javascript:[^""']*\1", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex JavaScriptUrlRegex();
+
+    [GeneratedRegex(@"(?:https?://|mailto:)[^\s<>""']+", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex PlainUrlRegex();
 }

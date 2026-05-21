@@ -17,6 +17,14 @@
             Modifiers="Control"
             Invoked="OnToggleFavoriteAcceleratorInvoked" />
         <KeyboardAccelerator
+            Key="K"
+            Modifiers="Control"
+            Invoked="OnShowCommentsAcceleratorInvoked" />
+        <KeyboardAccelerator
+            Key="T"
+            Modifiers="Control"
+            Invoked="OnShowChapterMarkersAcceleratorInvoked" />
+        <KeyboardAccelerator
             Key="Left"
             Modifiers="Control"
             Invoked="OnSkipBackwardAcceleratorInvoked" />

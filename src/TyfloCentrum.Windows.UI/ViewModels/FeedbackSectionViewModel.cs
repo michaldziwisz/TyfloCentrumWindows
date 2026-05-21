@@ -103,17 +103,32 @@ public partial class FeedbackSectionViewModel : ObservableObject
 
         try
         {
-            var result = await _feedbackSubmissionService.SubmitAsync(
-                new FeedbackSubmissionRequest(
-                    SelectedKindOption!.Kind,
-                    Title.Trim(),
-                    Description.Trim(),
-                    NormalizeOptionalEmail(ContactEmail),
-                    IncludeDiagnostics,
-                    IncludeLogFile
-                ),
-                cancellationToken
-            );
+            FeedbackSubmissionResult result;
+            try
+            {
+                result = await _feedbackSubmissionService.SubmitAsync(
+                    new FeedbackSubmissionRequest(
+                        SelectedKindOption!.Kind,
+                        Title.Trim(),
+                        Description.Trim(),
+                        NormalizeOptionalEmail(ContactEmail),
+                        IncludeDiagnostics,
+                        IncludeLogFile
+                    ),
+                    cancellationToken
+                );
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                ErrorMessage = FallbackErrorMessage;
+                StatusMessage = ErrorMessage;
+                NotifyStateChanged();
+                return false;
+            }
 
             if (!result.Success)
             {
@@ -134,17 +149,6 @@ public partial class FeedbackSectionViewModel : ObservableObject
                 : "Zgłoszenie wysłane pomyślnie.";
             NotifyStateChanged();
             return true;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch
-        {
-            ErrorMessage = FallbackErrorMessage;
-            StatusMessage = ErrorMessage;
-            NotifyStateChanged();
-            return false;
         }
         finally
         {

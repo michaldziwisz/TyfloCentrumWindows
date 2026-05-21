@@ -465,12 +465,19 @@ public sealed partial class ShellPage : Page
             "articles" => GetArticleSectionView(),
             "search" => GetSearchSectionView(),
             "favorites" => GetFavoritesSectionView(),
-            "radio" => GetRadioSectionView(),
-            "radio-schedule" => GetRadioSectionView(),
+            "radio" => GetRadioSectionView(primaryScheduleMode: false),
+            "radio-schedule" => GetRadioSectionView(primaryScheduleMode: true),
             "settings" => GetSettingsSectionView(),
             "feedback" => GetFeedbackSectionView(),
             _ => CreatePlaceholderContent(),
         };
+    }
+
+    private RadioSectionView GetRadioSectionView(bool primaryScheduleMode)
+    {
+        var view = GetRadioSectionView();
+        view.SetPrimaryScheduleMode(primaryScheduleMode);
+        return view;
     }
 
     private NewsSectionView GetNewsSectionView()

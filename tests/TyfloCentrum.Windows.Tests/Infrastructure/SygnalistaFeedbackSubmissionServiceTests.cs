@@ -193,6 +193,130 @@ public sealed class SygnalistaFeedbackSubmissionServiceTests
     }
 
     [Fact]
+    public async Task SubmitAsync_treats_public_issue_url_as_success_even_on_http_error()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(
+                    """
+                    {
+                      "ok": true,
+                      "reportId": "rep-500",
+                      "issue": {
+                        "number": 20,
+                        "url": "https://api.github.com/repos/example/repo/issues/20",
+                        "html_url": "https://github.com/example/repo/issues/20"
+                      }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json"
+                ),
+            }
+        );
+        var service = new SygnalistaFeedbackSubmissionService(
+            new HttpClient(handler),
+            new TyfloCentrumEndpointsOptions
+            {
+                SygnalistaBaseUrl = new Uri("https://sygnalista.example/"),
+                SygnalistaAppId = "tyflocentrum",
+            },
+            new FakeFeedbackDiagnosticsCollector()
+        );
+
+        var result = await service.SubmitAsync(
+            new FeedbackSubmissionRequest(
+                FeedbackSubmissionKind.Bug,
+                "Fałszywy błąd",
+                "Issue istnieje, więc aplikacja nie powinna pokazywać błędu.",
+                null,
+                false,
+                false
+            )
+        );
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
+        Assert.Equal("https://github.com/example/repo/issues/20", result.PublicIssueUrl);
+        Assert.Equal("rep-500", result.ReportId);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_extracts_public_issue_url_from_non_json_error_body()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(
+                    "Issue created: https://github.com/example/repo/issues/21",
+                    Encoding.UTF8,
+                    "text/plain"
+                ),
+            }
+        );
+        var service = new SygnalistaFeedbackSubmissionService(
+            new HttpClient(handler),
+            new TyfloCentrumEndpointsOptions
+            {
+                SygnalistaBaseUrl = new Uri("https://sygnalista.example/"),
+                SygnalistaAppId = "tyflocentrum",
+            },
+            new FakeFeedbackDiagnosticsCollector()
+        );
+
+        var result = await service.SubmitAsync(
+            new FeedbackSubmissionRequest(
+                FeedbackSubmissionKind.Bug,
+                "Fałszywy błąd",
+                "Issue istnieje mimo błędnego statusu odpowiedzi.",
+                null,
+                false,
+                false
+            )
+        );
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
+        Assert.Equal("https://github.com/example/repo/issues/21", result.PublicIssueUrl);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_treats_success_status_with_unparseable_body_as_success()
+    {
+        var handler = new StubHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent("created", Encoding.UTF8, "text/plain"),
+            }
+        );
+        var service = new SygnalistaFeedbackSubmissionService(
+            new HttpClient(handler),
+            new TyfloCentrumEndpointsOptions
+            {
+                SygnalistaBaseUrl = new Uri("https://sygnalista.example/"),
+                SygnalistaAppId = "tyflocentrum",
+            },
+            new FakeFeedbackDiagnosticsCollector()
+        );
+
+        var result = await service.SubmitAsync(
+            new FeedbackSubmissionRequest(
+                FeedbackSubmissionKind.Suggestion,
+                "Nietypowa odpowiedź",
+                "Sukces HTTP bez JSON nie powinien dawać fałszywego błędu.",
+                null,
+                false,
+                false
+            )
+        );
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorMessage);
+        Assert.Null(result.PublicIssueUrl);
+    }
+
+    [Fact]
     public async Task SubmitAsync_returns_friendly_message_when_server_does_not_know_app_id()
     {
         var handler = new StubHttpMessageHandler(_ =>

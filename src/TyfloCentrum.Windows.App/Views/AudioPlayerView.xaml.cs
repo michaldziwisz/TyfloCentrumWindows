@@ -323,6 +323,14 @@ public sealed partial class AudioPlayerView : UserControl
                 e.Handled = true;
                 _ = ToggleFocusedShowNotesFavoriteAsync();
                 break;
+            case VirtualKey.K when controlPressed:
+                e.Handled = true;
+                _ = ShowCommentsShortcutAsync();
+                break;
+            case VirtualKey.T when controlPressed:
+                e.Handled = true;
+                ShowChapterMarkersShortcut();
+                break;
         }
     }
 
@@ -342,6 +350,24 @@ public sealed partial class AudioPlayerView : UserControl
     {
         args.Handled = true;
         await ToggleFocusedShowNotesFavoriteAsync();
+    }
+
+    private async void OnShowCommentsAcceleratorInvoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args
+    )
+    {
+        args.Handled = true;
+        await ShowCommentsShortcutAsync();
+    }
+
+    private void OnShowChapterMarkersAcceleratorInvoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args
+    )
+    {
+        args.Handled = true;
+        ShowChapterMarkersShortcut();
     }
 
     private void OnSkipBackwardAcceleratorInvoked(
@@ -1145,9 +1171,14 @@ public sealed partial class AudioPlayerView : UserControl
 
     private void ConfigureShortcutHelpText(AudioPlaybackRequest request)
     {
+        var showNotesShortcuts = request.PodcastPostId is int
+            ? " Ctrl+K pokazuje komentarze albo formularz dodania komentarza, Ctrl+T pokazuje znaczniki czasu."
+            : string.Empty;
+
         ShortcutHelpTextBlock.Text = request.CanChangePlaybackRate
             ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Alt+strzałka w górę i dół zmieniają prędkość, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik."
             : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik.";
+        ShortcutHelpTextBlock.Text += showNotesShortcuts;
     }
 
     private void SetVolume(double percent, bool announce)
@@ -1240,6 +1271,64 @@ public sealed partial class AudioPlayerView : UserControl
         {
             FocusCommentsList();
         }
+    }
+
+    private async Task ShowCommentsShortcutAsync()
+    {
+        if (_currentRequest?.PodcastPostId is not int)
+        {
+            return;
+        }
+
+        if (_isLoadingShowNotes)
+        {
+            SetStatusMessage("Komentarze są jeszcze ładowane.", announce: true, important: true);
+            return;
+        }
+
+        if (_comments.Length == 0)
+        {
+            await ShowCommentComposerAsync();
+            return;
+        }
+
+        _isCommentsVisible = true;
+        _isChapterMarkersVisible = false;
+        _isRelatedLinksVisible = false;
+        _isCommentComposerVisible = false;
+        UpdateShowNotesUi("Pokazano komentarze.");
+        FocusCommentsList();
+    }
+
+    private void ShowChapterMarkersShortcut()
+    {
+        if (_currentRequest?.PodcastPostId is not int)
+        {
+            return;
+        }
+
+        if (_isLoadingShowNotes)
+        {
+            SetStatusMessage("Znaczniki czasu są jeszcze ładowane.", announce: true, important: true);
+            return;
+        }
+
+        if (_chapterMarkers.Length == 0)
+        {
+            var title = _currentRequest.Title;
+            SetStatusMessage(
+                $"Podcast nie ma znaczników czasu: {title}.",
+                announce: true,
+                important: true
+            );
+            return;
+        }
+
+        _isChapterMarkersVisible = true;
+        _isCommentsVisible = false;
+        _isRelatedLinksVisible = false;
+        UpdateShowNotesUi("Pokazano znaczniki czasu.");
+        FocusChapterMarkersList();
     }
 
     private void OnChapterMarkersListItemClick(object sender, ItemClickEventArgs e)
