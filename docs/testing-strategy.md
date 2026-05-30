@@ -332,6 +332,7 @@ Pozniej automatyzowac:
   - odczytuje komunikat `Dodano do ulubionych` albo `Usunięto z ulubionych` po `Ctrl+D` na temacie i odnośniku
   - odczytuje przyciski `Znaczniki czasu` i `Odnośniki`
   - odczytuje opis skrótów klawiaturowych odtwarzacza
+  - po użyciu `Pokaż wersję tekstową` fokus trafia do renderowanego czytnika HTML nazwanym jako `Czytnik wersji tekstowej odcinka`
 - `NVDA`:
   - odczytuje listę znaczników czasu jako tytuł i czas
   - odczytuje listę odnośników jako tytuł i host bez pustych wartości
@@ -343,6 +344,8 @@ Pozniej automatyzowac:
   - przycisk `Przesyłaj do urządzenia` otwiera wybór urządzenia zewnętrznego dla podcastu i `Tyfloradia`, a po połączeniu pozwala też rozłączyć przesyłanie
   - komentarz z sekcją `Znaczniki czasu` daje listę markerów w kolejności rosnącej
   - komentarz z sekcją `Odnośniki` albo `Linki` daje listę linków
+  - odcinek z linkiem do kategorii `tekstowe wersje audycji` pokazuje przycisk `Pokaż wersję tekstową`, a treść otwiera się jako render HTML w playerze
+  - `Escape` w renderowanej wersji tekstowej odcinka zamyka ten widok i wraca do przycisku `Pokaż wersję tekstową`
   - kliknięcie znacznika przewija player do właściwego czasu i uruchamia odtwarzanie
   - kliknięcie odnośnika otwiera go w systemowej przeglądarce lub w domyślnym kliencie poczty dla `mailto:`
   - przycisk kopiowania zapisuje adres odnośnika do schowka systemowego
@@ -369,7 +372,7 @@ Pozniej automatyzowac:
   - odczytuje listy bez technicznego słowa `lista`, a typ treści tylko zgodnie z ustawieniem dostępności
 - funkcjonalnie:
   - listy nie pokazują już osobnego, stałego wiersza `Podcast` albo `Artykuł` nad tytułem
-  - menu kontekstowe podcastu pokazuje `Pokaż komentarze (Ctrl+K)`, `Pokaż znaczniki czasu (Ctrl+T)` i `Pokaż odnośniki` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
+  - menu kontekstowe podcastu pokazuje `Pokaż komentarze (Ctrl+K)`, `Pokaż znaczniki czasu (Ctrl+T)`, `Pokaż odnośniki` i `Pokaż wersję tekstową` tylko wtedy, gdy odcinek naprawdę ma takie dodatki
   - menu kontekstowe przełączania ulubionych pokazuje skrót `Ctrl+D`
   - w playerze pełne nazwy przycisków dodatków podcastu są zawsze widoczne, bez ucinania tekstu do samego `Pokaż`
   - `Pokaż znaczniki czasu` otwiera listę samych znaczników bez wchodzenia do playera
@@ -377,6 +380,7 @@ Pozniej automatyzowac:
   - `Enter` na znaczniku czasu uruchamia player podcastu od wybranej czasówki
   - `Pokaż odnośniki` otwiera listę samych odnośników bez wchodzenia do playera
   - lista samych odnośników ma takie samo menu kontekstowe jak w playerze, w tym `Otwórz`, `Kopiuj`, `Udostępnij` i `Dodaj do ulubionych`
+  - `Pokaż wersję tekstową` z menu kontekstowego otwiera renderowany czytnik HTML bez wchodzenia do playera
   - `Ctrl+D` i `Ctrl+U` działają w liście samych odnośników tak samo jak w playerze
   - `Enter` na odnośniku otwiera go w przeglądarce
   - `Pokaż komentarze` otwiera listę komentarzy bez wchodzenia do playera

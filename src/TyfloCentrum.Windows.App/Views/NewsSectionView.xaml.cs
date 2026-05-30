@@ -420,8 +420,24 @@ public sealed partial class NewsSectionView : UserControl
                     PodcastShowNotesSection.RelatedLinks,
                     item,
                     showNotes
-                );
+            );
             flyout.Items.Add(relatedLinksItem);
+        }
+
+        if (showNotes.HasTextVersion)
+        {
+            var textVersionItem = new MenuFlyoutItem { Text = "Pokaż wersję tekstową" };
+            AutomationProperties.SetName(
+                textVersionItem,
+                $"Pokaż wersję tekstową podcastu: {item.Title}"
+            );
+            textVersionItem.Click += async (_, _) =>
+                await ShowPodcastShowNotesSectionAsync(
+                    PodcastShowNotesSection.TextVersion,
+                    item,
+                    showNotes
+                );
+            flyout.Items.Add(textVersionItem);
         }
     }
 
@@ -484,6 +500,8 @@ public sealed partial class NewsSectionView : UserControl
                         "Nie udało się wyświetlić znaczników czasu podcastu.",
                     PodcastShowNotesSection.RelatedLinks =>
                         "Nie udało się wyświetlić odnośników podcastu.",
+                    PodcastShowNotesSection.TextVersion =>
+                        "Nie udało się wyświetlić wersji tekstowej podcastu.",
                     _ => "Nie udało się wyświetlić dodatków podcastu.",
                 }
             );

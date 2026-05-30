@@ -54,6 +54,10 @@ public static class ServiceCollectionExtensions
         {
             TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
         });
+        services.AddHttpClient<IWordPressPageDetailsService, WordPressPageDetailsService>(client =>
+        {
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
+        });
         services.AddHttpClient<ITyfloSwiatMagazineService, WordPressTyfloSwiatMagazineService>(client =>
         {
             TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));
@@ -71,6 +75,7 @@ public static class ServiceCollectionExtensions
                     | DecompressionMethods.Brotli,
             });
         services.AddTransient<IPodcastShowNotesService, PodcastShowNotesService>();
+        services.AddTransient<IPodcastTextVersionService, PodcastTextVersionService>();
         services.AddHttpClient<IRadioService, ContactPanelRadioService>(client =>
         {
             TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));

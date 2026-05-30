@@ -86,4 +86,48 @@ public sealed class ShowNotesParserTests
         Assert.Single(result.Markers);
         Assert.Single(result.Links);
     }
+
+    [Fact]
+    public void ParseTextVersionLink_extracts_text_version_from_category_path()
+    {
+        var result = ShowNotesParser.ParseTextVersionLink(
+            """
+            <p>Audycja dostępna jest również w
+            <a href="https://tyflopodcast.example/tekstowe-wersje-audycji/test-wersja-tekstowa/">wersji tekstowej</a>.</p>
+            """
+        );
+
+        Assert.NotNull(result);
+        Assert.Equal("Tekstowa wersja odcinka", result!.Title);
+        Assert.Equal(
+            "https://tyflopodcast.example/tekstowe-wersje-audycji/test-wersja-tekstowa/",
+            result.Url.AbsoluteUri
+        );
+    }
+
+    [Fact]
+    public void ParseTextVersionLink_extracts_page_id_link_from_anchor_text()
+    {
+        var result = ShowNotesParser.ParseTextVersionLink(
+            """
+            <p>Dostępna jest <a href="/?page_id=11085">tekstowa wersja odcinka</a>.</p>
+            """,
+            new Uri("https://tyflopodcast.example/podcast-testowy/")
+        );
+
+        Assert.NotNull(result);
+        Assert.Equal("https://tyflopodcast.example/?page_id=11085", result!.Url.AbsoluteUri);
+    }
+
+    [Fact]
+    public void ParseTextVersionLink_ignores_unrelated_links()
+    {
+        var result = ShowNotesParser.ParseTextVersionLink(
+            """
+            <p><a href="https://example.com/projekt">Strona projektu</a></p>
+            """
+        );
+
+        Assert.Null(result);
+    }
 }

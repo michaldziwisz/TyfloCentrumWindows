@@ -15,7 +15,6 @@ using Windows.System;
 using Windows.UI.Popups;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
-using TyfloCentrum.Windows.Domain.Text;
 using TyfloCentrum.Windows.UI.ViewModels;
 using WinRT.Interop;
 
@@ -31,16 +30,21 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly IPlaybackResumeService _playbackResumeService;
+    private readonly IPodcastShowNotesService _podcastShowNotesService;
+    private readonly IPodcastTextVersionService _podcastTextVersionService;
     private readonly PodcastCommentComposerViewModel _commentComposerViewModel;
     private readonly IShareService _shareService;
+    private readonly InAppBrowserView _textVersionBrowserView;
     private readonly WindowHandleProvider _windowHandleProvider;
-    private readonly IWordPressCommentsService _wordPressCommentsService;
     private readonly PlaybackRateOption[] _playbackRates;
     private CancellationTokenSource? _showNotesLoadCts;
     private PodcastChapterMarkerItemViewModel[] _chapterMarkers = [];
     private CommentItemViewModel[] _comments = [];
     private PodcastRelatedLinkItemViewModel[] _relatedLinks = [];
+    private RelatedLink? _textVersionLink;
+    private PodcastTextVersionDocument? _textVersionDocument;
     private Button? _addCommentButton;
+    private Button? _textVersionButton;
     private ListView? _chapterMarkersListView;
     private ListView? _commentsListView;
     private ListView? _relatedLinksListView;
@@ -53,7 +57,9 @@ public sealed partial class AudioPlayerView : UserControl
     private bool _isCommentsVisible;
     private bool _isCommentComposerVisible;
     private bool _isLoadingShowNotes;
+    private bool _isLoadingTextVersion;
     private bool _isRelatedLinksVisible;
+    private bool _isTextVersionVisible;
     private bool _isSynchronizingCommentComposer;
     private bool _isSynchronizingPositionSlider;
     private bool _isTransportUiRefreshPending;
@@ -74,9 +80,11 @@ public sealed partial class AudioPlayerView : UserControl
         IClipboardService clipboardService,
         IFavoritesService favoritesService,
         IPlaybackResumeService playbackResumeService,
+        IPodcastShowNotesService podcastShowNotesService,
+        IPodcastTextVersionService podcastTextVersionService,
         PodcastCommentComposerViewModel commentComposerViewModel,
         IShareService shareService,
-        IWordPressCommentsService wordPressCommentsService,
+        InAppBrowserView textVersionBrowserView,
         IExternalLinkLauncher externalLinkLauncher,
         WindowHandleProvider windowHandleProvider
     )
@@ -86,11 +94,14 @@ public sealed partial class AudioPlayerView : UserControl
         _clipboardService = clipboardService;
         _favoritesService = favoritesService;
         _playbackResumeService = playbackResumeService;
+        _podcastShowNotesService = podcastShowNotesService;
+        _podcastTextVersionService = podcastTextVersionService;
         _commentComposerViewModel = commentComposerViewModel;
         _shareService = shareService;
-        _wordPressCommentsService = wordPressCommentsService;
+        _textVersionBrowserView = textVersionBrowserView;
         _externalLinkLauncher = externalLinkLauncher;
         _windowHandleProvider = windowHandleProvider;
+        _textVersionBrowserView.CloseRequested = HideTextVersionFromBrowser;
         _commentComposerViewModel.PropertyChanged += OnCommentComposerPropertyChanged;
         _playbackRates = PlaybackRateCatalog
             .SupportedValues.Select(value => new PlaybackRateOption(PlaybackRateCatalog.FormatLabel(value), value))
@@ -1089,26 +1100,22 @@ public sealed partial class AudioPlayerView : UserControl
     private async Task LoadShowNotesAsync(int podcastPostId, CancellationToken cancellationToken)
     {
         _isLoadingShowNotes = true;
-        UpdateShowNotesUi("Ładowanie komentarzy, znaczników czasu i odnośników…");
+        UpdateShowNotesUi("Ładowanie komentarzy, znaczników czasu, odnośników i wersji tekstowej…");
 
         try
         {
-            var comments = await _wordPressCommentsService.GetCommentsAsync(
-                podcastPostId,
-                cancellationToken
-            );
+            var snapshot = await _podcastShowNotesService.GetAsync(podcastPostId, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var commentItems = PodcastCommentThreadBuilder.Build(comments);
-            var parsed = ShowNotesParser.Parse(comments);
-            var chapterMarkers = parsed.Markers
+            var commentItems = PodcastCommentThreadBuilder.Build(snapshot.Comments);
+            var chapterMarkers = snapshot.Markers
                 .Select(marker => new PodcastChapterMarkerItemViewModel(
                     marker.Title,
                     marker.Seconds,
                     FormatTime(marker.Seconds)
                 ))
                 .ToArray();
-            var relatedLinks = parsed.Links
+            var relatedLinks = snapshot.Links
                 .Select(link => new PodcastRelatedLinkItemViewModel(
                     link.Title,
                     link.Url,
@@ -1133,14 +1140,21 @@ public sealed partial class AudioPlayerView : UserControl
             _comments = commentItems;
             _chapterMarkers = chapterMarkers;
             _relatedLinks = relatedLinks;
+            _textVersionLink = snapshot.TextVersion;
+            _textVersionDocument = null;
 
             _isCommentsVisible = false;
             _isChapterMarkersVisible = false;
             _isRelatedLinksVisible = false;
+            _isTextVersionVisible = false;
+            _isLoadingTextVersion = false;
             _isLoadingShowNotes = false;
 
             UpdateShowNotesUi(
-                _comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0
+                _comments.Length == 0
+                    && _chapterMarkers.Length == 0
+                    && _relatedLinks.Length == 0
+                    && _textVersionLink is null
                     ? null
                     : BuildShowNotesReadyMessage()
             );
@@ -1153,6 +1167,10 @@ public sealed partial class AudioPlayerView : UserControl
             _comments = [];
             _chapterMarkers = [];
             _relatedLinks = [];
+            _textVersionLink = null;
+            _textVersionDocument = null;
+            _isTextVersionVisible = false;
+            _isLoadingTextVersion = false;
             _isLoadingShowNotes = false;
             UpdateShowNotesUi("Nie udało się wczytać komentarzy i dodatków do odcinka.");
         }
@@ -1229,6 +1247,7 @@ public sealed partial class AudioPlayerView : UserControl
         {
             _isCommentsVisible = false;
             _isRelatedLinksVisible = false;
+            _isTextVersionVisible = false;
         }
 
         UpdateShowNotesUi("Widok znaczników czasu został zaktualizowany.");
@@ -1246,6 +1265,7 @@ public sealed partial class AudioPlayerView : UserControl
         {
             _isCommentsVisible = false;
             _isChapterMarkersVisible = false;
+            _isTextVersionVisible = false;
         }
 
         UpdateShowNotesUi("Widok odnośników został zaktualizowany.");
@@ -1256,6 +1276,65 @@ public sealed partial class AudioPlayerView : UserControl
         }
     }
 
+    private async void OnToggleTextVersionClick(object sender, RoutedEventArgs e)
+    {
+        await ToggleTextVersionAsync();
+    }
+
+    private async Task ToggleTextVersionAsync()
+    {
+        if (_isTextVersionVisible)
+        {
+            HideTextVersionFromBrowser();
+            return;
+        }
+
+        if (_textVersionLink is null)
+        {
+            SetStatusMessage(
+                "Ten odcinek nie ma wersji tekstowej.",
+                announce: true,
+                important: true
+            );
+            return;
+        }
+
+        _isCommentsVisible = false;
+        _isChapterMarkersVisible = false;
+        _isRelatedLinksVisible = false;
+        _isCommentComposerVisible = false;
+
+        if (_textVersionDocument is null)
+        {
+            _isLoadingTextVersion = true;
+            UpdateShowNotesUi("Ładowanie wersji tekstowej odcinka…");
+
+            var currentRequest = _currentRequest;
+            var document = await _podcastTextVersionService.GetAsync(
+                _textVersionLink,
+                currentRequest?.Title ?? "Wersja tekstowa odcinka",
+                currentRequest?.Subtitle ?? string.Empty
+            );
+
+            _isLoadingTextVersion = false;
+            if (document is null)
+            {
+                ErrorBar.Message = "Nie udało się wczytać wersji tekstowej odcinka.";
+                ErrorBar.IsOpen = true;
+                ErrorBar.Visibility = Visibility.Visible;
+                SetStatusMessage(ErrorBar.Message, announce: true, important: true);
+                UpdateShowNotesUi(null);
+                return;
+            }
+
+            _textVersionDocument = document;
+        }
+
+        _isTextVersionVisible = true;
+        UpdateShowNotesUi("Pokazano wersję tekstową odcinka.");
+        _textVersionBrowserView.FocusReader();
+    }
+
     private void OnToggleCommentsClick(object sender, RoutedEventArgs e)
     {
         _isCommentsVisible = !_isCommentsVisible;
@@ -1263,6 +1342,7 @@ public sealed partial class AudioPlayerView : UserControl
         {
             _isChapterMarkersVisible = false;
             _isRelatedLinksVisible = false;
+            _isTextVersionVisible = false;
         }
 
         UpdateShowNotesUi("Widok komentarzy został zaktualizowany.");
@@ -1295,6 +1375,7 @@ public sealed partial class AudioPlayerView : UserControl
         _isCommentsVisible = true;
         _isChapterMarkersVisible = false;
         _isRelatedLinksVisible = false;
+        _isTextVersionVisible = false;
         _isCommentComposerVisible = false;
         UpdateShowNotesUi("Pokazano komentarze.");
         FocusCommentsList();
@@ -1327,6 +1408,7 @@ public sealed partial class AudioPlayerView : UserControl
         _isChapterMarkersVisible = true;
         _isCommentsVisible = false;
         _isRelatedLinksVisible = false;
+        _isTextVersionVisible = false;
         UpdateShowNotesUi("Pokazano znaczniki czasu.");
         FocusChapterMarkersList();
     }
@@ -1907,8 +1989,9 @@ public sealed partial class AudioPlayerView : UserControl
         _chapterMarkersListView = null;
         _commentsListView = null;
         _relatedLinksListView = null;
+        _textVersionButton = null;
 
-        if (_isLoadingShowNotes)
+        if (_isLoadingShowNotes || _isLoadingTextVersion)
         {
             ShowNotesPanel.Visibility = Visibility.Visible;
             ShowNotesPanel.Children.Add(new ProgressRing
@@ -1931,9 +2014,15 @@ public sealed partial class AudioPlayerView : UserControl
 
         var canComment = _currentRequest?.PodcastPostId is int;
 
-        if (_comments.Length == 0 && _chapterMarkers.Length == 0 && _relatedLinks.Length == 0 && !canComment)
+        if (
+            _comments.Length == 0
+            && _chapterMarkers.Length == 0
+            && _relatedLinks.Length == 0
+            && _textVersionLink is null
+            && !canComment
+        )
         {
-            if (!_isLoadingShowNotes && string.IsNullOrWhiteSpace(statusMessage))
+            if (!_isLoadingShowNotes && !_isLoadingTextVersion && string.IsNullOrWhiteSpace(statusMessage))
             {
                 ShowNotesPanel.Visibility = Visibility.Collapsed;
             }
@@ -2016,6 +2105,24 @@ public sealed partial class AudioPlayerView : UserControl
             actionsPanel.Children.Add(button);
         }
 
+        if (_textVersionLink is not null)
+        {
+            var button = new Button
+            {
+                Content = _isTextVersionVisible ? "Ukryj wersję tekstową" : "Pokaż wersję tekstową",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                IsEnabled = !_isLoadingTextVersion,
+                MinWidth = 240,
+            };
+            AutomationProperties.SetName(
+                button,
+                _isTextVersionVisible ? "Ukryj wersję tekstową odcinka" : "Pokaż wersję tekstową odcinka"
+            );
+            button.Click += OnToggleTextVersionClick;
+            _textVersionButton = button;
+            actionsPanel.Children.Add(button);
+        }
+
         ShowNotesPanel.Children.Add(actionsPanel);
 
         if (_isCommentComposerVisible && canComment)
@@ -2087,6 +2194,29 @@ public sealed partial class AudioPlayerView : UserControl
             listView.ContextRequested += OnRelatedLinksListContextRequested;
             _relatedLinksListView = listView;
             ShowNotesPanel.Children.Add(listView);
+        }
+
+        if (_isTextVersionVisible && _textVersionDocument is not null)
+        {
+            ShowNotesPanel.Children.Add(new TextBlock
+            {
+                Text = "Wersja tekstowa odcinka",
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            });
+            if (
+                _textVersionBrowserView.Initialize(
+                    _textVersionDocument.Title,
+                    _textVersionDocument.Link,
+                    _textVersionDocument.ReaderHtml,
+                    "Czytnik wersji tekstowej odcinka"
+                )
+            )
+            {
+                _textVersionBrowserView.Height = 520;
+                _textVersionBrowserView.MinHeight = 420;
+                _textVersionBrowserView.HorizontalAlignment = HorizontalAlignment.Stretch;
+                ShowNotesPanel.Children.Add(_textVersionBrowserView);
+            }
         }
     }
 
@@ -2267,7 +2397,10 @@ public sealed partial class AudioPlayerView : UserControl
         _comments = [];
         _chapterMarkers = [];
         _relatedLinks = [];
+        _textVersionLink = null;
+        _textVersionDocument = null;
         _addCommentButton = null;
+        _textVersionButton = null;
         _commentsListView = null;
         _chapterMarkersListView = null;
         _relatedLinksListView = null;
@@ -2275,12 +2408,28 @@ public sealed partial class AudioPlayerView : UserControl
         _commentAuthorEmailTextBox = null;
         _commentContentTextBox = null;
         _isLoadingShowNotes = false;
+        _isLoadingTextVersion = false;
         _isCommentsVisible = false;
         _isCommentComposerVisible = false;
         _isChapterMarkersVisible = false;
         _isRelatedLinksVisible = false;
+        _isTextVersionVisible = false;
+        _textVersionBrowserView.Cleanup();
         ShowNotesPanel.Children.Clear();
         ShowNotesPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void HideTextVersionFromBrowser()
+    {
+        if (!_isTextVersionVisible)
+        {
+            return;
+        }
+
+        _isTextVersionVisible = false;
+        _textVersionBrowserView.Cleanup();
+        UpdateShowNotesUi("Ukryto wersję tekstową odcinka.");
+        DispatcherQueue.TryEnqueue(() => _textVersionButton?.Focus(FocusState.Programmatic));
     }
 
     private async void OnAddCommentClick(object sender, RoutedEventArgs e)
@@ -2299,6 +2448,7 @@ public sealed partial class AudioPlayerView : UserControl
         {
             await _commentComposerViewModel.LoadIfNeededAsync();
             _isCommentComposerVisible = true;
+            _isTextVersionVisible = false;
 
             if (replyTarget is null)
             {

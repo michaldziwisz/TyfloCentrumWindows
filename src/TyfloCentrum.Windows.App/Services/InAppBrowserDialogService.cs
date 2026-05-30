@@ -12,17 +12,20 @@ public sealed class InAppBrowserDialogService
 {
     private readonly ITyfloSwiatMagazineService _magazineService;
     private readonly IWordPressPostDetailsService _postDetailsService;
+    private readonly IPodcastTextVersionService _podcastTextVersionService;
     private readonly IServiceProvider _serviceProvider;
 
     public InAppBrowserDialogService(
         IServiceProvider serviceProvider,
         IWordPressPostDetailsService postDetailsService,
-        ITyfloSwiatMagazineService magazineService
+        ITyfloSwiatMagazineService magazineService,
+        IPodcastTextVersionService podcastTextVersionService
     )
     {
         _serviceProvider = serviceProvider;
         _postDetailsService = postDetailsService;
         _magazineService = magazineService;
+        _podcastTextVersionService = podcastTextVersionService;
     }
 
     public async Task<bool> ShowAsync(
@@ -105,16 +108,64 @@ public sealed class InAppBrowserDialogService
         }
     }
 
+    public async Task<bool> ShowPodcastTextVersionAsync(
+        RelatedLink textVersionLink,
+        string fallbackTitle,
+        string fallbackDate,
+        XamlRoot? xamlRoot,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (xamlRoot is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var document = await _podcastTextVersionService.GetAsync(
+                textVersionLink,
+                fallbackTitle,
+                fallbackDate,
+                cancellationToken
+            );
+            if (document is null)
+            {
+                return false;
+            }
+
+            return await ShowDocumentAsync(
+                document.Title,
+                document.Link,
+                document.ReaderHtml,
+                xamlRoot,
+                cancellationToken,
+                dialogTitle: "Wersja tekstowa odcinka",
+                readerAccessibleName: "Czytnik wersji tekstowej odcinka"
+            );
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task<bool> ShowDocumentAsync(
         string title,
         string link,
         string readerHtml,
         XamlRoot xamlRoot,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        string dialogTitle = "Czytanie artykułu",
+        string readerAccessibleName = "Czytnik artykułu"
     )
     {
         var view = _serviceProvider.GetRequiredService<InAppBrowserView>();
-        if (!view.Initialize(title, link, readerHtml))
+        if (!view.Initialize(title, link, readerHtml, readerAccessibleName))
         {
             return false;
         }
@@ -123,7 +174,7 @@ public sealed class InAppBrowserDialogService
         dialog = new ContentDialog
         {
             XamlRoot = xamlRoot,
-            Title = "Czytanie artykułu",
+            Title = dialogTitle,
             FullSizeDesired = true,
             Content = view,
         };

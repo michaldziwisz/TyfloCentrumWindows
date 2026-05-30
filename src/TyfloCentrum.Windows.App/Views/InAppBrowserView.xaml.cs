@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using System.Runtime.InteropServices;
@@ -9,7 +10,7 @@ namespace TyfloCentrum.Windows.App.Views;
 
 public sealed partial class InAppBrowserView : UserControl
 {
-    private const string ReaderAccessibleName = "Czytnik artykułu";
+    private const string DefaultReaderAccessibleName = "Czytnik artykułu";
     private static readonly Guid AccPropServicesClsid = new("B5F8350B-0548-48B1-A6EE-88BD00B4A5E7");
     private static readonly Guid NamePropertyId = new("608D3DF8-8128-4AA7-A428-F55E49267291");
     private static readonly IAccPropServicesNative AccPropServices =
@@ -21,6 +22,7 @@ public sealed partial class InAppBrowserView : UserControl
     private readonly Services.WindowHandleProvider _windowHandleProvider;
     private readonly HashSet<nint> _annotatedBrowserClientHandles = [];
     private string _currentHtml = string.Empty;
+    private string _readerAccessibleName = DefaultReaderAccessibleName;
     private bool _isInitialized;
     private bool _messageHandlerAttached;
     private Uri? _pendingUri;
@@ -37,7 +39,12 @@ public sealed partial class InAppBrowserView : UserControl
 
     public Action? CloseRequested { get; set; }
 
-    public bool Initialize(string title, string link, string readerHtml)
+    public bool Initialize(
+        string title,
+        string link,
+        string readerHtml,
+        string? readerAccessibleName = null
+    )
     {
         if (!Uri.TryCreate(link, UriKind.Absolute, out var uri) || string.IsNullOrWhiteSpace(readerHtml))
         {
@@ -46,13 +53,22 @@ public sealed partial class InAppBrowserView : UserControl
 
         _pendingUri = uri;
         _currentHtml = readerHtml;
+        _readerAccessibleName = string.IsNullOrWhiteSpace(readerAccessibleName)
+            ? DefaultReaderAccessibleName
+            : readerAccessibleName.Trim();
         _isInitialized = false;
+        AutomationProperties.SetName(BrowserView, _readerAccessibleName);
         ViewTitleTextBlock.Text = string.IsNullOrWhiteSpace(title) ? "Artykuł" : title.Trim();
         ErrorBar.IsOpen = false;
         ErrorBar.Message = string.Empty;
         LoadingIndicator.IsActive = false;
         LoadingIndicator.Visibility = Visibility.Collapsed;
         return true;
+    }
+
+    public void FocusReader()
+    {
+        _ = FocusReaderAsync();
     }
 
     public void Cleanup()
@@ -276,7 +292,7 @@ public sealed partial class InAppBrowserView : UserControl
         return 1;
     }
 
-    private static void ApplyAccessibilityMetadata(nint handle)
+    private void ApplyAccessibilityMetadata(nint handle)
     {
         var remotableHandle = CreateRemotableHandle(handle);
         AccPropServices.SetHwndPropStr(
@@ -284,16 +300,16 @@ public sealed partial class InAppBrowserView : UserControl
             ObjIdWindow,
             ChildIdSelf,
             NamePropertyId,
-            ReaderAccessibleName
+            _readerAccessibleName
         );
         AccPropServices.SetHwndPropStr(
             ref remotableHandle,
             ObjIdClient,
             ChildIdSelf,
             NamePropertyId,
-            ReaderAccessibleName
+            _readerAccessibleName
         );
-        SetWindowText(handle, ReaderAccessibleName);
+        SetWindowText(handle, _readerAccessibleName);
     }
 
     private static string GetWindowClassName(nint handle)

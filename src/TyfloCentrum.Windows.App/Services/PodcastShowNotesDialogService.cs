@@ -15,6 +15,7 @@ public sealed class PodcastShowNotesDialogService
     private readonly IClipboardService _clipboardService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
+    private readonly InAppBrowserDialogService _inAppBrowserDialogService;
     private readonly IShareService _shareService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IWordPressCommentsService _wordPressCommentsService;
@@ -26,6 +27,7 @@ public sealed class PodcastShowNotesDialogService
         IClipboardService clipboardService,
         IExternalLinkLauncher externalLinkLauncher,
         IFavoritesService favoritesService,
+        InAppBrowserDialogService inAppBrowserDialogService,
         IShareService shareService,
         IWordPressCommentsService wordPressCommentsService
     )
@@ -36,6 +38,7 @@ public sealed class PodcastShowNotesDialogService
         _clipboardService = clipboardService;
         _externalLinkLauncher = externalLinkLauncher;
         _favoritesService = favoritesService;
+        _inAppBrowserDialogService = inAppBrowserDialogService;
         _shareService = shareService;
         _wordPressCommentsService = wordPressCommentsService;
     }
@@ -55,6 +58,19 @@ public sealed class PodcastShowNotesDialogService
         {
             return false;
         }
+
+        if (section == PodcastShowNotesSection.TextVersion)
+        {
+            return snapshot.TextVersion is not null
+                && await _inAppBrowserDialogService.ShowPodcastTextVersionAsync(
+                    snapshot.TextVersion,
+                    title,
+                    subtitle,
+                    xamlRoot,
+                    cancellationToken
+                );
+        }
+
         ContentDialog? dialog = null;
 
         try
@@ -165,6 +181,7 @@ public sealed class PodcastShowNotesDialogService
             PodcastShowNotesSection.Comments => true,
             PodcastShowNotesSection.ChapterMarkers => snapshot.HasChapterMarkers,
             PodcastShowNotesSection.RelatedLinks => snapshot.HasRelatedLinks,
+            PodcastShowNotesSection.TextVersion => snapshot.HasTextVersion,
             _ => false,
         };
     }
@@ -176,6 +193,7 @@ public sealed class PodcastShowNotesDialogService
             PodcastShowNotesSection.Comments => "Komentarze podcastu",
             PodcastShowNotesSection.ChapterMarkers => "Znaczniki czasu",
             PodcastShowNotesSection.RelatedLinks => "Odnośniki",
+            PodcastShowNotesSection.TextVersion => "Wersja tekstowa odcinka",
             _ => "Dodatki podcastu",
         };
     }

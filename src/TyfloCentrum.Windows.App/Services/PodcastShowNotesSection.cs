@@ -5,4 +5,5 @@ public enum PodcastShowNotesSection
     Comments,
     ChapterMarkers,
     RelatedLinks,
+    TextVersion,
 }

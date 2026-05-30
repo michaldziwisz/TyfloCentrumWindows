@@ -15,6 +15,8 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 ### Podstawowe endpointy
 - `GET /wp/v2/posts`
 - `GET /wp/v2/posts/{id}`
+- `GET /wp/v2/pages`
+- `GET /wp/v2/pages/{id}`
 - `GET /wp/v2/categories`
 - `GET /wp/v2/comments`
 - `POST /wp-comments-post.php`
@@ -27,6 +29,9 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - filtrowanie po kategorii
 - wyszukiwanie po parametrze `search`
 - ograniczanie zwracanych pol przez `_fields`
+- tekstowe wersje audycji:
+  - link jest wykrywany w tresci wpisu po adresie z `/tekstowe-wersje-audycji/` albo po etykiecie zawierajacej slowa `tekstowa` i `wersja`
+  - docelowa strona jest pobierana z `GET /wp/v2/pages/{id}` dla linkow `?page_id=...` albo z `GET /wp/v2/pages?slug=...`
 - dla wysylki komentarza:
   - odczyt komentarzy pozostaje na `GET /wp/v2/comments`
   - publikacja komentarza uzywa tego samego formularza co strona WWW, bo REST `POST /wp/v2/comments` moze wymagac logowania mimo wlaczonego publicznego komentowania

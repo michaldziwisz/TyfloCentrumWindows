@@ -41,8 +41,23 @@ public sealed class PodcastShowNotesServiceTests
                 },
             ]
         );
+        var postDetailsService = new StubWordPressPostDetailsService(
+            new WpPostDetail
+            {
+                Id = 77,
+                Date = "2026-03-27T12:00:00",
+                Link = "https://tyflopodcast.example/podcast-testowy/",
+                Title = new RenderedText("Podcast testowy"),
+                Content = new RenderedText(
+                    """
+                    <p>Audycja dostępna jest również w
+                    <a href="https://tyflopodcast.example/tekstowe-wersje-audycji/podcast-testowy-wersja-tekstowa/">wygenerowanej automatycznie wersji tekstowej</a>.</p>
+                    """
+                ),
+            }
+        );
 
-        var service = new PodcastShowNotesService(commentsService);
+        var service = new PodcastShowNotesService(commentsService, postDetailsService);
 
         var result = await service.GetAsync(77);
 
@@ -53,6 +68,12 @@ public sealed class PodcastShowNotesServiceTests
         Assert.Equal(5d, result.Markers[0].Seconds);
         Assert.Equal("Strona projektu", result.Links[0].Title);
         Assert.Equal("https://example.com/projekt", result.Links[0].Url.AbsoluteUri);
+        Assert.NotNull(result.TextVersion);
+        Assert.Equal("Tekstowa wersja odcinka", result.TextVersion!.Title);
+        Assert.Equal(
+            "https://tyflopodcast.example/tekstowe-wersje-audycji/podcast-testowy-wersja-tekstowa/",
+            result.TextVersion.Url.AbsoluteUri
+        );
     }
 
     private sealed class StubWordPressCommentsService : IWordPressCommentsService
@@ -79,6 +100,25 @@ public sealed class PodcastShowNotesServiceTests
         )
         {
             throw new NotSupportedException();
+        }
+    }
+
+    private sealed class StubWordPressPostDetailsService : IWordPressPostDetailsService
+    {
+        private readonly WpPostDetail _post;
+
+        public StubWordPressPostDetailsService(WpPostDetail post)
+        {
+            _post = post;
+        }
+
+        public Task<WpPostDetail> GetPostAsync(
+            ContentSource source,
+            int postId,
+            CancellationToken cancellationToken = default
+        )
+        {
+            return Task.FromResult(_post);
         }
     }
 }

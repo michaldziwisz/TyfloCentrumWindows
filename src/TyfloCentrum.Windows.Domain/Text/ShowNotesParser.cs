@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.RegularExpressions;
 using TyfloCentrum.Windows.Domain.Models;
 
@@ -5,6 +6,8 @@ namespace TyfloCentrum.Windows.Domain.Text;
 
 public static partial class ShowNotesParser
 {
+    private const string TextVersionTitle = "Tekstowa wersja odcinka";
+
     public static ShowNotesParseResult Parse(IReadOnlyList<WordPressComment> comments)
     {
         var markers = new List<ChapterMarker>();
@@ -33,6 +36,32 @@ public static partial class ShowNotesParser
             UniqueMarkers(markers).OrderBy(marker => marker.Seconds).ToArray(),
             UniqueLinks(links)
         );
+    }
+
+    public static RelatedLink? ParseTextVersionLink(string html, Uri? baseUri = null)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return null;
+        }
+
+        foreach (Match match in AnchorRegex().Matches(html))
+        {
+            var href = WebUtility.HtmlDecode(match.Groups["href"].Value).Trim();
+            var label = WordPressContentText.NormalizeHtml(match.Groups["text"].Value);
+
+            if (!IsTextVersionCandidate(href, label))
+            {
+                continue;
+            }
+
+            if (TryCreateLinkUri(href, baseUri, out var url))
+            {
+                return new RelatedLink(TextVersionTitle, url);
+            }
+        }
+
+        return null;
     }
 
     private static IReadOnlyList<string> NormalizeLines(string html)
@@ -346,9 +375,50 @@ public static partial class ShowNotesParser
         return result;
     }
 
+    private static bool IsTextVersionCandidate(string href, string label)
+    {
+        return href.Contains("/tekstowe-wersje-audycji/", StringComparison.OrdinalIgnoreCase)
+            || HasTextVersionWords(href)
+            || HasTextVersionWords(label);
+    }
+
+    private static bool HasTextVersionWords(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var normalized = WordPressContentText.NormalizeForSearch(value);
+        return normalized.Contains("tekstow", StringComparison.Ordinal)
+            && normalized.Contains("wersj", StringComparison.Ordinal);
+    }
+
+    private static bool TryCreateLinkUri(string value, Uri? baseUri, out Uri uri)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out uri!))
+        {
+            return true;
+        }
+
+        if (baseUri is not null && Uri.TryCreate(baseUri, value, out uri!))
+        {
+            return true;
+        }
+
+        uri = null!;
+        return false;
+    }
+
     [GeneratedRegex(@"(?:\b\d{1,2}:\d{2}:\d{2}\b|\b\d{1,2}:\d{2}\b)$", RegexOptions.Compiled)]
     private static partial Regex TimecodeRegex();
 
     [GeneratedRegex(@"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex EmailRegex();
+
+    [GeneratedRegex(
+        @"<a\b[^>]*\bhref\s*=\s*(?:""(?<href>[^""]*)""|'(?<href>[^']*)'|(?<href>[^\s>]+))[^>]*>(?<text>.*?)</a>",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+    )]
+    private static partial Regex AnchorRegex();
 }
