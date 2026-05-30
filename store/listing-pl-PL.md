@@ -10,7 +10,7 @@ W TyfloCentrum możesz:
 - czytać aktualności i artykuły w wygodnym widoku do czytania,
 - przeglądać podcasty i od razu otwierać je w odtwarzaczu,
 - słuchać TyfloRadia na żywo,
-- korzystać ze znaczników czasu i odnośników w materiałach audio,
+- korzystać ze znaczników czasu, odnośników i tekstowych wersji audycji,
 - dodawać treści do ulubionych i szybko do nich wracać,
 - pobierać podcasty jako pliki MP3 oraz artykuły jako samodzielne pliki HTML,
 - otrzymywać powiadomienia o nowych artykułach i podcastach,
@@ -19,12 +19,13 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji poprawiono zachowanie odtwarzacza podcastów na komputerach z wysokim skalowaniem Windows, mniejszą rozdzielczością albo nietypowym rozmiarem okna. Dolne sekcje odtwarzacza, w tym skróty, dodatki odcinka, komentarze, formularz komentarza i przyciski akcji, nie powinny być już ucinane; zawartość można przewinąć.
+W tej wersji dodano obsługę tekstowych wersji audycji. Jeśli odcinek ma dostępną wersję tekstową, można ją otworzyć z menu kontekstowego podcastu albo bezpośrednio w odtwarzaczu. Treść jest wyświetlana jako renderowany HTML, dzięki czemu zachowuje linki i pozwala korzystać z wyszukiwania w tekście.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
 - Wbudowany odtwarzacz audio z prędkością od 1x do 3x.
 - Tyfloradio dostępne bezpośrednio z poziomu aplikacji.
+- Tekstowe wersje audycji dostępne z menu podcastu i odtwarzacza.
 - Pobieranie treści do czytania i słuchania offline.
 - Ulubione, udostępnianie i menu kontekstowe dla najważniejszych akcji.
 - Powiadomienia o nowych artykułach i podcastach.
