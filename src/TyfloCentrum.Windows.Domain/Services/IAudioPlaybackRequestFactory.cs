@@ -13,5 +13,5 @@ public interface IAudioPlaybackRequestFactory
         double? initialSeekSeconds = null
     );
 
-    AudioPlaybackRequest CreateRadio(string? subtitle = null);
+    AudioPlaybackRequest CreateRadio(string? subtitle = null, bool canContactRadio = false);
 }

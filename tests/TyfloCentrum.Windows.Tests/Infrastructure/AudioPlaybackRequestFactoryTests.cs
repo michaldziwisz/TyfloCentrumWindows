@@ -62,5 +62,22 @@ public sealed class AudioPlaybackRequestFactoryTests
         Assert.True(request.IsLive);
         Assert.False(request.CanSeek);
         Assert.False(request.CanChangePlaybackRate);
+        Assert.False(request.CanContactRadio);
+    }
+
+    [Fact]
+    public void CreateRadio_sets_contact_flag_when_requested()
+    {
+        var factory = new AudioPlaybackRequestFactory(
+            new TyfloCentrumEndpointsOptions
+            {
+                TyfloradioStreamUrl = new Uri("https://radio.example/live.m3u8"),
+            }
+        );
+
+        var request = factory.CreateRadio("Audycja interaktywna", canContactRadio: true);
+
+        Assert.True(request.CanContactRadio);
+        Assert.Equal("Audycja interaktywna", request.Subtitle);
     }
 }

@@ -45,7 +45,7 @@ public sealed class AudioPlaybackRequestFactory : IAudioPlaybackRequestFactory
         );
     }
 
-    public AudioPlaybackRequest CreateRadio(string? subtitle = null)
+    public AudioPlaybackRequest CreateRadio(string? subtitle = null, bool canContactRadio = false)
     {
         return new AudioPlaybackRequest(
             SourceTypeLabel: "Tyfloradio",
@@ -54,7 +54,8 @@ public sealed class AudioPlaybackRequestFactory : IAudioPlaybackRequestFactory
             SourceUrl: _options.TyfloradioStreamUrl,
             IsLive: true,
             CanSeek: false,
-            CanChangePlaybackRate: false
+            CanChangePlaybackRate: false,
+            CanContactRadio: canContactRadio
         );
     }
 

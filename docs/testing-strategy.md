@@ -355,6 +355,9 @@ Pozniej automatyzowac:
   - po zamknięciu dialogu i ponownym otwarciu podcast wznawia się od ostatniej zapisanej pozycji
   - po dojściu odcinka do końca i ponownym otwarciu player startuje od początku, a nie od końcówki
   - skróty klawiaturowe działają także wtedy, gdy focus jest na obszarze playera, a nie na konkretnym przycisku
+  - przy odtwarzaczu `Tyfloradia` z trwającą audycją interaktywną dostępny jest przycisk `Napisz wiadomość do Tyfloradia`, który rozwija formularz wiadomości tekstowej bez zamykania odtwarzacza
+  - po wysłaniu wiadomości z poziomu odtwarzacza `Tyfloradia` formularz zwija się, fokus wraca na przycisk `Napisz wiadomość do Tyfloradia`, a czytnik ekranu ogłasza `Wiadomość wysłana pomyślnie.`
+  - gdy `Tyfloradio` nie prowadzi audycji interaktywnej, odtwarzacz nie pokazuje przycisku pisania wiadomości
 
 ### Modul `Podcasty`, `Artykuły`, `Szukaj`
 - klawiatura:

@@ -157,7 +157,10 @@ public partial class RadioViewModel : ObservableObject
 
     public AudioPlaybackRequest CreatePlaybackRequest()
     {
-        return _audioPlaybackRequestFactory.CreateRadio(LiveStatusMessage);
+        return _audioPlaybackRequestFactory.CreateRadio(
+            LiveStatusMessage,
+            IsInteractiveBroadcastAvailable
+        );
     }
 
     public void ReportPlaybackError()

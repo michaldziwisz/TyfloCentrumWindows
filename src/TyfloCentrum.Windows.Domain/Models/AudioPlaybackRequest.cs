@@ -9,5 +9,6 @@ public sealed record AudioPlaybackRequest(
     bool CanSeek,
     bool CanChangePlaybackRate,
     int? PodcastPostId = null,
-    double? InitialSeekSeconds = null
+    double? InitialSeekSeconds = null,
+    bool CanContactRadio = false
 );

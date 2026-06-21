@@ -35,6 +35,7 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly PodcastCommentComposerViewModel _commentComposerViewModel;
     private readonly IShareService _shareService;
     private readonly InAppBrowserView _textVersionBrowserView;
+    private readonly ContactTextMessageView _radioContactView;
     private readonly WindowHandleProvider _windowHandleProvider;
     private readonly PlaybackRateOption[] _playbackRates;
     private CancellationTokenSource? _showNotesLoadCts;
@@ -60,6 +61,7 @@ public sealed partial class AudioPlayerView : UserControl
     private bool _isLoadingTextVersion;
     private bool _isRelatedLinksVisible;
     private bool _isTextVersionVisible;
+    private bool _isRadioContactVisible;
     private bool _isSynchronizingCommentComposer;
     private bool _isSynchronizingPositionSlider;
     private bool _isTransportUiRefreshPending;
@@ -85,6 +87,7 @@ public sealed partial class AudioPlayerView : UserControl
         PodcastCommentComposerViewModel commentComposerViewModel,
         IShareService shareService,
         InAppBrowserView textVersionBrowserView,
+        ContactTextMessageView radioContactView,
         IExternalLinkLauncher externalLinkLauncher,
         WindowHandleProvider windowHandleProvider
     )
@@ -99,9 +102,11 @@ public sealed partial class AudioPlayerView : UserControl
         _commentComposerViewModel = commentComposerViewModel;
         _shareService = shareService;
         _textVersionBrowserView = textVersionBrowserView;
+        _radioContactView = radioContactView;
         _externalLinkLauncher = externalLinkLauncher;
         _windowHandleProvider = windowHandleProvider;
         _textVersionBrowserView.CloseRequested = HideTextVersionFromBrowser;
+        _radioContactView.ViewModel.MessageSent += OnRadioContactMessageSent;
         _commentComposerViewModel.PropertyChanged += OnCommentComposerPropertyChanged;
         _playbackRates = PlaybackRateCatalog
             .SupportedValues.Select(value => new PlaybackRateOption(PlaybackRateCatalog.FormatLabel(value), value))
@@ -147,6 +152,7 @@ public sealed partial class AudioPlayerView : UserControl
             : Visibility.Collapsed;
         ShortcutHelpPanel.Visibility = Visibility.Visible;
         ConfigureShortcutHelpText(request);
+        ConfigureRadioContactPanel(request);
 
         _currentSettings = (await _appSettingsService.GetAsync(cancellationToken)).Normalize();
         ConfigurePlaybackRateSelection(request);
@@ -1197,6 +1203,93 @@ public sealed partial class AudioPlayerView : UserControl
             ? "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w lewo i prawo przewijają o 30 sekund, Alt+strzałka w górę i dół zmieniają prędkość, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik."
             : "Skróty: Ctrl+spacja odtwarzaj lub pauzuj, Ctrl+strzałka w górę i dół zmieniają głośność, Ctrl+D przełącza ulubione dla zaznaczonego dodatku odcinka, Ctrl+U udostępnia zaznaczony odnośnik.";
         ShortcutHelpTextBlock.Text += showNotesShortcuts;
+    }
+
+    private void ConfigureRadioContactPanel(AudioPlaybackRequest request)
+    {
+        _isRadioContactVisible = false;
+        DetachRadioContactView();
+        RadioContactFormHost.Visibility = Visibility.Collapsed;
+        UpdateRadioContactToggleButton();
+        RadioContactPanel.Visibility = request.CanContactRadio
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void DetachRadioContactView()
+    {
+        if (_radioContactView.Parent is null)
+        {
+            return;
+        }
+
+        RadioContactFormHost.Children.Remove(_radioContactView);
+    }
+
+    private void UpdateRadioContactToggleButton()
+    {
+        var label = _isRadioContactVisible
+            ? "Ukryj wiadomość do Tyfloradia"
+            : "Napisz wiadomość do Tyfloradia";
+        RadioContactToggleButton.Content = label;
+        AutomationProperties.SetName(RadioContactToggleButton, label);
+    }
+
+    private async void OnToggleRadioContactClick(object sender, RoutedEventArgs e)
+    {
+        if (_isRadioContactVisible)
+        {
+            HideRadioContact(focusToggle: true);
+            return;
+        }
+
+        await ShowRadioContactAsync();
+    }
+
+    private async Task ShowRadioContactAsync()
+    {
+        try
+        {
+            await _radioContactView.ViewModel.LoadIfNeededAsync();
+
+            if (_radioContactView.Parent is null)
+            {
+                RadioContactFormHost.Children.Add(_radioContactView);
+            }
+
+            _isRadioContactVisible = true;
+            RadioContactFormHost.Visibility = Visibility.Visible;
+            UpdateRadioContactToggleButton();
+            SetStatusMessage("Otwarto formularz wiadomości do Tyfloradia.", announce: true);
+            DispatcherQueue.TryEnqueue(_radioContactView.FocusPrimaryContent);
+        }
+        catch
+        {
+            HideRadioContact(focusToggle: false);
+            ErrorBar.Message = "Nie udało się otworzyć formularza wiadomości do Tyfloradia.";
+            ErrorBar.IsOpen = true;
+            ErrorBar.Visibility = Visibility.Visible;
+            SetStatusMessage(ErrorBar.Message, announce: true, important: true);
+        }
+    }
+
+    private void HideRadioContact(bool focusToggle)
+    {
+        _isRadioContactVisible = false;
+        RadioContactFormHost.Visibility = Visibility.Collapsed;
+        DetachRadioContactView();
+        UpdateRadioContactToggleButton();
+
+        if (focusToggle)
+        {
+            DispatcherQueue.TryEnqueue(() => RadioContactToggleButton.Focus(FocusState.Programmatic));
+        }
+    }
+
+    private void OnRadioContactMessageSent(object? sender, EventArgs e)
+    {
+        SetStatusMessage("Wiadomość wysłana pomyślnie.", announce: true, important: true);
+        HideRadioContact(focusToggle: true);
     }
 
     private void SetVolume(double percent, bool announce)

@@ -183,6 +183,36 @@ public sealed class RadioViewModelTests
     }
 
     [Fact]
+    public void CreatePlaybackRequest_allows_contact_when_interactive_broadcast_is_available()
+    {
+        var factory = new FakeAudioPlaybackRequestFactory();
+        var viewModel = new RadioViewModel(new FakeRadioService(), factory)
+        {
+            IsInteractiveBroadcastAvailable = true,
+        };
+
+        var request = viewModel.CreatePlaybackRequest();
+
+        Assert.True(factory.LastRadioCanContact);
+        Assert.True(request.CanContactRadio);
+    }
+
+    [Fact]
+    public void CreatePlaybackRequest_blocks_contact_when_interactive_broadcast_is_unavailable()
+    {
+        var factory = new FakeAudioPlaybackRequestFactory();
+        var viewModel = new RadioViewModel(new FakeRadioService(), factory)
+        {
+            IsInteractiveBroadcastAvailable = false,
+        };
+
+        var request = viewModel.CreatePlaybackRequest();
+
+        Assert.False(factory.LastRadioCanContact);
+        Assert.False(request.CanContactRadio);
+    }
+
+    [Fact]
     public void TryStartContact_sets_error_when_audition_is_not_available()
     {
         var viewModel = new RadioViewModel(
@@ -309,6 +339,8 @@ public sealed class RadioViewModelTests
     {
         public string? LastRadioSubtitle { get; private set; }
 
+        public bool LastRadioCanContact { get; private set; }
+
         public Uri CreatePodcastDownloadUri(int postId)
         {
             return new Uri($"https://audio.example/podcast/{postId}.mp3");
@@ -333,9 +365,10 @@ public sealed class RadioViewModelTests
             );
         }
 
-        public AudioPlaybackRequest CreateRadio(string? subtitle = null)
+        public AudioPlaybackRequest CreateRadio(string? subtitle = null, bool canContactRadio = false)
         {
             LastRadioSubtitle = subtitle;
+            LastRadioCanContact = canContactRadio;
             return new AudioPlaybackRequest(
                 "Tyfloradio",
                 "Tyfloradio",
@@ -343,7 +376,8 @@ public sealed class RadioViewModelTests
                 new Uri("https://audio.example/live.m3u8"),
                 true,
                 false,
-                false
+                false,
+                CanContactRadio: canContactRadio
             );
         }
     }

@@ -147,6 +147,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -345,10 +346,29 @@
             Severity="Error"
             Visibility="Collapsed" />
 
+        <StackPanel
+            x:Name="RadioContactPanel"
+            Grid.Row="8"
+            HorizontalAlignment="Stretch"
+            Spacing="8"
+            Visibility="Collapsed">
+            <Button
+                x:Name="RadioContactToggleButton"
+                AutomationProperties.Name="Napisz wiadomość do Tyfloradia"
+                Click="OnToggleRadioContactClick"
+                Content="Napisz wiadomość do Tyfloradia"
+                HorizontalAlignment="Left"
+                MinWidth="240" />
+            <StackPanel
+                x:Name="RadioContactFormHost"
+                HorizontalAlignment="Stretch"
+                Visibility="Collapsed" />
+        </StackPanel>
+
         <MediaPlayerElement
             x:Name="PlayerElement"
             AutomationProperties.HelpText="Skrót: Ctrl+spacja"
-            Grid.Row="8"
+            Grid.Row="9"
             AreTransportControlsEnabled="False"
             AutoPlay="False"
             Language="pl-PL"
