@@ -60,7 +60,7 @@ Szczegoly:
   - czwarty segment wersji musi pozostac `0`
   - przyklad poprawnej wersji: `0.1.11.0`
 - dla kolejnych recznych update'ow warto przygotowac osobny plik z gotowym listingiem i `What's new`, np.:
-  - [submission-0.1.13.0-pl-PL.md](../store/submission-0.1.13.0-pl-PL.md)
+  - [submission-0.1.14.0-pl-PL.md](../store/submission-0.1.14.0-pl-PL.md)
 - lokalny `msixupload` przygotowuj skryptem:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\New-StoreMsixUpload.ps1 -PackageDirectory <katalog AppPackages>`
 - do `msixupload` trafia tylko:

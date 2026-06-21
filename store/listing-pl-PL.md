@@ -19,12 +19,13 @@ W TyfloCentrum możesz:
 TyfloCentrum jest tworzone z myślą o wygodzie, szybkości działania i dostępności cyfrowej, tak aby korzystanie z treści TyfloPodcast było proste zarówno dla użytkowników czytników ekranu, jak i dla osób preferujących klasyczną obsługę aplikacji na Windows.
 
 ## What's New In This Version
-W tej wersji dodano obsługę tekstowych wersji audycji. Jeśli odcinek ma dostępną wersję tekstową, można ją otworzyć z menu kontekstowego podcastu albo bezpośrednio w odtwarzaczu. Treść jest wyświetlana jako renderowany HTML, dzięki czemu zachowuje linki i pozwala korzystać z wyszukiwania w tekście.
+W tej wersji można napisać wiadomość tekstową do Tyfloradia bez wychodzenia z odtwarzacza. Gdy na antenie trwa audycja interaktywna, w odtwarzaczu Tyfloradia pojawia się przycisk pisania wiadomości, który rozwija formularz bezpośrednio w oknie odtwarzacza. Po wysłaniu formularz zwija się, a fokus wraca na przycisk.
 
 ## Product Features
 - Aktualności, artykuły i podcasty w jednej aplikacji.
 - Wbudowany odtwarzacz audio z prędkością od 1x do 3x.
 - Tyfloradio dostępne bezpośrednio z poziomu aplikacji.
+- Wiadomość tekstowa do Tyfloradia także z poziomu odtwarzacza podczas audycji interaktywnej.
 - Tekstowe wersje audycji dostępne z menu podcastu i odtwarzacza.
 - Pobieranie treści do czytania i słuchania offline.
 - Ulubione, udostępnianie i menu kontekstowe dla najważniejszych akcji.
