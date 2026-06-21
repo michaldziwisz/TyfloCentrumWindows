@@ -19,6 +19,7 @@ public sealed class PushNotificationDispatcherTests : IDisposable
     {
         Directory.CreateDirectory(_tempDirectory);
         var stateStore = CreateStateStore();
+        var nowIso = DateTimeOffset.UtcNow.ToString("O");
         await stateStore.UpdateAsync(
             state =>
             {
@@ -27,18 +28,18 @@ public sealed class PushNotificationDispatcherTests : IDisposable
                     Token = "https://example.test/channel-1",
                     Env = "windows-wns",
                     Prefs = new PushNotificationPreferences(true, false, false, false),
-                    CreatedAt = "2026-03-21T00:00:00Z",
-                    UpdatedAt = "2026-03-21T00:00:00Z",
-                    LastSeenAt = "2026-03-21T00:00:00Z",
+                    CreatedAt = nowIso,
+                    UpdatedAt = nowIso,
+                    LastSeenAt = nowIso,
                 };
                 state.Tokens["https://example.test/channel-2"] = new PushSubscriberRecord
                 {
                     Token = "https://example.test/channel-2",
                     Env = "windows-wns",
                     Prefs = new PushNotificationPreferences(true, false, false, false),
-                    CreatedAt = "2026-03-21T00:00:00Z",
-                    UpdatedAt = "2026-03-21T00:00:00Z",
-                    LastSeenAt = "2026-03-21T00:00:00Z",
+                    CreatedAt = nowIso,
+                    UpdatedAt = nowIso,
+                    LastSeenAt = nowIso,
                 };
             }
         );
