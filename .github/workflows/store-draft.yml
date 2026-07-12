@@ -152,6 +152,7 @@ jobs:
           msstore publish "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App" `
             --inputDirectory "$uploadDir" `
             -id $env:STORE_PRODUCT_ID `
+            --verbose `
             --noCommit
 
       - name: Export current draft metadata
