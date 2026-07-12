@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -13,6 +14,7 @@ using Windows.Media.Casting;
 using Windows.Media.Playback;
 using Windows.System;
 using Windows.UI.Popups;
+using TyfloCentrum.Windows.App.Playback;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
@@ -30,6 +32,8 @@ public sealed partial class AudioPlayerView : UserControl
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly IPlaybackResumeService _playbackResumeService;
+    private readonly IProgressiveMediaCacheFactory _progressiveMediaCacheFactory;
+    private readonly ILogger<AudioPlayerView> _logger;
     private readonly IPodcastShowNotesService _podcastShowNotesService;
     private readonly IPodcastTextVersionService _podcastTextVersionService;
     private readonly PodcastCommentComposerViewModel _commentComposerViewModel;
@@ -53,6 +57,7 @@ public sealed partial class AudioPlayerView : UserControl
     private TextBox? _commentAuthorEmailTextBox;
     private TextBox? _commentContentTextBox;
     private MediaPlayer? _mediaPlayer;
+    private IProgressiveMediaCache? _activeMediaCache;
     private AppSettingsSnapshot _currentSettings = AppSettingsSnapshot.Defaults;
     private bool _isChapterMarkersVisible;
     private bool _isCommentsVisible;
@@ -82,6 +87,8 @@ public sealed partial class AudioPlayerView : UserControl
         IClipboardService clipboardService,
         IFavoritesService favoritesService,
         IPlaybackResumeService playbackResumeService,
+        IProgressiveMediaCacheFactory progressiveMediaCacheFactory,
+        ILogger<AudioPlayerView> logger,
         IPodcastShowNotesService podcastShowNotesService,
         IPodcastTextVersionService podcastTextVersionService,
         PodcastCommentComposerViewModel commentComposerViewModel,
@@ -97,6 +104,8 @@ public sealed partial class AudioPlayerView : UserControl
         _clipboardService = clipboardService;
         _favoritesService = favoritesService;
         _playbackResumeService = playbackResumeService;
+        _progressiveMediaCacheFactory = progressiveMediaCacheFactory;
+        _logger = logger;
         _podcastShowNotesService = podcastShowNotesService;
         _podcastTextVersionService = podcastTextVersionService;
         _commentComposerViewModel = commentComposerViewModel;
@@ -182,6 +191,7 @@ public sealed partial class AudioPlayerView : UserControl
         _lastKnownDurationSeconds = 0;
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
+        await DisposeActiveMediaCacheAsync();
         await DisconnectCastingAsync(announce: false);
         return;
         }
@@ -194,6 +204,7 @@ public sealed partial class AudioPlayerView : UserControl
         mediaPlayer.Source = null;
         PlayerElement.SetMediaPlayer(null);
         mediaPlayer.Dispose();
+        await DisposeActiveMediaCacheAsync();
         _currentRequest = null;
         _pendingResumePositionSeconds = null;
         _lastPersistedResumeSeconds = 0;
@@ -201,6 +212,25 @@ public sealed partial class AudioPlayerView : UserControl
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
         await DisconnectCastingAsync(announce: false);
+    }
+
+    private async Task DisposeActiveMediaCacheAsync()
+    {
+        if (_activeMediaCache is null)
+        {
+            return;
+        }
+
+        var cache = _activeMediaCache;
+        _activeMediaCache = null;
+        try
+        {
+            await cache.DisposeAsync();
+        }
+        catch
+        {
+            // sprzątanie bufora nie może wysadzić zamykania odtwarzacza
+        }
     }
 
     private async Task ConfigureMediaPlayerAsync(
@@ -216,12 +246,31 @@ public sealed partial class AudioPlayerView : UserControl
         _hasPlaybackEnded = false;
         _isRestoringResumePosition = false;
 
+        // Podcast (nie live): gramy z progresywnego bufora - jedno ciągłe pobranie
+        // pliku, z którego Media Foundation czyta zakresami. Dzięki temu przewijanie
+        // nie wywołuje kolejnych pełnych pobrań ("mulenie") i serwer liczy jedno
+        // pobranie na odtworzenie. Radio (live) zostaje przy bezpośrednim URL.
+        MediaSource mediaSource;
+        IProgressiveMediaCache? mediaCache = null;
+        if (!request.IsLive)
+        {
+            mediaCache = _progressiveMediaCacheFactory.Create(request.SourceUrl);
+            await mediaCache.OpenAsync(cancellationToken);
+            var stream = new ProgressiveRandomAccessStream(mediaCache, "audio/mpeg");
+            mediaSource = MediaSource.CreateFromStream(stream, "audio/mpeg");
+        }
+        else
+        {
+            mediaSource = MediaSource.CreateFromUri(request.SourceUrl);
+        }
+
         var mediaPlayer = new MediaPlayer
         {
             AudioCategory = MediaPlayerAudioCategory.Media,
-            Source = MediaSource.CreateFromUri(request.SourceUrl),
+            Source = mediaSource,
             Volume = VolumeSlider.Value / 100d,
         };
+        _activeMediaCache = mediaCache;
 
         mediaPlayer.MediaFailed += OnMediaFailed;
         mediaPlayer.MediaOpened += OnMediaOpened;
@@ -276,6 +325,12 @@ public sealed partial class AudioPlayerView : UserControl
         {
             DetachMediaPlayer(mediaPlayer);
             mediaPlayer.Dispose();
+            if (_activeMediaCache is not null)
+            {
+                var failedCache = _activeMediaCache;
+                _activeMediaCache = null;
+                await failedCache.DisposeAsync();
+            }
             throw;
         }
     }
@@ -717,6 +772,16 @@ public sealed partial class AudioPlayerView : UserControl
 
     private void OnMediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
     {
+        _logger.LogError(
+            "Odtwarzanie audio nie powiodło się. Error={Error} ExtendedCode={ExtendedCode} Message={Message} Cache(total={Total}, available={Available}, complete={Complete})",
+            args.Error,
+            args.ExtendedErrorCode?.HResult,
+            args.ErrorMessage,
+            _activeMediaCache?.TotalLength,
+            _activeMediaCache?.AvailableLength,
+            _activeMediaCache?.IsComplete
+        );
+
         DispatcherQueue.TryEnqueue(() =>
         {
             ErrorBar.Message = "Nie udało się odtworzyć audio. Sprawdź połączenie i spróbuj ponownie.";

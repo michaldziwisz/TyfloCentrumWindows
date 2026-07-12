@@ -38,6 +38,13 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromMinutes(5);
             TyfloCentrumHttpClientDefaults.EnsureUserAgent(client);
         });
+        services.AddHttpClient<IProgressiveMediaCacheFactory, ProgressiveMediaCacheFactory>(client =>
+        {
+            // Strumień audio bywa otwarty przez cały czas odtwarzania odcinka -
+            // długi timeout, jak przy pobieraniu offline.
+            client.Timeout = TimeSpan.FromMinutes(30);
+            TyfloCentrumHttpClientDefaults.EnsureUserAgent(client);
+        });
         services.AddHttpClient<INewsFeedService, WordPressNewsFeedService>(client =>
         {
             TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(30));

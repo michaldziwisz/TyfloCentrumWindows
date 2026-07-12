@@ -349,6 +349,11 @@ Pozniej automatyzowac:
   - kliknięcie znacznika przewija player do właściwego czasu i uruchamia odtwarzanie
   - kliknięcie odnośnika otwiera go w systemowej przeglądarce lub w domyślnym kliencie poczty dla `mailto:`
   - przycisk kopiowania zapisuje adres odnośnika do schowka systemowego
+  - podcast (nie `Tyfloradio`) startuje przez progresywny bufor: odtwarzanie rusza po dociągnięciu początku pliku, a nie po pobraniu całości
+  - wielokrotne przewijanie w przód i w tył w obrębie już pobranego fragmentu jest natychmiastowe i nie wywołuje ponownego pobierania (weryfikacja: log serwera pokazuje jedno pobranie pliku na odtworzenie, nie wielokrotne pełne)
+  - przewinięcie w przód poza pobrany fragment krótko czeka na dociągnięcie danych, po czym gra dalej bez błędu
+  - zamknięcie odtwarzacza albo przełączenie na inny odcinek przerywa pobieranie w tle i nie zostawia rosnących plików tymczasowych
+  - odtwarzanie długiego odcinka (kilkaset MB, np. `TyfloPrzegląd`) uruchamia się bez „mulenia” i wielokrotnego zawieszania na starcie
   - przycisk udostępniania otwiera systemowe udostępnianie dla wybranego odnośnika
   - temat i odnośnik można dodać oraz usunąć z ulubionych bez zamykania playera
   - przycisk `Dodaj komentarz` nie pokazuje błędnej podpowiedzi skrótu `Ctrl+spacja`

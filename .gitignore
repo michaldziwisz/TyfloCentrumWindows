@@ -38,3 +38,7 @@ Thumbs.db
 # Local Store / release helpers
 src/TyfloCentrum.Windows.App/Package.StoreAssociation.xml
 tyflocentrum_icons.zip
+
+# Local tooling / scratch
+.codex
+hardcopy.*
