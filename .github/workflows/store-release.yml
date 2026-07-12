@@ -174,7 +174,24 @@ jobs:
             $arguments += @('--packageRolloutPercentage', $env:ROLLOUT_PERCENTAGE)
           }
 
-          & msstore @arguments
+          # API devcenter bywa niestabilne (przejsciowe HTTP 504 na GET aplikacji),
+          # a msstore nie ma wlasnego retry - trafienie w 504 wywala caly run z
+          # mylacym "Could not retrieve your application". Ponawiamy sam publish
+          # kilka razy w tym samym runie, bez ponownego budowania paczki.
+          $maxAttempts = 6
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Publish - proba $attempt z $maxAttempts"
+            & msstore @arguments
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Publish OK w probie $attempt."
+              exit 0
+            }
+            if ($attempt -lt $maxAttempts) {
+              Write-Host "Proba $attempt nieudana (exit $LASTEXITCODE). Czekam 60 s i ponawiam..."
+              Start-Sleep -Seconds 60
+            }
+          }
+          throw "Publish nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
 
       - name: Poll submission status
         shell: pwsh

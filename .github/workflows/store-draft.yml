@@ -149,11 +149,28 @@ jobs:
           $uploadDir = Join-Path $env:RUNNER_TEMP 'store-upload'
           New-Item -ItemType Directory -Force -Path $uploadDir | Out-Null
           Copy-Item "${{ steps.upload.outputs.msixupload_path }}" -Destination $uploadDir -Force
-          msstore publish "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App" `
-            --inputDirectory "$uploadDir" `
-            -id $env:STORE_PRODUCT_ID `
-            --verbose `
-            --noCommit
+
+          # API devcenter bywa niestabilne (przejsciowe HTTP 504 na GET aplikacji),
+          # a msstore nie ma wlasnego retry - trafienie w 504 wywala caly run z
+          # mylacym "Could not retrieve your application". Ponawiamy sam publish
+          # kilka razy w tym samym runie, bez ponownego budowania paczki.
+          $maxAttempts = 6
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Publish draft - proba $attempt z $maxAttempts"
+            msstore publish "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App" `
+              --inputDirectory "$uploadDir" `
+              -id $env:STORE_PRODUCT_ID `
+              --noCommit
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Publish draft OK w probie $attempt."
+              exit 0
+            }
+            if ($attempt -lt $maxAttempts) {
+              Write-Host "Proba $attempt nieudana (exit $LASTEXITCODE). Czekam 60 s i ponawiam..."
+              Start-Sleep -Seconds 60
+            }
+          }
+          throw "Publish draft nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
 
       - name: Export current draft metadata
         shell: pwsh
