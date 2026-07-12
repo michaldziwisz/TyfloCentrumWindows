@@ -172,16 +172,29 @@ jobs:
           }
           throw "Publish draft nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
 
-      - name: Export current draft metadata
+      - name: Update Store listing metadata (What's new / opis)
         shell: pwsh
         run: |
+          # msstore publish wgrywa TYLKO pakiet i NIE rusza tekstow listingu.
+          # Ten krok nadpisuje listing (opis + What's new) trescia z repo
+          # (store/listing/*.txt) przez Store REST API, z wlasnym retry na 504.
+          python "$env:GITHUB_WORKSPACE\scripts\store\update_listing.py"
+
+      - name: Export current draft metadata
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          # Krok czysto diagnostyczny (artefakt draftu). msstore submission get
+          # potrafi trafic w przejsciowe 504 - nie moze wywalac calego wydania,
+          # bo pakiet i listing sa juz zlozone. Stad continue-on-error.
           $outputPath = Join-Path $env:RUNNER_TEMP 'store-draft-submission.json'
           msstore submission get $env:STORE_PRODUCT_ID | Set-Content -Path $outputPath -Encoding utf8
           "metadata_path=$outputPath" >> $env:GITHUB_ENV
 
       - name: Upload draft metadata
+        if: ${{ env.metadata_path != '' }}
         uses: actions/upload-artifact@v7.0.0
         with:
           name: store-draft-metadata
           path: ${{ env.metadata_path }}
-          if-no-files-found: error
+          if-no-files-found: warn

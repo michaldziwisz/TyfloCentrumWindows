@@ -167,23 +167,54 @@ jobs:
             'publish',
             "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App",
             '--inputDirectory', $uploadDir,
-            '-id', $env:STORE_PRODUCT_ID
+            '-id', $env:STORE_PRODUCT_ID,
+            '--noCommit'
           )
-
-          if (-not [string]::IsNullOrWhiteSpace($env:ROLLOUT_PERCENTAGE)) {
-            $arguments += @('--packageRolloutPercentage', $env:ROLLOUT_PERCENTAGE)
-          }
 
           # API devcenter bywa niestabilne (przejsciowe HTTP 504 na GET aplikacji),
           # a msstore nie ma wlasnego retry - trafienie w 504 wywala caly run z
           # mylacym "Could not retrieve your application". Ponawiamy sam publish
           # kilka razy w tym samym runie, bez ponownego budowania paczki.
+          # Uwaga: publikujemy z --noCommit, bo listing (What's new/opis)
+          # aktualizujemy PO wgraniu pakietu, a commit robimy dopiero na koncu.
           $maxAttempts = 6
+          $published = $false
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
             Write-Host "Publish - proba $attempt z $maxAttempts"
             & msstore @arguments
             if ($LASTEXITCODE -eq 0) {
               Write-Host "Publish OK w probie $attempt."
+              $published = $true
+              break
+            }
+            if ($attempt -lt $maxAttempts) {
+              Write-Host "Proba $attempt nieudana (exit $LASTEXITCODE). Czekam 60 s i ponawiam..."
+              Start-Sleep -Seconds 60
+            }
+          }
+          if (-not $published) {
+            throw "Publish nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
+          }
+
+      - name: Update Store listing metadata (What's new / opis)
+        shell: pwsh
+        run: |
+          # msstore publish wgrywa TYLKO pakiet i NIE rusza tekstow listingu.
+          # Nadpisujemy listing (opis + What's new) trescia z repo
+          # (store/listing/*.txt) przez Store REST API, z wlasnym retry na 504.
+          python "$env:GITHUB_WORKSPACE\scripts\store\update_listing.py"
+
+      - name: Commit submission to the Store
+        shell: pwsh
+        run: |
+          # Dopiero teraz skladamy submisje do certyfikacji (pakiet + zaktualizowany
+          # listing). msstore submission publish potrafi trafic w 504 - retry.
+          $maxAttempts = 6
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            Write-Host "Commit submission - proba $attempt z $maxAttempts"
+            msstore submission publish $env:STORE_PRODUCT_ID
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Commit OK w probie $attempt."
               exit 0
             }
             if ($attempt -lt $maxAttempts) {
@@ -191,9 +222,11 @@ jobs:
               Start-Sleep -Seconds 60
             }
           }
-          throw "Publish nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
+          throw "Commit submission nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
 
       - name: Poll submission status
+        continue-on-error: true
         shell: pwsh
         run: |
+          # Diagnostyka statusu - nie moze wywalac wydania (submisja juz zlozona).
           msstore submission poll $env:STORE_PRODUCT_ID

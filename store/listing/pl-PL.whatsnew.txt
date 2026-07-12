@@ -1,0 +1,1 @@
+Odtwarzanie podcastów jest teraz szybsze i płynniejsze. Odcinek zaczyna grać niemal od razu, bez czekania na pobranie całego pliku, a przewijanie w przód i w tył działa bez zacinania nawet w długich audycjach. Zmiana dotyczy podcastów; Tyfloradio na żywo działa jak dotychczas.

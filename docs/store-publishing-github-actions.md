@@ -91,6 +91,20 @@ Przeznaczenie:
 - aktualizuje metadata draftu na podstawie pliku JSON z repo
 - opcjonalnie publikuje metadata submission od razu po aktualizacji
 
+## Automatyczna aktualizacja listingu (opis / What's new)
+`msstore publish` wgrywa TYLKO pakiet i NIE zmienia tekstow listingu. Dlatego
+workflow `Store Draft` i `Store Release` po wgraniu pakietu odpalaja skrypt
+`scripts/store/update_listing.py`, ktory nadpisuje listing oczekujacej submisji
+przez Store REST API (z wlasnym retry na przejsciowe HTTP 504 z devcenter).
+
+Zrodlo prawdy o tekstach = pliki w repo:
+- `store/listing/<locale>.description.txt` -> pelny opis (`baseListing.description`)
+- `store/listing/<locale>.whatsnew.txt`    -> `What's new` (`baseListing.releaseNotes`)
+
+Przy nowej wersji wystarczy zaktualizowac te pliki (glownie `whatsnew`). W
+`Store Release` skrypt uwzglednia tez `ROLLOUT_PERCENTAGE` (rollout procentowy),
+a commit submisji nastepuje dopiero PO aktualizacji listingu.
+
 ## Rekomendowany flow publikacji
 1. Wprowadz zmiany do aplikacji.
 2. Podnies `Version` w `src/TyfloCentrum.Windows.App/Package.appxmanifest`.

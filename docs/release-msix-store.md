@@ -61,6 +61,12 @@ Szczegoly:
   - przyklad poprawnej wersji: `0.1.11.0`
 - dla kolejnych recznych update'ow warto przygotowac osobny plik z gotowym listingiem i `What's new`, np.:
   - [submission-0.1.15.0-pl-PL.md](../store/submission-0.1.15.0-pl-PL.md)
+- teksty listingu (opis + `What's new`) sa TERAZ aktualizowane automatycznie w workflow:
+  - zrodlo prawdy: `store/listing/<locale>.description.txt` i `store/listing/<locale>.whatsnew.txt`
+  - workflow `Store Draft/Release` po wgraniu pakietu odpala `scripts/store/update_listing.py`,
+    ktory nadpisuje listing oczekujacej submisji przez Store REST API (z retry na HTTP 504)
+  - przy nowej wersji zaktualizuj te pliki `.txt` (glownie `whatsnew`), a `submission-<wersja>.md` zostaje jako czytelna notatka/changelog
+  - reczne wklejanie `What's new` w Partner Center nie jest juz konieczne (mozliwe jako fallback)
 - lokalny `msixupload` przygotowuj skryptem:
   - `powershell -ExecutionPolicy Bypass -File .\scripts\windows\New-StoreMsixUpload.ps1 -PackageDirectory <katalog AppPackages>`
 - do `msixupload` trafia tylko:
