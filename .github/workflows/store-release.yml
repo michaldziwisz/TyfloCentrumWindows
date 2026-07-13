@@ -50,6 +50,11 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Validate Store configuration
         shell: pwsh
         run: |
@@ -71,18 +76,6 @@ jobs:
               throw 'rollout_percentage musi byc liczba od 0 do 100.'
             }
           }
-
-      - name: Install Microsoft Store CLI
-        uses: microsoft/microsoft-store-apppublisher@v1.1
-
-      - name: Reconfigure Microsoft Store CLI
-        shell: pwsh
-        run: |
-          msstore reconfigure `
-            --tenantId $env:AZURE_AD_TENANT_ID `
-            --sellerId $env:SELLER_ID `
-            --clientId $env:AZURE_AD_APPLICATION_CLIENT_ID `
-            --clientSecret $env:AZURE_AD_APPLICATION_SECRET
 
       - name: Build release MSIX
         shell: pwsh
@@ -155,78 +148,14 @@ jobs:
       - name: Publish submission to Microsoft Store
         shell: pwsh
         run: |
-          # msstore publish oczekuje KATALOGU z paczka (-i/--inputDirectory),
-          # nie sciezki do pliku, i sam wybiera kandydata .msix/.msixupload.
-          # Katalog paczki zawiera tez .msix i .cer, wiec izolujemy .msixupload
-          # w czystym katalogu, by CLI wzialo dokladnie ten plik.
-          $uploadDir = Join-Path $env:RUNNER_TEMP 'store-upload'
-          New-Item -ItemType Directory -Force -Path $uploadDir | Out-Null
-          Copy-Item "${{ steps.upload.outputs.msixupload_path }}" -Destination $uploadDir -Force
-
-          $arguments = @(
-            'publish',
-            "$env:GITHUB_WORKSPACE\src\TyfloCentrum.Windows.App",
-            '--inputDirectory', $uploadDir,
-            '-id', $env:STORE_PRODUCT_ID,
-            '--noCommit'
-          )
-
-          # API devcenter bywa niestabilne (przejsciowe HTTP 504 na GET aplikacji),
-          # a msstore nie ma wlasnego retry - trafienie w 504 wywala caly run z
-          # mylacym "Could not retrieve your application". Ponawiamy sam publish
-          # kilka razy w tym samym runie, bez ponownego budowania paczki.
-          # Uwaga: publikujemy z --noCommit, bo listing (What's new/opis)
-          # aktualizujemy PO wgraniu pakietu, a commit robimy dopiero na koncu.
-          $maxAttempts = 6
-          $published = $false
-          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            Write-Host "Publish - proba $attempt z $maxAttempts"
-            & msstore @arguments
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Publish OK w probie $attempt."
-              $published = $true
-              break
-            }
-            if ($attempt -lt $maxAttempts) {
-              Write-Host "Proba $attempt nieudana (exit $LASTEXITCODE). Czekam 60 s i ponawiam..."
-              Start-Sleep -Seconds 60
-            }
-          }
-          if (-not $published) {
-            throw "Publish nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
-          }
-
-      - name: Update Store listing metadata (What's new / opis)
-        shell: pwsh
-        run: |
-          # msstore publish wgrywa TYLKO pakiet i NIE rusza tekstow listingu.
-          # Nadpisujemy listing (opis + What's new) trescia z repo
-          # (store/listing/*.txt) przez Store REST API, z wlasnym retry na 504.
-          python "$env:GITHUB_WORKSPACE\scripts\store\update_listing.py"
-
-      - name: Commit submission to the Store
-        shell: pwsh
-        run: |
-          # Dopiero teraz skladamy submisje do certyfikacji (pakiet + zaktualizowany
-          # listing). msstore submission publish potrafi trafic w 504 - retry.
-          $maxAttempts = 6
-          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            Write-Host "Commit submission - proba $attempt z $maxAttempts"
-            msstore submission publish $env:STORE_PRODUCT_ID
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Commit OK w probie $attempt."
-              exit 0
-            }
-            if ($attempt -lt $maxAttempts) {
-              Write-Host "Proba $attempt nieudana (exit $LASTEXITCODE). Czekam 60 s i ponawiam..."
-              Start-Sleep -Seconds 60
-            }
-          }
-          throw "Commit submission nie powiodl sie po $maxAttempts probach (prawdopodobnie niestabilne API devcenter, HTTP 504)."
-
-      - name: Poll submission status
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          # Diagnostyka statusu - nie moze wywalac wydania (submisja juz zlozona).
-          msstore submission poll $env:STORE_PRODUCT_ID
+          # Publikacja + commit bezposrednio przez Store submission REST API
+          # (scripts/store/store_publish.py), z pominieciem `msstore`, ktory:
+          #  - mial zla flage (--inputFile vs --inputDirectory),
+          #  - raportuje przejsciowe 504 jako mylace "Could not retrieve your app",
+          #  - przy --noCommit NIE podmienial pakietu w submisji (zostawal stary).
+          # Skrypt: oznacza stare pakiety do usuniecia, dodaje wgrany pakiet,
+          # aktualizuje listing (store/listing/*.txt), ustawia rollout z
+          # ROLLOUT_PERCENTAGE (env) i sklada submisje. Ma wlasny retry na 504.
+          python "$env:GITHUB_WORKSPACE\scripts\store\store_publish.py" `
+            --package "${{ steps.upload.outputs.msixupload_path }}" `
+            --commit
