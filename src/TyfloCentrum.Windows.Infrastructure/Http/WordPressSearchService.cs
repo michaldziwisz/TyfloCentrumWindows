@@ -94,7 +94,7 @@ public sealed class WordPressSearchService : IWordPressSearchService
     {
         var builder = new UriBuilder(new Uri(baseUri, "wp/v2/posts"));
         builder.Query =
-            $"context=embed&per_page={pageSize}&search={Uri.EscapeDataString(query)}&orderby=date&order=desc&_fields=id,date,link,title,excerpt";
+            $"context=embed&per_page={pageSize}&search={Uri.EscapeDataString(query)}&orderby=date&order=desc&_fields=id,date,link,title,excerpt,modified_gmt,tyflocentrum";
 
         return await _cache.GetOrCreateAsync(
             $"wp-search:{builder.Uri.AbsoluteUri}",

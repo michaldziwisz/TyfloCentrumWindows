@@ -57,7 +57,8 @@ public sealed class ContentFavoriteService
             item.Title,
             item.PublishedDate,
             item.Link,
-            cancellationToken
+            cancellationToken,
+            item.Time
         );
     }
 
@@ -73,7 +74,8 @@ public sealed class ContentFavoriteService
             item.Title,
             item.PublishedDate,
             item.Link,
-            cancellationToken
+            cancellationToken,
+            item.Time
         );
     }
 
@@ -83,7 +85,8 @@ public sealed class ContentFavoriteService
         string title,
         string publishedDate,
         string link,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        ContentTimeItemViewModel? time = null
     )
     {
         var isFavorite = await IsFavoriteAsync(source, postId, cancellationToken);
@@ -99,7 +102,7 @@ public sealed class ContentFavoriteService
         }
 
         await _favoritesService.AddOrUpdateAsync(
-            CreateFavoriteItem(source, postId, title, publishedDate, link),
+            CreateFavoriteItem(source, postId, title, publishedDate, link, time),
             cancellationToken
         );
         return true;
@@ -115,7 +118,8 @@ public sealed class ContentFavoriteService
         int postId,
         string title,
         string publishedDate,
-        string link
+        string link,
+        ContentTimeItemViewModel? time
     )
     {
         return new FavoriteItem
@@ -128,6 +132,9 @@ public sealed class ContentFavoriteService
             Title = title,
             PublishedDate = publishedDate,
             Link = link,
+            TimeMetadata = source == ContentSource.Podcast ? time?.Raw : null,
+            ReadingMetadata = source == ContentSource.Article ? time?.Raw : null,
+            ModifiedGmt = time?.SourceModified,
             SavedAtUtc = DateTimeOffset.UtcNow,
         };
     }

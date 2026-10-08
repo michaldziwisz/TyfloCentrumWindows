@@ -18,6 +18,12 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
         Title = WordPressTextFormatter.NormalizeHtml(item.Title.Rendered);
         Link = item.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Date);
+        Time = new(new(ContentSource.Article, true, PageId), item.ReadingMetadata, item.ModifiedGmt);
+        Time.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(DateAndTime));
+            OnPropertyChanged(nameof(AccessibleLabel));
+        };
         _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }
 
@@ -28,6 +34,10 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
     public string Link { get; }
 
     public string PublishedDate { get; }
+
+    public ContentTimeItemViewModel Time { get; }
+
+    public string DateAndTime => string.Join(" · ", new[] { PublishedDate, Time.Visible }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
     public string OpenDetailsLabel => $"Pokaż artykuł ze spisu treści: {Title}";
 
@@ -52,6 +62,7 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
             }
 
             parts.Add(IsFavorite ? "W ulubionych" : "Poza ulubionymi");
+            if (Time.Enabled) parts.Add(Time.Accessible);
             return string.Join(". ", parts);
         }
     }

@@ -2,7 +2,7 @@ using TyfloCentrum.Windows.Domain.Models;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
-public sealed class FavoriteItemViewModel
+public sealed class FavoriteItemViewModel : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
     public FavoriteItemViewModel(FavoriteItem item)
     {
@@ -14,6 +14,12 @@ public sealed class FavoriteItemViewModel
         Title = item.Title;
         Subtitle = item.Subtitle;
         PublishedDate = item.PublishedDate;
+        Time = new(new(Source, ArticleOrigin == FavoriteArticleOrigin.Page, PostId), Source == ContentSource.Podcast ? item.TimeMetadata : item.ReadingMetadata, item.ModifiedGmt, fetchAudio: true, enabled: Kind is FavoriteKind.Article or FavoriteKind.Podcast);
+        Time.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(DateAndTime));
+            OnPropertyChanged(nameof(AccessibleLabel));
+        };
         Link = item.Link;
         ContextTitle = item.ContextTitle;
         ContextSubtitle = item.ContextSubtitle;
@@ -36,6 +42,10 @@ public sealed class FavoriteItemViewModel
     public string Subtitle { get; }
 
     public string PublishedDate { get; }
+
+    public ContentTimeItemViewModel Time { get; }
+
+    public string DateAndTime => string.Join(" · ", new[] { PublishedDate, Time.Visible }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
     public string Link { get; }
 
@@ -62,7 +72,7 @@ public sealed class FavoriteItemViewModel
 
     public bool HasSecondaryText => !string.IsNullOrWhiteSpace(SecondaryText);
 
-    public bool HasPublishedDate => !string.IsNullOrWhiteSpace(PublishedDate);
+    public bool HasPublishedDate => Time.Enabled || !string.IsNullOrWhiteSpace(PublishedDate);
 
     public string ContextLabel =>
         Kind switch
@@ -117,6 +127,7 @@ public sealed class FavoriteItemViewModel
             }
 
             parts.Add(SavedAtLabel);
+            if (Time.Enabled) parts.Add(Time.Accessible);
             return string.Join(". ", parts);
         }
     }

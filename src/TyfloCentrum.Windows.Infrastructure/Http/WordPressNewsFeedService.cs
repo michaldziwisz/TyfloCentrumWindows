@@ -124,7 +124,7 @@ public sealed class WordPressNewsFeedService : INewsFeedService
     {
         var builder = new UriBuilder(new Uri(baseUri, "wp/v2/posts"));
         builder.Query =
-            $"context=embed&per_page={pageSize}&page={pageNumber}&orderby=date&order=desc&_fields=id,date,link,title,excerpt";
+            $"context=embed&per_page={pageSize}&page={pageNumber}&orderby=date&order=desc&_fields=id,date,link,title,excerpt,modified_gmt,tyflocentrum";
 
         return await _cache.GetOrCreateAsync(
             $"wp-news-page:{builder.Uri.AbsoluteUri}",

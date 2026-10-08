@@ -5,6 +5,15 @@ namespace TyfloCentrum.Windows.Domain.Models;
 
 public sealed record WpPostSummary
 {
+    [JsonPropertyName("tyflocentrum")]
+    public System.Text.Json.JsonElement? TimeMetadata { get; init; }
+
+    [JsonPropertyName("modified_gmt")]
+    public System.Text.Json.JsonElement? ModifiedGmt { get; init; }
+
+    [JsonPropertyName("reading_metadata")]
+    public System.Text.Json.JsonElement? ReadingMetadata { get; init; }
+
     [JsonPropertyName("id")]
     public required int Id { get; init; }
 

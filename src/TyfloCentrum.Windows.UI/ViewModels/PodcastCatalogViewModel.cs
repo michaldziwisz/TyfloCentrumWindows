@@ -9,13 +9,15 @@ public sealed class PodcastCatalogViewModel : ContentCatalogViewModelBase
     public PodcastCatalogViewModel(
         IWordPressCatalogService catalogService,
         IExternalLinkLauncher externalLinkLauncher,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
         : base(
             ContentSource.Podcast,
             catalogService,
             externalLinkLauncher,
-            contentTypeAnnouncementPreferenceService
+            contentTypeAnnouncementPreferenceService,
+            contentTimeService
         ) { }
 
     public override string LeadText => "Przeglądaj kategorie i listę podcastów z Tyflopodcast.";

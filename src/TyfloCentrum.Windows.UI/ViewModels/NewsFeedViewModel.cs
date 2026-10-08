@@ -10,6 +10,9 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 public partial class NewsFeedViewModel : ObservableObject
 {
     private const int PageSize = 20;
+    private readonly ContentTimeEnrichment _metadata;
+    public Task MetadataCompletion => _metadata.Completion;
+
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly INewsFeedService _newsFeedService;
@@ -22,11 +25,13 @@ public partial class NewsFeedViewModel : ObservableObject
     public NewsFeedViewModel(
         INewsFeedService newsFeedService,
         IExternalLinkLauncher externalLinkLauncher,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
     {
         _newsFeedService = newsFeedService;
         _externalLinkLauncher = externalLinkLauncher;
+        _metadata = new ContentTimeEnrichment(contentTimeService);
         _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
         _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         RetryCommand = new AsyncRelayCommand(RetryAsync, () => !IsLoading);
@@ -109,6 +114,7 @@ public partial class NewsFeedViewModel : ObservableObject
                 cancellationToken
             );
             AppendItems(page.Items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             _currentPageNumber = nextPageNumber;
             _hasMoreItems = page.HasMoreItems;
             ErrorMessage = null;
@@ -157,6 +163,7 @@ public partial class NewsFeedViewModel : ObservableObject
             return;
         }
 
+        _metadata.Cancel();
         IsLoading = true;
         IsLoadingMore = false;
         ErrorMessage = null;
@@ -171,6 +178,7 @@ public partial class NewsFeedViewModel : ObservableObject
 
             Items.Clear();
             AppendItems(page.Items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             _currentPageNumber = 1;
             _hasMoreItems = page.HasMoreItems;
             _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
@@ -226,12 +234,14 @@ public partial class NewsFeedViewModel : ObservableObject
             return;
         }
 
+        _metadata.Cancel();
         _isRefreshingLatestItems = true;
 
         try
         {
             var page = await _newsFeedService.GetLatestItemsPageAsync(PageSize, 1, cancellationToken);
             PrependNewItems(page.Items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             _hasMoreItems = _currentPageNumber > 1 || page.HasMoreItems;
             _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
             ErrorMessage = null;
@@ -255,6 +265,14 @@ public partial class NewsFeedViewModel : ObservableObject
 
     private void PrependNewItems(IEnumerable<NewsFeedItem> items)
     {
+        var refreshed = items.ToArray();
+        foreach (var item in refreshed)
+        {
+            var existing = Items.FirstOrDefault(candidate => candidate.Kind == item.Kind && candidate.PostId == item.Post.Id);
+            if (existing is not null)
+                existing.Time.UpdateSource(item.Post.ModifiedGmt, existing.Source == ContentSource.Podcast ? item.Post.TimeMetadata : item.Post.ReadingMetadata);
+        }
+        items = refreshed;
         var existingKeys = new HashSet<(NewsItemKind Kind, int PostId)>(
             Items.Select(item => (item.Kind, item.PostId))
         );

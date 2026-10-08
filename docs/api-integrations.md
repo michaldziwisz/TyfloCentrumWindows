@@ -66,6 +66,16 @@ Ten dokument opisuje zewnetrzne kontrakty HTTP, ktore wersja Windows musi obsluz
 - pobieranie podstron po `parent`
 - osobne listy kategorii i wpisow
 
+## Opcjonalne czasy na listach
+
+Listy posts i pages proszą dodatkowo o `tyflocentrum` oraz opcjonalne `modified_gmt`. Nie rozszerzają zapytań o treść ani audio. Model toleruje dowolny kształt tych dodatkowych pól; błędna wartość nie unieważnia wpisu.
+
+Długość audio pochodzi z WordPressa: schema 1, `audio_status=ready`, dodatnie skończone `duration_seconds` do 2147483647. Liczba jest zmiennoprzecinkowa, zaokrąglana w górę do sekundy. Ulubione mogą odświeżyć ją batchowym `include` z polami `id,tyflocentrum`, bez pobierania pełnego wpisu.
+
+Czas czytania pochodzi wyłącznie z `https://tyflocentrum.tyflo.eu.org/v1/metadata?source=tyfloswiat.pl&type=posts&ids=...` (osobno `pages`). Porcje mają do 50 dodatnich unikalnych ID. `ContentTimeService` scala po kluczu źródło/typ/ID, odrzuca obce i niejednoznaczne duplikaty. Osobny timeout 3 s, do dwóch równoległych żądań, brak retry, deduplikacja aktywnych kluczy. Cache w pamięci: 512 wpisów, do 5 min dla wyniku i 1 min dla braku/awarii. Ważność nigdy nie przekracza 24 h od `checked_at`; źródłowa nowsza modyfikacja unieważnia czas. Brak modyfikacji w `context=embed` jest dozwolony. Wymagane schema 1, `freshness=fresh`, `text_status=ready`, dodatnie liczniki i `reading_minutes=ceil(word_count/200)`.
+
+`ContentTimeEnrichment` aktualizuje istniejące wiersze już po zbudowaniu listy, niezależnie od jej stanu ładowania. Anulowanie i numer generacji chronią odświeżenia. Dla pozostawionej listy timer powiadamia wiązania o wygaśnięciu danych. Stare ulubione i cache pozostają czytelne: nowe pola są opcjonalne, identyfikatory i kolejność nie zmieniają się. Dane metadanych nie dotyczą PDF/numeru jako całości, tematów ani odnośników.
+
 ## Panel kontaktowy
 
 ### Endpointy na zywo

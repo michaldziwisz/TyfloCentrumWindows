@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <None Update="Fixtures\content-time.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\TyfloCentrum.Windows.App\Views\NewsSectionView.xaml;..\..\src\TyfloCentrum.Windows.App\Views\ArticleSectionView.xaml;..\..\src\TyfloCentrum.Windows.App\Views\PodcastSectionView.xaml;..\..\src\TyfloCentrum.Windows.App\Views\SearchSectionView.xaml;..\..\src\TyfloCentrum.Windows.App\Views\FavoritesSectionView.xaml;..\..\src\TyfloCentrum.Windows.App\Views\TyfloSwiatMagazineView.xaml" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

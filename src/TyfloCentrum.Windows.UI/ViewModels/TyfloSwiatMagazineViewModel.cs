@@ -10,6 +10,9 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class TyfloSwiatMagazineViewModel : ObservableObject
 {
+    private readonly ContentTimeEnrichment _metadata;
+    public Task MetadataCompletion => _metadata.Completion;
+
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly ITyfloSwiatMagazineService _magazineService;
@@ -22,12 +25,14 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
         ITyfloSwiatMagazineService magazineService,
         IExternalLinkLauncher externalLinkLauncher,
         IFavoritesService favoritesService,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
     {
         _magazineService = magazineService;
         _externalLinkLauncher = externalLinkLauncher;
         _favoritesService = favoritesService;
+        _metadata = new ContentTimeEnrichment(contentTimeService);
         _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
         _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
     }
@@ -129,6 +134,7 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
         }
 
         CancelIssueSelection();
+        _metadata.Cancel();
         IsLoading = true;
         ErrorMessage = null;
         StatusMessage = "Ładowanie numerów czasopisma TyfloŚwiat…";
@@ -306,7 +312,8 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
                     )
                 )
                 .ToArray();
-            await PopulateFavoriteStateAsync(tocItems, cancellationToken);
+            await PopulateFavoriteStateAsync(tocItems, selectionToken);
+            if (selectionToken.IsCancellationRequested || !ReferenceEquals(_issueSelectionCancellationTokenSource, linkedCancellationTokenSource)) return;
 
             TocItems.Clear();
             foreach (var item in tocItems)
@@ -314,6 +321,7 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
                 TocItems.Add(item);
             }
 
+            _metadata.Start(TocItems.Select(item => item.Time), selectionToken);
             StatusMessage = detail.TocItems.Count > 0
                 ? "Wczytano spis treści numeru."
                 : "Wczytano treść numeru.";
@@ -547,6 +555,7 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
 
     private void ClearSelectedIssueDetail()
     {
+        _metadata.Cancel();
         SelectedIssueTitle = string.Empty;
         SelectedIssuePublishedDate = string.Empty;
         SelectedIssueContentText = string.Empty;
@@ -616,6 +625,8 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
             Title = item.Title,
             PublishedDate = item.PublishedDate,
             Link = item.Link,
+            ReadingMetadata = item.Time.Raw,
+            ModifiedGmt = item.Time.SourceModified,
             SavedAtUtc = DateTimeOffset.UtcNow,
         };
     }

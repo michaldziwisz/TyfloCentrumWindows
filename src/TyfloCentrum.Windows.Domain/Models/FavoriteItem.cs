@@ -4,6 +4,15 @@ namespace TyfloCentrum.Windows.Domain.Models;
 
 public sealed record FavoriteItem
 {
+    [JsonPropertyName("tyflocentrum")]
+    public System.Text.Json.JsonElement? TimeMetadata { get; init; }
+
+    [JsonPropertyName("modified_gmt")]
+    public System.Text.Json.JsonElement? ModifiedGmt { get; init; }
+
+    [JsonPropertyName("reading_metadata")]
+    public System.Text.Json.JsonElement? ReadingMetadata { get; init; }
+
     public string Id { get; init; } = string.Empty;
 
     public ContentSource Source { get; init; } = ContentSource.Podcast;

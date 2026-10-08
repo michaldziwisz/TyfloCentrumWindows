@@ -28,7 +28,8 @@
                     <TextBlock
                         AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding PublishedDate}" />
+                        Text="{Binding DateAndTime}"
+                        TextWrapping="WrapWholeWords" />
                     <TextBlock
                         AutomationProperties.AccessibilityView="Raw"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"

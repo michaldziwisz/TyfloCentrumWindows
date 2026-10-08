@@ -17,9 +17,9 @@ public sealed class FileBackedTransientContentCache : ITransientContentCache
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, MemoryCacheEntry> _memoryEntries = new(StringComparer.Ordinal);
 
-    public FileBackedTransientContentCache()
+    public FileBackedTransientContentCache(string? directoryPath = null)
     {
-        _cacheDirectoryPath = Path.Combine(
+        _cacheDirectoryPath = directoryPath ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TyfloCentrum.Windows",
             "http-cache"

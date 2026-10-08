@@ -2,6 +2,8 @@ namespace TyfloCentrum.Windows.Infrastructure.Http;
 
 public sealed class TyfloCentrumEndpointsOptions
 {
+    public Uri ContentMetadataUrl { get; init; } = new("https://tyflocentrum.tyflo.eu.org/v1/metadata");
+
     public Uri TyflopodcastApiBaseUrl { get; init; } = new("https://tyflopodcast.net/wp-json/");
 
     public Uri TyfloswiatApiBaseUrl { get; init; } = new("https://tyfloswiat.pl/wp-json/");
