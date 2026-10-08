@@ -30,7 +30,7 @@ public sealed class ContentTimeServiceTests(ITestOutputHelper output)
     {
         var q = Query(uri);
         if (uri.Host == "podcasts.example") return Json(q["include"].Split(',').Select(id => new { id = int.Parse(id), tyflocentrum = new { schema_version = 1, audio_status = "ready", duration_seconds = 2.5 } }));
-        return Json(new { schema_version = 1, source = "tyfloswiat.pl", type = q["type"], items = q["ids"].Split(',').Reverse().Select(id => Reading(int.Parse(id), now, minutes)) });
+        return Json(new { schema_version = 1, source = "tyfloswiat.pl", type = q["type"], items = Enumerable.Reverse(q["ids"].Split(',')).Select(id => Reading(int.Parse(id), now, minutes)) });
     }
 
     [Fact]
