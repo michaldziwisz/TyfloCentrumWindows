@@ -63,6 +63,25 @@ Zakres:
 Cel:
 - potwierdzic realne zachowanie aplikacji z technologiami wspomagajacymi
 
+## Metadane czasu treści
+
+`ContentTimePolicyTests` odtwarza wszystkie 50 wspólnych przypadków (29 tekstowych i 21 audio). `ContentTimeAcceptanceTests` sprawdza przejście 21 przypadków audio przez rzeczywiste modele i nazwy wierszy. Testy transportu używają atrapy `HttpMessageHandler`, nie produkcji: porcje do 50, rozdział posts/pages, klucze zamiast kolejności, duplikaty i obce ID, 429/503, błędny JSON, timeout, deduplikacja równoległych żądań, anulowanie i cache ograniczony liczbą wpisów oraz datą sprawdzenia.
+
+`ContentTimeScreenTests` ładuje rzeczywiste serwisy i ViewModele Nowości, obu katalogów, kategorii, wyszukiwarki, ulubionych i spisu artykułów numeru. Sprawdza widoczną listę podczas zablokowanego transportu, działające akcje wiersza przed wynikiem, aktualizację bez wymiany obiektu, wynik poprawny i 503. Rejestry URL trafiają do wyjścia testu/TRX; nie zawierają pobrań nagrań ani pełnych artykułów na listę. Pobranie treści wybranego numeru jest zastanym działaniem spisu treści, nie pobraniem każdej strony do liczenia słów.
+
+`ContentTimeLifetimeTests` weryfikuje wygaśnięcie już wyświetlonej wartości bez ponownego ładowania, serializację cache i sześć rzeczywistych szablonów XAML. To test powiadomień MVVM i struktury XAML, nie pomiar UI Automation na żywym pulpicie ani test czytnika ekranu. UITests nadal zawiera niewykonywany scaffold.
+
+Pełna kontrola Windows: `dotnet test TyfloCentrum.Windows.sln -c Debug -p:Platform=x64 --logger trx --results-directory TestResults`, następnie istniejący `Build-DirectSetupExe.ps1 -Configuration Release -Platform x64`. Workflow `Direct Installer Build` przechowuje TRX także po błędzie. Nie publikuje do sklepu i nie instaluje aplikacji.
+
+Kontrola ręczna do wykonania na Windows z NVDA i Narratorem:
+
+- Na każdej z powyższych list czas znajduje się przy dacie i jest odczytywany raz w istniejącej nazwie wiersza. Nie dochodzi dodatkowy przystanek Tab.
+- Zmiana czasu po odpowiedzi nie przesuwa zaznaczenia ani fokusu. Starsza odpowiedź po odświeżeniu lub zmianie kategorii/numeru nie zmienia nowej listy.
+- Przy braku sieci/metadanych słychać „Czas niedostępny”; Enter, menu, otwarcie artykułu i odtwarzanie nadal działają.
+- Sprawdzić „około 1 minuty”, „około 2 minut”, audio z godzinami i sekundami oraz pozycję bez daty.
+- Numer czasopisma, PDF, temat i odnośnik nie dostają czasu całego wydania lub audycji.
+- Pozostawienie listy ponad dobę od `checked_at` ukrywa stary czas bez restartu. Sprawdzić powrót ze szczegółów, wysoką skalę tekstu i kontrast.
+
 ## Dane testowe
 - fixture'y odpowiedzi HTTP przechowywane lokalnie w testach
 - kontrolowane stuby dla scenariuszy:

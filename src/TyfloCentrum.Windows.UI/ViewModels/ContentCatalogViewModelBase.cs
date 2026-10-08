@@ -9,6 +9,9 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public abstract partial class ContentCatalogViewModelBase : ObservableObject
 {
+    private readonly ContentTimeEnrichment _metadata;
+    public Task MetadataCompletion => _metadata.Completion;
+
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressCatalogService _catalogService;
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
@@ -26,12 +29,14 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
         ContentSource source,
         IWordPressCatalogService catalogService,
         IExternalLinkLauncher externalLinkLauncher,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
     {
         _source = source;
         _catalogService = catalogService;
         _externalLinkLauncher = externalLinkLauncher;
+        _metadata = new ContentTimeEnrichment(contentTimeService);
         _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
         _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         RetryCommand = new AsyncRelayCommand(RetryAsync, () => !IsLoading);
@@ -151,6 +156,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             );
 
             AppendItems(page.Items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             _currentPageNumber = nextPageNumber;
             _hasMoreItems = page.HasMoreItems;
             ErrorMessage = null;
@@ -229,6 +235,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             _reloadQueued = false;
             _queuedIncludeCategories = false;
 
+            _metadata.Cancel();
             IsLoading = true;
             IsLoadingMore = false;
             ErrorMessage = null;
@@ -299,6 +306,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
 
         Items.Clear();
         AppendItems(page.Items);
+        _metadata.Start(Items.Select(item => item.Time), cancellationToken);
         _currentPageNumber = 1;
         _hasMoreItems = page.HasMoreItems;
         _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
@@ -343,6 +351,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             return;
         }
 
+        _metadata.Cancel();
         _isRefreshingLatestItems = true;
 
         try
@@ -356,6 +365,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             );
 
             PrependNewItems(page.Items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             _hasMoreItems = _currentPageNumber > 1 || page.HasMoreItems;
             _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
             ErrorMessage = null;
@@ -376,6 +386,14 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
 
     private void PrependNewItems(IEnumerable<WpPostSummary> items)
     {
+        var refreshed = items.ToArray();
+        foreach (var item in refreshed)
+        {
+            var existing = Items.FirstOrDefault(candidate => candidate.PostId == item.Id);
+            if (existing is not null)
+                existing.Time.UpdateSource(item.ModifiedGmt, _source == ContentSource.Podcast ? item.TimeMetadata : item.ReadingMetadata);
+        }
+        items = refreshed;
         var existingPostIds = new HashSet<int>(Items.Select(item => item.PostId));
         var newItems = items
             .Where(item => existingPostIds.Add(item.Id))

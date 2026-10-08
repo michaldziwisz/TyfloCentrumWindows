@@ -8,6 +8,9 @@ namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class SearchViewModel : ObservableObject
 {
+    private readonly ContentTimeEnrichment _metadata;
+    public Task MetadataCompletion => _metadata.Completion;
+
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressSearchService _searchService;
@@ -15,11 +18,13 @@ public partial class SearchViewModel : ObservableObject
     public SearchViewModel(
         IWordPressSearchService searchService,
         IExternalLinkLauncher externalLinkLauncher,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
     {
         _searchService = searchService;
         _externalLinkLauncher = externalLinkLauncher;
+        _metadata = new ContentTimeEnrichment(contentTimeService);
         _contentTypeAnnouncementPreferenceService = contentTypeAnnouncementPreferenceService;
         _contentTypeAnnouncementPreferenceService.Changed += OnContentTypeAnnouncementPlacementChanged;
         ScopeOptions = SearchScopeOptionViewModel.All;
@@ -133,6 +138,7 @@ public partial class SearchViewModel : ObservableObject
             return;
         }
 
+        _metadata.Cancel();
         IsLoading = true;
         ErrorMessage = null;
         LastSearchQuery = query;
@@ -160,6 +166,7 @@ public partial class SearchViewModel : ObservableObject
                 );
             }
 
+            _metadata.Start(Results.Select(item => item.Time), cancellationToken);
             HasLoaded = true;
             StatusMessage = Results.Count == 0
                 ? "Brak wyników wyszukiwania."

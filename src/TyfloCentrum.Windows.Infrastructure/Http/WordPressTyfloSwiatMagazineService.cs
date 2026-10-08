@@ -106,7 +106,7 @@ public sealed class WordPressTyfloSwiatMagazineService : ITyfloSwiatMagazineServ
     {
         var builder = new UriBuilder(new Uri(_options.TyfloswiatApiBaseUrl, "wp/v2/pages"));
         builder.Query =
-            $"context=embed&per_page={Math.Max(1, perPage)}&slug={Uri.EscapeDataString(slug)}&_fields=id,date,link,title,excerpt";
+            $"context=embed&per_page={Math.Max(1, perPage)}&slug={Uri.EscapeDataString(slug)}&_fields=id,date,link,title,excerpt,modified_gmt,tyflocentrum";
 
         return await _cache.GetOrCreateAsync(
             $"wp-tyfloswiat-slug:{builder.Uri.AbsoluteUri}",
@@ -138,7 +138,7 @@ public sealed class WordPressTyfloSwiatMagazineService : ITyfloSwiatMagazineServ
     {
         var builder = new UriBuilder(new Uri(_options.TyfloswiatApiBaseUrl, "wp/v2/pages"));
         builder.Query =
-            $"context=embed&per_page=100&parent={parentPageId}&orderby=date&order=desc&_fields=id,date,link,title,excerpt";
+            $"context=embed&per_page=100&parent={parentPageId}&orderby=date&order=desc&_fields=id,date,link,title,excerpt,modified_gmt,tyflocentrum";
 
         return await _cache.GetOrCreateAsync(
             $"wp-tyfloswiat-children:{builder.Uri.AbsoluteUri}",

@@ -93,7 +93,7 @@ public sealed class WordPressCatalogService : IWordPressCatalogService
             $"page={normalizedPageNumber}",
             "orderby=date",
             "order=desc",
-            "_fields=id,date,link,title,excerpt",
+            "_fields=id,date,link,title,excerpt,modified_gmt,tyflocentrum",
         };
 
         if (categoryId is int value)

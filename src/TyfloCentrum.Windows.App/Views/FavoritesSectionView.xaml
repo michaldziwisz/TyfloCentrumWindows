@@ -36,7 +36,9 @@
                         Visibility="{Binding HasSecondaryText, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding PublishedDate}"
+                        AutomationProperties.AccessibilityView="Raw"
+                        Text="{Binding DateAndTime}"
+                        TextWrapping="WrapWholeWords"
                         Visibility="{Binding HasPublishedDate, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"

@@ -65,7 +65,9 @@
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{Binding PublishedDate}" />
+                        AutomationProperties.AccessibilityView="Raw"
+                        Text="{Binding DateAndTime}"
+                        TextWrapping="WrapWholeWords" />
                 </StackPanel>
             </Border>
         </DataTemplate>

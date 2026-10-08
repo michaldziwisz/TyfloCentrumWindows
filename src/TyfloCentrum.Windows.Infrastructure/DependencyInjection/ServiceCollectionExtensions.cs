@@ -16,6 +16,10 @@ public static class ServiceCollectionExtensions
     )
     {
         services.AddSingleton(endpoints);
+        services.AddHttpClient("content-time", client =>
+            TyfloCentrumHttpClientDefaults.ConfigureJsonClient(client, TimeSpan.FromSeconds(3)));
+        services.AddSingleton<IContentTimeService>(provider => new ContentTimeService(
+            provider.GetRequiredService<IHttpClientFactory>().CreateClient("content-time"), endpoints));
         services.AddSingleton<ILocalSettingsStore, FileLocalSettingsStore>();
         services.AddSingleton<ITransientContentCache, FileBackedTransientContentCache>();
         services.AddSingleton<IAppSettingsService, LocalAppSettingsService>();

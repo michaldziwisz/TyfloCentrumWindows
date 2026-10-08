@@ -9,13 +9,15 @@ public sealed class ArticleCatalogViewModel : ContentCatalogViewModelBase
     public ArticleCatalogViewModel(
         IWordPressCatalogService catalogService,
         IExternalLinkLauncher externalLinkLauncher,
-        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService
+        ContentTypeAnnouncementPreferenceService contentTypeAnnouncementPreferenceService,
+        IContentTimeService? contentTimeService = null
     )
         : base(
             ContentSource.Article,
             catalogService,
             externalLinkLauncher,
-            contentTypeAnnouncementPreferenceService
+            contentTypeAnnouncementPreferenceService,
+            contentTimeService
         ) { }
 
     public override string LeadText =>

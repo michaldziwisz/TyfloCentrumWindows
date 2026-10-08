@@ -21,6 +21,12 @@ public sealed class ContentPostItemViewModel : ObservableObject
         Excerpt = WordPressTextFormatter.NormalizeHtml(item.Excerpt?.Rendered ?? string.Empty);
         Link = item.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Date);
+        Time = new(new(Source, false, PostId), Source == ContentSource.Podcast ? item.TimeMetadata : item.ReadingMetadata, item.ModifiedGmt);
+        Time.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(DateAndTime));
+            OnPropertyChanged(nameof(AccessibleLabel));
+        };
         _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }
 
@@ -37,6 +43,10 @@ public sealed class ContentPostItemViewModel : ObservableObject
     public string Link { get; }
 
     public string PublishedDate { get; }
+
+    public ContentTimeItemViewModel Time { get; }
+
+    public string DateAndTime => string.Join(" · ", new[] { PublishedDate, Time.Visible }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
     public bool SupportsPlayback => Source == ContentSource.Podcast;
 
@@ -74,6 +84,7 @@ public sealed class ContentPostItemViewModel : ObservableObject
                 parts.Add(PublishedDate);
             }
 
+            if (Time.Enabled) parts.Add(Time.Accessible);
             return string.Join(". ", parts);
         }
     }

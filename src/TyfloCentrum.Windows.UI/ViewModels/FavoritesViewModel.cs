@@ -2,11 +2,15 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TyfloCentrum.Windows.Domain.Models;
 using TyfloCentrum.Windows.Domain.Services;
+using TyfloCentrum.Windows.UI.Services;
 
 namespace TyfloCentrum.Windows.UI.ViewModels;
 
 public partial class FavoritesViewModel : ObservableObject
 {
+    private readonly ContentTimeEnrichment _metadata;
+    public Task MetadataCompletion => _metadata.Completion;
+
     private readonly IClipboardService _clipboardService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
@@ -17,9 +21,11 @@ public partial class FavoritesViewModel : ObservableObject
         IFavoritesService favoritesService,
         IExternalLinkLauncher externalLinkLauncher,
         IClipboardService clipboardService,
-        IShareService shareService
+        IShareService shareService,
+        IContentTimeService? contentTimeService = null
     )
     {
+        _metadata = new ContentTimeEnrichment(contentTimeService);
         _favoritesService = favoritesService;
         _externalLinkLauncher = externalLinkLauncher;
         _clipboardService = clipboardService;
@@ -87,6 +93,7 @@ public partial class FavoritesViewModel : ObservableObject
         }
 
         _hasLoaded = true;
+        _metadata.Cancel();
         IsLoading = true;
         ErrorMessage = null;
         StatusMessage = "Ładowanie ulubionych…";
@@ -96,6 +103,7 @@ public partial class FavoritesViewModel : ObservableObject
         {
             var items = await _favoritesService.GetItemsAsync(cancellationToken);
             ApplyItems(items);
+            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
             HasLoadedOnce = true;
             StatusMessage = BuildStatusMessage(Items.Count);
         }
