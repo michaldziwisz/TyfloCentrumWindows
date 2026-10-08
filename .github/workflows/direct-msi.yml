@@ -49,7 +49,15 @@ jobs:
       - name: Run automated tests
         shell: pwsh
         run: |
-          dotnet test .\TyfloCentrum.Windows.sln -c Debug -p:Platform=x64 --nologo
+          dotnet test .\TyfloCentrum.Windows.sln -c Debug -p:Platform=x64 --nologo --logger trx --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: warn
 
       - name: Build direct installer EXE
         shell: pwsh

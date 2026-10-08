@@ -1,0 +1,795 @@
+{
+  "schema_version": 1,
+  "purpose": "Syntetyczne fixture kontraktu klientów, nie pomiar produkcji",
+  "now": "2026-10-08T12:00:00Z",
+  "policy": {
+    "reading_words_per_minute": 200,
+    "max_source_age_seconds": 86400,
+    "duration_rounding": "ceil_seconds",
+    "duration_max_seconds": 2147483647,
+    "missing_label": "Czas niedostępny",
+    "batch_max_ids": 50
+  },
+  "text_cases": [
+    {
+      "name": "ready_6_minutes",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 6,
+      "expected_visible": "Czytanie: około 6 min",
+      "expected_accessible": "Czytanie: około 6 minut"
+    },
+    {
+      "name": "ready_1",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 200,
+        "reading_minutes": 1,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 1,
+      "expected_visible": "Czytanie: około 1 min",
+      "expected_accessible": "Czytanie: około 1 minuty"
+    },
+    {
+      "name": "ready_2",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 400,
+        "reading_minutes": 2,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 2,
+      "expected_visible": "Czytanie: około 2 min",
+      "expected_accessible": "Czytanie: około 2 minut"
+    },
+    {
+      "name": "ready_5",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1000,
+        "reading_minutes": 5,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 5,
+      "expected_visible": "Czytanie: około 5 min",
+      "expected_accessible": "Czytanie: około 5 minut"
+    },
+    {
+      "name": "ready_12",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 2400,
+        "reading_minutes": 12,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 12,
+      "expected_visible": "Czytanie: około 12 min",
+      "expected_accessible": "Czytanie: około 12 minut"
+    },
+    {
+      "name": "ready_22",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 4400,
+        "reading_minutes": 22,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 22,
+      "expected_visible": "Czytanie: około 22 min",
+      "expected_accessible": "Czytanie: około 22 minut"
+    },
+    {
+      "name": "ready_45",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 9000,
+        "reading_minutes": 45,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": 45,
+      "expected_visible": "Czytanie: około 45 min",
+      "expected_accessible": "Czytanie: około 45 minut"
+    },
+    {
+      "name": "text_empty",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 0,
+        "reading_minutes": 0,
+        "text_status": "empty",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_unsupported",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "unsupported",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_missing",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "missing",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_incomplete",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "incomplete",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_expired",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "expired",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_pending",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "pending",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_restricted",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "restricted",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "text_future_state",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": null,
+        "reading_minutes": null,
+        "text_status": "future_state",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "freshness_stale",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "stale",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "freshness_expired",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "expired",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "freshness_missing",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "missing",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "freshness_future_state",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "future_state",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "schema_2",
+      "metadata": {
+        "schema_version": 2,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "negative",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": -1,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "boolean",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": true,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "string",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": "6",
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "fractional",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6.5,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "zero_words_ready",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 0,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "count_mismatch",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 5,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "cache_ttl_expired",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-07T11:59:59Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "edited_source",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": "2026-10-08T11:00:00Z",
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-08T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "missing_checked_at",
+      "metadata": {
+        "schema_version": 1,
+        "duration_seconds": null,
+        "word_count": 1001,
+        "reading_minutes": 6,
+        "text_status": "ready",
+        "audio_status": "unavailable",
+        "generated_at": "2026-10-08T10:00:00Z"
+      },
+      "freshness": "fresh",
+      "checked_at": null,
+      "metadata_modified_gmt": "2026-10-07T10:00:00",
+      "source_modified_gmt": "2026-10-07T10:00:00",
+      "expected_minutes": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    }
+  ],
+  "audio_cases": [
+    {
+      "name": "ready_0.001",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 0.001
+      },
+      "expected_seconds": 1,
+      "expected_visible": "Czas trwania: 1 s",
+      "expected_accessible": "Czas trwania: 1 sekunda"
+    },
+    {
+      "name": "ready_2.5",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 2.5
+      },
+      "expected_seconds": 3,
+      "expected_visible": "Czas trwania: 3 s",
+      "expected_accessible": "Czas trwania: 3 sekundy"
+    },
+    {
+      "name": "ready_59",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 59
+      },
+      "expected_seconds": 59,
+      "expected_visible": "Czas trwania: 59 s",
+      "expected_accessible": "Czas trwania: 59 sekund"
+    },
+    {
+      "name": "ready_60",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 60
+      },
+      "expected_seconds": 60,
+      "expected_visible": "Czas trwania: 1 min",
+      "expected_accessible": "Czas trwania: 1 minuta"
+    },
+    {
+      "name": "ready_61",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 61
+      },
+      "expected_seconds": 61,
+      "expected_visible": "Czas trwania: 1 min 1 s",
+      "expected_accessible": "Czas trwania: 1 minuta 1 sekunda"
+    },
+    {
+      "name": "ready_3599.2",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 3599.2
+      },
+      "expected_seconds": 3600,
+      "expected_visible": "Czas trwania: 1 godz.",
+      "expected_accessible": "Czas trwania: 1 godzina"
+    },
+    {
+      "name": "ready_4984",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 4984
+      },
+      "expected_seconds": 4984,
+      "expected_visible": "Czas trwania: 1 godz. 23 min 4 s",
+      "expected_accessible": "Czas trwania: 1 godzina 23 minuty 4 sekundy"
+    },
+    {
+      "name": "ready_90061",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 90061
+      },
+      "expected_seconds": 90061,
+      "expected_visible": "Czas trwania: 25 godz. 1 min 1 s",
+      "expected_accessible": "Czas trwania: 25 godzin 1 minuta 1 sekunda"
+    },
+    {
+      "name": "missing",
+      "metadata": null,
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "null",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": null
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "zero",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 0
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "negative",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": -1
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "bool",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": true
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "string",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": "60"
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "overflow",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "ready",
+        "duration_seconds": 2147483648
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "schema",
+      "metadata": {
+        "schema_version": 2,
+        "audio_status": "ready",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "pending",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "pending",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "no_audio",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "no_audio",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "unavailable",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "unavailable",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "changed_during_probe",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "changed_during_probe",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    },
+    {
+      "name": "future_state",
+      "metadata": {
+        "schema_version": 1,
+        "audio_status": "future_state",
+        "duration_seconds": 60
+      },
+      "expected_seconds": null,
+      "expected_visible": "Czas niedostępny",
+      "expected_accessible": "Czas niedostępny"
+    }
+  ]
+}
