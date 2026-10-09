@@ -26,12 +26,12 @@ internal static class ContentTimeUiProbe
         services.AddSingleton<ITransientContentCache>(_ => new FileBackedTransientContentCache(Path.Combine(Root, "http-cache")));
         services.AddSingleton<IFavoritesService>(_ => new FileFavoritesService(Path.Combine(Root, "favorites.json")));
         services.ConfigureAll<HttpClientFactoryOptions>(options => options.HttpMessageHandlerBuilderActions.Add(builder => builder.PrimaryHandler = new Transport()));
-        var favorites = new FileFavoritesService(Path.Combine(Root, "favorites.json"));
-        foreach (var item in new[] {
+        var favorites = new[] {
             new FavoriteItem { Id = "Podcast:42", Source = ContentSource.Podcast, PostId = 42, Title = "Sonda audio", PublishedDate = "08.10.2026" },
             new FavoriteItem { Id = "Article:42", Source = ContentSource.Article, PostId = 42, Title = "Sonda tekst", PublishedDate = "08.10.2026" },
-            new FavoriteItem { Id = "ArticlePage:42", Source = ContentSource.Article, ArticleOrigin = FavoriteArticleOrigin.Page, PostId = 42, Title = "Sonda strona", PublishedDate = "08.10.2026" } })
-            favorites.AddOrUpdateAsync(item).GetAwaiter().GetResult();
+            new FavoriteItem { Id = "ArticlePage:42", Source = ContentSource.Article, ArticleOrigin = FavoriteArticleOrigin.Page, PostId = 42, Title = "Sonda strona", PublishedDate = "08.10.2026" } };
+        // Konstruktor działa na wątku WinUI: żadnego sync-over-async.
+        File.WriteAllText(Path.Combine(Root, "favorites.json"), JsonSerializer.Serialize(favorites, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
     }
     internal static void Attach(MainWindow window)
     {

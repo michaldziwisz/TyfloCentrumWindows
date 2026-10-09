@@ -53,6 +53,7 @@ public sealed class ContentTimeRefreshTests(ITestOutputHelper output)
             {
                 phase = next; // Jedyny przełącznik odpowiedzi; nigdy liczba żądań.
                 var notifications = names.Count;
+                var priorLabels = scenario.Rows().Select(r => r.ToString()).ToArray();
                 await scenario.Refresh();
                 await scenario.Completion();
                 var expectedAmount = next == 1 ? 7 : 9;
@@ -65,7 +66,7 @@ public sealed class ContentTimeRefreshTests(ITestOutputHelper output)
                     Assert.Equal(1, row.ToString()!.Split(time.Accessible).Length - 1);
                 }
                 Assert.Equal(keys, scenario.Rows().Select(Time).Select(t => t.Key));
-                if (next == -1) Assert.Equal(notifications, names.Count); // Awaria zachowuje dane, bez fałszywego ready.
+                if (next == -1 || priorLabels.SequenceEqual(scenario.Rows().Select(r => r.ToString()))) Assert.Equal(notifications, names.Count); // Awaria zachowuje dane, bez fałszywego ready.
                 output.WriteLine($"PID={Environment.ProcessId}; ekran={screen}; phase={next}; nazwy={JsonSerializer.Serialize(scenario.Rows().Select(r => r.ToString()))}");
             }
             var currentCount = handler.Urls.Count;
@@ -188,6 +189,63 @@ public sealed class ContentTimeRefreshTests(ITestOutputHelper output)
         block = false;
         await enrich.RefreshAsync([row]);
         Assert.Equal("Czytanie: około 7 min", row.Visible);
+        enrich.Cancel();
+    }
+
+    [Fact]
+    public async Task FailedRefreshPreservesRowsEvictedFromBoundedCache()
+    {
+        var fail = false;
+        using var handler = new Transport((uri, _) => Task.FromResult(fail ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) : Response(uri, 1)));
+        using var http = new HttpClient(handler);
+        var enrich = new ContentTimeEnrichment(new ContentTimeService(http, Options, capacity: 2));
+        var rows = Enumerable.Range(1, 4).Select(id => new ContentTimeItemViewModel(Key(id), null)).ToArray();
+        await enrich.RefreshAsync(rows);
+        Assert.All(rows, row => Assert.Equal("Czytanie: około 7 min", row.Visible));
+        fail = true;
+        await enrich.RefreshAsync(rows);
+        Assert.All(rows, row => Assert.Equal("Czytanie: około 7 min", row.Visible));
+        enrich.Cancel();
+    }
+
+    [Fact]
+    public async Task PaginationSubscriberJoinsFreshFlightInsteadOfOldPositiveCache()
+    {
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var phase = 1;
+        using var handler = new Transport(async (uri, ct) => { var captured = phase; if (captured == 2) await release.Task.WaitAsync(ct); return Response(uri, captured); });
+        using var http = new HttpClient(handler);
+        var service = new ContentTimeService(http, Options);
+        await service.GetAsync([Key(42)]);
+        phase = 2;
+        var forced = service.RefreshAsync([Key(42)]);
+        var pagination = service.GetAsync([Key(42)]);
+        release.SetResult();
+        await forced;
+        Assert.Equal(9, ContentTimePolicy.Reading((await pagination)[Key(42)], null, DateTimeOffset.UtcNow)?.Amount);
+        Assert.Equal(2, handler.Urls.Count);
+    }
+
+    [Fact]
+    public async Task PaginationDuringManualRefreshKeepsFreshIntentForExistingAndNewRows()
+    {
+        var phase = 1;
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var handler = new Transport(async (uri, ct) => { var captured = phase; if (captured == 2) await release.Task.WaitAsync(ct); return Response(uri, captured); });
+        using var http = new HttpClient(handler);
+        var enrich = new ContentTimeEnrichment(new ContentTimeService(http, Options));
+        var first = new ContentTimeItemViewModel(Key(42), null);
+        enrich.Start([first]);
+        await enrich.Completion;
+        phase = 2;
+        var refresh = enrich.RefreshAsync([first]);
+        var added = new ContentTimeItemViewModel(Key(43), null);
+        enrich.Start([first, added]);
+        release.SetResult();
+        await refresh;
+        await enrich.Completion;
+        Assert.Equal("Czytanie: około 9 min", first.Visible);
+        Assert.Equal("Czytanie: około 9 min", added.Visible);
         enrich.Cancel();
     }
 

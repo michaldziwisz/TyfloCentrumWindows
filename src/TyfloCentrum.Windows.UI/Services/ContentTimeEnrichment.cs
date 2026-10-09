@@ -1,4 +1,5 @@
 using TyfloCentrum.Windows.Domain.Models;
+using TyfloCentrum.Windows.Domain.Metadata;
 using TyfloCentrum.Windows.Domain.Services;
 using TyfloCentrum.Windows.UI.ViewModels;
 
@@ -12,6 +13,7 @@ public sealed class ContentTimeEnrichment(IContentTimeService? service, TimeProv
     private readonly TimeProvider _clock = clock ?? TimeProvider.System;
     private DateTimeOffset? _lastAttempt;
     private bool _manualPending;
+    private bool _refreshIntent;
     private Task? _refresh;
     private ContentTimeItemViewModel[] _rows = [];
     public Task Completion { get; private set; } = Task.CompletedTask;
@@ -19,6 +21,7 @@ public sealed class ContentTimeEnrichment(IContentTimeService? service, TimeProv
     public void Cancel()
     {
         _generation++;
+        _refreshIntent = false;
         _request?.Cancel();
         _request?.Dispose();
         _request = null;
@@ -27,13 +30,16 @@ public sealed class ContentTimeEnrichment(IContentTimeService? service, TimeProv
 
     public void Start(IEnumerable<ContentTimeItemViewModel> rows, CancellationToken token = default)
     {
+        var carryRefresh = _refreshIntent;
         Cancel();
+        _refresh = null;
+        _refreshIntent = carryRefresh;
         _rows = rows.Where(r => r.Enabled).ToArray();
         foreach (var row in _rows) row.Apply(row.Raw);
         if (service is null) return;
         _request = CancellationTokenSource.CreateLinkedTokenSource(token);
         _lastAttempt = _clock.GetUtcNow();
-        Completion = EnrichAsync(_rows, _generation, _request.Token);
+        Completion = EnrichAsync(_rows, _generation, _request.Token, carryRefresh, carryRefresh);
     }
 
     public Task RefreshAsync(IEnumerable<ContentTimeItemViewModel> rows, bool manual = true, CancellationToken token = default)
@@ -60,6 +66,7 @@ public sealed class ContentTimeEnrichment(IContentTimeService? service, TimeProv
             _lastAttempt = _clock.GetUtcNow();
             _request = CancellationTokenSource.CreateLinkedTokenSource(token);
             var generation = _generation;
+            _refreshIntent = true;
             Completion = EnrichAsync(_rows, generation, _request.Token, manual, true);
             await Completion;
             if (generation != _generation || token.IsCancellationRequested) return;
@@ -76,12 +83,17 @@ public sealed class ContentTimeEnrichment(IContentTimeService? service, TimeProv
                 await service!.GetAsync(targets.Select(r => r.Key), token);
             if (token.IsCancellationRequested || generation != _generation) return;
             foreach (var row in targets)
-                row.Apply(values.TryGetValue(row.Key, out var value) ? value : null);
+                if (values is not ContentTimeBatch status || !status.UnavailableKeys.Contains(row.Key))
+                    row.Apply(values.TryGetValue(row.Key, out var value) ? value : null);
         }
         catch (OperationCanceledException) { }
         catch
         {
             // Awaria opcjonalnego dostawcy nie kasuje poprawnych widocznych danych.
+        }
+        finally
+        {
+            if (generation == _generation) _refreshIntent = false;
         }
     }
 }

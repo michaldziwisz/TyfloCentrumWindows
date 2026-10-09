@@ -41,7 +41,7 @@ public sealed class ContentTimeService : IContentTimeService
     {
         cancellationToken.ThrowIfCancellationRequested();
         var requested = keys.Where(k => k.IsValid).Distinct().ToArray();
-        var result = new Dictionary<ContentTimeKey, JsonElement?>();
+        var result = new ContentTimeBatch();
         var waits = new HashSet<Flight>();
         var starts = new List<Flight>();
         lock (_sync)
@@ -49,16 +49,20 @@ public sealed class ContentTimeService : IContentTimeService
             var missing = new List<ContentTimeKey>();
             foreach (var key in requested)
             {
+                if (!refresh && _flights.TryGetValue(key, out var active) && !active.Cancellation.IsCancellationRequested)
+                {
+                    waits.Add(active);
+                    continue;
+                }
                 var throttled = _retryAfter.GetValueOrDefault((key.Source, key.IsPage)) > _clock.GetUtcNow();
                 if (_cache.TryGetValue(key, out var entry) && ((!refresh && entry.Until > _clock.GetUtcNow()) || throttled))
                 {
                     result[key] = entry.Value;
+                    if (entry.Unavailable || throttled) result.UnavailableKeys.Add(key);
                     continue;
                 }
-                if (throttled) { result[key] = null; continue; }
-                if (!refresh && _flights.TryGetValue(key, out var active) && !active.Cancellation.IsCancellationRequested)
-                    waits.Add(active);
-                else missing.Add(key);
+                if (throttled) { result[key] = null; result.UnavailableKeys.Add(key); continue; }
+                missing.Add(key);
             }
             foreach (var group in missing.GroupBy(k => (k.Source, k.IsPage)))
             foreach (var chunk in group.Chunk(50))
@@ -75,8 +79,13 @@ public sealed class ContentTimeService : IContentTimeService
         {
             await Task.WhenAll(waits.Select(f => f.Completion.Task)).WaitAsync(cancellationToken).ConfigureAwait(false);
             foreach (var flight in waits)
-            foreach (var pair in await flight.Completion.Task.ConfigureAwait(false))
-                if (requested.Contains(pair.Key)) result[pair.Key] = pair.Value;
+            {
+                var batch = await flight.Completion.Task.ConfigureAwait(false);
+                foreach (var pair in batch)
+                    if (requested.Contains(pair.Key)) result[pair.Key] = pair.Value;
+                if (batch is ContentTimeBatch status)
+                    result.UnavailableKeys.UnionWith(status.UnavailableKeys.Where(requested.Contains));
+            }
             cancellationToken.ThrowIfCancellationRequested();
             return result;
         }
@@ -95,7 +104,8 @@ public sealed class ContentTimeService : IContentTimeService
 
     private async Task FetchAsync(Flight flight)
     {
-        var values = flight.Keys.ToDictionary(k => k, _ => (JsonElement?)null);
+        var values = new ContentTimeBatch();
+        foreach (var key in flight.Keys) values[key] = null;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(flight.Cancellation.Token);
         timeout.CancelAfter(_timeout);
         var entered = false;
@@ -123,6 +133,7 @@ public sealed class ContentTimeService : IContentTimeService
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException or InvalidOperationException)
         {
             failed = true;
+            values.UnavailableKeys.UnionWith(flight.Keys);
             // Awaria nie jest wycofaniem metadanych: zachowaj poprzedni dobry wynik.
             lock (_sync)
                 foreach (var key in flight.Keys)
@@ -143,7 +154,7 @@ public sealed class ContentTimeService : IContentTimeService
                         ContentTimePolicy.Reading(values[key], null, now);
                     var until = now.Add(failed || value is null ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(5));
                     if (value?.ExpiresAt is DateTimeOffset expiry && expiry < until) until = expiry;
-                    _cache[key] = new CacheEntry(values[key], until, ++_sequence);
+                    _cache[key] = new CacheEntry(values[key], until, ++_sequence, failed);
                     while (_cache.Count > _capacity) _cache.Remove(_cache.MinBy(p => p.Value.Sequence).Key);
                 }
                 flight.Completion.TrySetResult(values);
@@ -207,7 +218,7 @@ public sealed class ContentTimeService : IContentTimeService
         }
     }
 
-    private sealed record CacheEntry(JsonElement? Value, DateTimeOffset Until, long Sequence);
+    private sealed record CacheEntry(JsonElement? Value, DateTimeOffset Until, long Sequence, bool Unavailable);
     private sealed class Flight(ContentTimeKey[] keys)
     {
         public ContentTimeKey[] Keys { get; } = keys;
