@@ -53,6 +53,11 @@ public sealed partial class FavoritesSectionView : UserControl
         return ViewModel.ReloadAsync(cancellationToken);
     }
 
+    private async void OnRefreshTimesClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RefreshContentTimesAsync();
+    }
+
     private async void OnRetryClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.ReloadAsync();

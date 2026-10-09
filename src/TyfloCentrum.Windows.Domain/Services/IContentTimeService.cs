@@ -6,4 +6,7 @@ namespace TyfloCentrum.Windows.Domain.Services;
 public interface IContentTimeService
 {
     Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> GetAsync(IEnumerable<ContentTimeKey> keys, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> RefreshAsync(IEnumerable<ContentTimeKey> keys, CancellationToken cancellationToken = default)
+        => GetAsync(keys, cancellationToken);
 }

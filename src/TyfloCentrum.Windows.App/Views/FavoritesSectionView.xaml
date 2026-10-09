@@ -82,18 +82,24 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Button Grid.Row="0" HorizontalAlignment="Left"
+            AutomationProperties.AutomationId="favorites.RefreshTimes"
+            AutomationProperties.Name="Odśwież czasy treści"
+            Click="OnRefreshTimesClick" Content="Odśwież czasy treści" />
+
         <TextBlock
-            Grid.Row="0"
+            Grid.Row="1"
             FontWeight="SemiBold"
             Text="Lokalna lista ulubionych pozycji zapisanych na tym komputerze."
             TextWrapping="WrapWholeWords" />
 
         <ComboBox
             x:Name="FilterComboBox"
-            Grid.Row="1"
+            Grid.Row="2"
             Width="240"
             AutomationProperties.AutomationId="favorites.filter"
             AutomationProperties.Name="Filtr ulubionych"
@@ -106,7 +112,7 @@
 
         <TextBlock
             x:Name="StatusTextBlock"
-            Grid.Row="2"
+            Grid.Row="3"
             AutomationProperties.LiveSetting="Polite"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             Text="{Binding StatusMessage}"
@@ -115,12 +121,12 @@
 
         <ProgressRing
             x:Name="LoadingIndicator"
-            Grid.Row="3"
+            Grid.Row="4"
             IsActive="False"
             Visibility="Collapsed" />
 
         <StackPanel
-            Grid.Row="4"
+            Grid.Row="5"
             Spacing="8">
             <StackPanel
                 x:Name="ErrorPanel"

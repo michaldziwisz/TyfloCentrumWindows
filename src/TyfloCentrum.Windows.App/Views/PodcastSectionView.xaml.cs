@@ -135,6 +135,11 @@ public sealed partial class PodcastSectionView : UserControl
         _autoRefreshTimer = null;
     }
 
+    private async void OnRefreshTimesClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RefreshContentTimesAsync();
+    }
+
     private async void OnRetryClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.RetryAsync();

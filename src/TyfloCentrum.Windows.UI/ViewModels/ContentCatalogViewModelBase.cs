@@ -12,6 +12,9 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
     private readonly ContentTimeEnrichment _metadata;
     public Task MetadataCompletion => _metadata.Completion;
 
+    public Task RefreshContentTimesAsync(bool manual = true, CancellationToken cancellationToken = default)
+        => _metadata.RefreshAsync(Items.Select(item => item.Time), manual, cancellationToken);
+
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressCatalogService _catalogService;
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
@@ -132,7 +135,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             return;
         }
 
-        await RefreshLatestItemsAsync(cancellationToken);
+        await RefreshLatestItemsAsync(staleAfter <= TimeSpan.Zero, cancellationToken);
     }
 
     public async Task LoadMoreAsync(CancellationToken cancellationToken = default)
@@ -344,7 +347,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
         }
     }
 
-    private async Task RefreshLatestItemsAsync(CancellationToken cancellationToken)
+    private async Task RefreshLatestItemsAsync(bool manual, CancellationToken cancellationToken)
     {
         if (IsLoading || IsLoadingMore || _isRefreshingLatestItems)
         {
@@ -365,7 +368,7 @@ public abstract partial class ContentCatalogViewModelBase : ObservableObject
             );
 
             PrependNewItems(page.Items);
-            _metadata.Start(Items.Select(item => item.Time), cancellationToken);
+            await RefreshContentTimesAsync(manual, cancellationToken);
             _hasMoreItems = _currentPageNumber > 1 || page.HasMoreItems;
             _lastSuccessfulRefreshAtUtc = DateTimeOffset.UtcNow;
             ErrorMessage = null;

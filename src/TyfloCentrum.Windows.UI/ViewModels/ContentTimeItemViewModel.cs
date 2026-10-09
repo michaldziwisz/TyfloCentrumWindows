@@ -10,6 +10,8 @@ public sealed class ContentTimeItemViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
     private CancellationTokenSource? _expiry;
+    private string? _lastVisible;
+    private string? _lastAccessible;
     public ContentTimeItemViewModel(ContentTimeKey key, JsonElement? raw, JsonElement? modified = null,
         bool fetchAudio = false, bool enabled = true, TimeProvider? clock = null)
     {
@@ -34,7 +36,9 @@ public sealed class ContentTimeItemViewModel : ObservableObject
     public void UpdateSource(JsonElement? modified, JsonElement? raw)
     {
         SourceModified = modified;
-        Apply(raw);
+        // Lista tekstowa zwykle nie niesie czasu; brak pola nie oznacza wycofania.
+        // Dla istniejącego audio świeże dane pobiera batch, niezależnie od cache listy.
+        Apply(Key.Source == ContentSource.Article ? raw ?? Raw : Raw);
     }
 
     public void Apply(JsonElement? raw)
@@ -67,7 +71,17 @@ public sealed class ContentTimeItemViewModel : ObservableObject
 
     private void Notify()
     {
-        OnPropertyChanged(nameof(Visible));
-        OnPropertyChanged(nameof(Accessible));
+        var visible = Visible;
+        var accessible = Accessible;
+        if (_lastVisible != visible)
+        {
+            _lastVisible = visible;
+            OnPropertyChanged(nameof(Visible));
+        }
+        if (_lastAccessible != accessible)
+        {
+            _lastAccessible = accessible;
+            OnPropertyChanged(nameof(Accessible));
+        }
     }
 }

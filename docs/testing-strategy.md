@@ -82,6 +82,18 @@ Kontrola ręczna do wykonania na Windows z NVDA i Narratorem:
 - Numer czasopisma, PDF, temat i odnośnik nie dostają czasu całego wydania lub audycji.
 - Pozostawienie listy ponad dobę od `checked_at` ukrywa stary czas bez restartu. Sprawdzić powrót ze szczegółów, wysoką skalę tekstu i kontrast.
 
+### Odświeżanie w tym samym procesie
+
+`ContentTimeRefreshTests` używa tych samych instancji HttpClient, cache, ViewModeli i wierszy. Faza atrapy jest zmieniana jawnie przed akcją ekranu: missing, ready, nowsze ready, brak zmiany, 503, błędne i wycofane dane. Macierz obejmuje Nowości, oba katalogi i ich kategorie, wyniki wyszukiwania, stare ulubione (posts/pages/audio) i artykuły numeru. Dodatkowe scenariusze obejmują spóźnioną odpowiedź, 20 szybkich odświeżeń, anulowanie/powrót, Retry-After oraz 601 wierszy przy cache 32.
+
+Przycisk „Odśwież czasy treści” w Nowościach, obu katalogach i ulubionych nie przeładowuje listy. W Artykułach obsługuje również aktualnie otwarty spis numeru. F5 wykonuje tę samą akcję na widocznym ekranie bez ruszania fokusu. Istniejące „Odśwież” wyszukiwarki aktualizuje metadane z zachowaniem obiektów wyników.
+
+Powrót do okna odświeża metadane najwcześniej 6 minut od ostatniej próby (dotychczasowy interwał list). Nie dodano timera produkcyjnego. Próg dotyczy też nieudanej próby; ręczne żądanie go omija, ale nie omija serwerowego Retry-After. TTL transportu 1/5 minut, limit 512 i porcje do 50 pozostają. Dla istniejących wierszy audio batch pobiera świeże pole WP niezależnie od cache listy; przy pierwszym załadowaniu nadal używane jest pole inline.
+
+Sonda natywna: jawne `-p:ContentTimeUiProbe=true` dołącza wyłącznie testowy plik `tests/TyfloCentrum.Windows.UITests/ContentTimeUiProbe.cs`. Wymaga istniejącego absolutnego `TYFLO_REFRESH_PROBE_ROOT` z `phase.txt`. Wszystkie klienty HTTP otrzymują atrapę, storage wskazuje katalog sondy, powiadomienia i zwykły logger są wyłączone. Normalny build nie zawiera tej klasy. Sonda zapisuje PID, tożsamości wierszy i GET; UIA należy mierzyć z zewnątrz na prawdziwych przyciskach. Nie jest to zaliczenie NVDA/Narratora.
+
+Kontrola natywna: odczytać UIA Name i RuntimeId tego samego wiersza przed/po przycisku lub F5; przy niezmienionym wyniku brak dodatkowych zdarzeń nazwy; fokus i zaznaczenie nie zmieniają się. Osobno zmierzyć wznowienie przed 6 minutami i po progu oraz ciągłe odtwarzanie.
+
 ## Dane testowe
 - fixture'y odpowiedzi HTTP przechowywane lokalnie w testach
 - kontrolowane stuby dla scenariuszy:

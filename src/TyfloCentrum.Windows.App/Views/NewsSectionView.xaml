@@ -45,23 +45,29 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Button Grid.Row="0" HorizontalAlignment="Left"
+            AutomationProperties.AutomationId="News.RefreshTimes"
+            AutomationProperties.Name="Odśwież czasy treści"
+            Click="OnRefreshTimesClick" Content="Odśwież czasy treści" />
+
         <TextBlock
-            Grid.Row="0"
+            Grid.Row="1"
             FontWeight="SemiBold"
             Text="Najnowsze treści z Tyflopodcast i TyfloŚwiat" />
 
         <ProgressRing
             x:Name="LoadingIndicator"
-            Grid.Row="1"
+            Grid.Row="2"
             IsActive="False"
             Visibility="Collapsed" />
 
         <StackPanel
             x:Name="ErrorPanel"
-            Grid.Row="2"
+            Grid.Row="3"
             Spacing="8"
             Visibility="Collapsed">
             <InfoBar
@@ -78,12 +84,12 @@
 
         <TextBlock
             x:Name="EmptyStateText"
-            Grid.Row="2"
+            Grid.Row="3"
             Visibility="Collapsed"
             Text="Brak nowych treści do wyświetlenia." />
 
         <Grid
-            Grid.Row="3"
+            Grid.Row="4"
             RowSpacing="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />

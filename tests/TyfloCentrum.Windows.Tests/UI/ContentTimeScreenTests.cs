@@ -275,6 +275,50 @@ public sealed class ContentTimeScreenTests(ITestOutputHelper output)
         Assert.False(vm.HasError);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ManualSearchRefreshUpdatesSameRowsWithoutChangingSourceRevision(bool audio)
+    {
+        var minutes = 0;
+        using var handler = new Transport((uri, _) => Task.FromResult(
+            uri.Host == "metadata.example" ? (minutes == 0 ? Json(new { schema_version = 1, source = "tyfloswiat.pl", type = "posts", items = Array.Empty<object>() }) : Batch(uri, minutes: minutes)) :
+            Json(new[] { Post(42) with { TimeMetadata = minutes == 0 ? null : JsonSerializer.SerializeToElement(new { schema_version = 1, audio_status = "ready", duration_seconds = minutes }) } })));
+        using var http = new HttpClient(handler);
+        var vm = new SearchViewModel(new WordPressSearchService(http, Options, new InMemoryTransientContentCache()), new Actions(), new(), new ContentTimeService(http, Options)) { SearchText = "Artykuł" };
+        await vm.SearchAsync();
+        await vm.MetadataCompletion;
+        var row = vm.Results.Single(r => r.Source == (audio ? ContentSource.Podcast : ContentSource.Article));
+        Assert.Equal("Czas niedostępny", row.Time.Visible);
+        minutes = 7; // Jawna zmiana serwera PO pierwszym odczycie, PRZED akcją użytkownika.
+        await vm.RefreshAsync();
+        await vm.MetadataCompletion;
+        Assert.Equal(audio ? "Czas trwania: 7 s" : "Czytanie: około 7 min", vm.Results.Single(r => r.Source == row.Source).Time.Visible);
+        Assert.Same(row, vm.Results.Single(r => r.Source == row.Source));
+        Assert.Equal(1, row.AccessibleLabel.Split(row.Time.Accessible).Length - 1);
+        output.WriteLine($"PID={Environment.ProcessId}; ręczny RefreshAsync; {row.AccessibleLabel}");
+    }
+
+    [Fact]
+    public async Task CatalogRefreshDoesNotEraseGoodReadingWhileNewBatchIsPending()
+    {
+        var ready = false;
+        using var handler = new Transport((uri, _) => Task.FromResult(uri.Host == "metadata.example" ? Batch(uri, minutes: ready ? 7 : 2) : SourceResponse(uri)));
+        using var http = new HttpClient(handler);
+        var vm = new ArticleCatalogViewModel(new WordPressCatalogService(http, Options, new InMemoryTransientContentCache()), new Actions(), new(), new ContentTimeService(http, Options));
+        await vm.LoadIfNeededAsync();
+        await vm.MetadataCompletion;
+        var row = Assert.Single(vm.Items);
+        var seen = new List<string>();
+        row.Time.PropertyChanged += (_, _) => seen.Add(row.Time.Visible);
+        ready = true;
+        await vm.RefreshIfStaleAsync(TimeSpan.Zero);
+        await vm.MetadataCompletion;
+        Assert.DoesNotContain("Czas niedostępny", seen);
+        Assert.Equal("Czytanie: około 7 min", row.Time.Visible);
+        Assert.Same(row, Assert.Single(vm.Items));
+    }
+
     private sealed class NoCache : ITransientContentCache
     {
         public Task<T> GetOrCreateAsync<T>(string key, TimeSpan ttl, Func<CancellationToken, Task<T>> factory, CancellationToken cancellationToken = default) => factory(cancellationToken);

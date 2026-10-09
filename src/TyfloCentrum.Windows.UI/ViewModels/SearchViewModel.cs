@@ -11,6 +11,9 @@ public partial class SearchViewModel : ObservableObject
     private readonly ContentTimeEnrichment _metadata;
     public Task MetadataCompletion => _metadata.Completion;
 
+    public Task RefreshContentTimesAsync(bool manual = true, CancellationToken cancellationToken = default)
+        => _metadata.RefreshAsync(Results.Select(item => item.Time), manual, cancellationToken);
+
     private readonly ContentTypeAnnouncementPreferenceService _contentTypeAnnouncementPreferenceService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IWordPressSearchService _searchService;
@@ -101,7 +104,7 @@ public partial class SearchViewModel : ObservableObject
             return;
         }
 
-        await ExecuteSearchAsync(query, cancellationToken);
+        await ExecuteSearchAsync(query, cancellationToken, refresh: true);
     }
 
     public async Task OpenResultAsync(
@@ -131,7 +134,7 @@ public partial class SearchViewModel : ObservableObject
         NotifyStateChanged();
     }
 
-    private async Task ExecuteSearchAsync(string query, CancellationToken cancellationToken)
+    private async Task ExecuteSearchAsync(string query, CancellationToken cancellationToken, bool refresh = false)
     {
         if (IsLoading)
         {
@@ -142,7 +145,7 @@ public partial class SearchViewModel : ObservableObject
         IsLoading = true;
         ErrorMessage = null;
         LastSearchQuery = query;
-        StatusMessage = "Wyszukiwanie…";
+        if (!refresh) StatusMessage = "Wyszukiwanie…";
         NotifyStateChanged();
 
         try
@@ -154,19 +157,20 @@ public partial class SearchViewModel : ObservableObject
                 cancellationToken
             );
 
-            Results.Clear();
+            if (!refresh) Results.Clear();
+            var keys = items.Select(item => (item.Source, item.Post.Id)).ToHashSet();
+            foreach (var removed in Results.Where(row => !keys.Contains((row.Source, row.PostId))).ToArray()) Results.Remove(removed);
             foreach (var item in items)
             {
-                Results.Add(
-                    new ContentPostItemViewModel(
-                        item.Source,
-                        item.Post,
-                        _contentTypeAnnouncementPreferenceService.Placement
-                    )
-                );
+                var existing = Results.FirstOrDefault(row => row.Source == item.Source && row.PostId == item.Post.Id);
+                if (existing is null)
+                    Results.Add(new ContentPostItemViewModel(item.Source, item.Post, _contentTypeAnnouncementPreferenceService.Placement));
+                else
+                    existing.Time.UpdateSource(item.Post.ModifiedGmt, item.Source == ContentSource.Article ? item.Post.ReadingMetadata : item.Post.TimeMetadata);
             }
 
-            _metadata.Start(Results.Select(item => item.Time), cancellationToken);
+            if (refresh) await RefreshContentTimesAsync(true, cancellationToken);
+            else _metadata.Start(Results.Select(item => item.Time), cancellationToken);
             HasLoaded = true;
             StatusMessage = Results.Count == 0
                 ? "Brak wyników wyszukiwania."

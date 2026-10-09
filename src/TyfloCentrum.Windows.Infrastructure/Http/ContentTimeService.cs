@@ -18,6 +18,7 @@ public sealed class ContentTimeService : IContentTimeService
     private readonly Dictionary<ContentTimeKey, CacheEntry> _cache = [];
     private readonly Dictionary<ContentTimeKey, Flight> _flights = [];
     private long _sequence;
+    private readonly Dictionary<(ContentSource, bool), DateTimeOffset> _retryAfter = [];
 
     public ContentTimeService(HttpClient http, TyfloCentrumEndpointsOptions options,
         TimeProvider? clock = null, TimeSpan? timeout = null, int capacity = 512)
@@ -29,8 +30,14 @@ public sealed class ContentTimeService : IContentTimeService
         _capacity = Math.Max(1, capacity);
     }
 
-    public async Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> GetAsync(
-        IEnumerable<ContentTimeKey> keys, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> GetAsync(
+        IEnumerable<ContentTimeKey> keys, CancellationToken cancellationToken = default) => GetCoreAsync(keys, false, cancellationToken);
+
+    public Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> RefreshAsync(
+        IEnumerable<ContentTimeKey> keys, CancellationToken cancellationToken = default) => GetCoreAsync(keys, true, cancellationToken);
+
+    private async Task<IReadOnlyDictionary<ContentTimeKey, JsonElement?>> GetCoreAsync(
+        IEnumerable<ContentTimeKey> keys, bool refresh, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var requested = keys.Where(k => k.IsValid).Distinct().ToArray();
@@ -42,13 +49,14 @@ public sealed class ContentTimeService : IContentTimeService
             var missing = new List<ContentTimeKey>();
             foreach (var key in requested)
             {
-                if (_cache.TryGetValue(key, out var entry) && entry.Until > _clock.GetUtcNow())
+                var throttled = _retryAfter.GetValueOrDefault((key.Source, key.IsPage)) > _clock.GetUtcNow();
+                if (_cache.TryGetValue(key, out var entry) && ((!refresh && entry.Until > _clock.GetUtcNow()) || throttled))
                 {
                     result[key] = entry.Value;
                     continue;
                 }
-                _cache.Remove(key);
-                if (_flights.TryGetValue(key, out var active) && !active.Cancellation.IsCancellationRequested)
+                if (throttled) { result[key] = null; continue; }
+                if (!refresh && _flights.TryGetValue(key, out var active) && !active.Cancellation.IsCancellationRequested)
                     waits.Add(active);
                 else missing.Add(key);
             }
@@ -91,11 +99,22 @@ public sealed class ContentTimeService : IContentTimeService
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(flight.Cancellation.Token);
         timeout.CancelAfter(_timeout);
         var entered = false;
+        var failed = false;
+        var group = (flight.Keys[0].Source, flight.Keys[0].IsPage);
         try
         {
             await _parallel.WaitAsync(timeout.Token).ConfigureAwait(false);
             entered = true;
+            lock (_sync)
+                if (_retryAfter.GetValueOrDefault(group) > _clock.GetUtcNow())
+                    throw new HttpRequestException("Trwa Retry-After dostawcy metadanych.");
             using var response = await SendAsync(BuildUri(flight.Keys), timeout.Token).ConfigureAwait(false);
+            if ((int)response.StatusCode is 429 or 503 && response.Headers.RetryAfter is { } retry)
+            {
+                var until = retry.Date ?? _clock.GetUtcNow().Add(retry.Delta ?? TimeSpan.FromMinutes(1));
+                lock (_sync)
+                    if (until > _retryAfter.GetValueOrDefault(group)) _retryAfter[group] = until;
+            }
             response.EnsureSuccessStatusCode();
             await response.Content.LoadIntoBufferAsync(262144).WaitAsync(timeout.Token).ConfigureAwait(false);
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false));
@@ -103,7 +122,11 @@ public sealed class ContentTimeService : IContentTimeService
         }
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException or InvalidOperationException)
         {
-            // Nie ma retry. Także awaria ma krótki cache, niezależny od cache listy.
+            failed = true;
+            // Awaria nie jest wycofaniem metadanych: zachowaj poprzedni dobry wynik.
+            lock (_sync)
+                foreach (var key in flight.Keys)
+                    if (_cache.TryGetValue(key, out var old)) values[key] = old.Value;
         }
         finally
         {
@@ -118,7 +141,7 @@ public sealed class ContentTimeService : IContentTimeService
                     var now = _clock.GetUtcNow();
                     var value = key.Source == ContentSource.Podcast ? ContentTimePolicy.Audio(values[key]) :
                         ContentTimePolicy.Reading(values[key], null, now);
-                    var until = now.Add(value is null ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(5));
+                    var until = now.Add(failed || value is null ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(5));
                     if (value?.ExpiresAt is DateTimeOffset expiry && expiry < until) until = expiry;
                     _cache[key] = new CacheEntry(values[key], until, ++_sequence);
                     while (_cache.Count > _capacity) _cache.Remove(_cache.MinBy(p => p.Value.Sequence).Key);
@@ -131,7 +154,9 @@ public sealed class ContentTimeService : IContentTimeService
 
     private async Task<HttpResponseMessage> SendAsync(Uri uri, CancellationToken token)
     {
-        var pending = _http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, token);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
+        var pending = _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
         try { return await pending.WaitAsync(token).ConfigureAwait(false); }
         catch (OperationCanceledException)
         {

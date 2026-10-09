@@ -58,24 +58,30 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Button Grid.Row="0" HorizontalAlignment="Left"
+            AutomationProperties.AutomationId="Articles.RefreshTimes"
+            AutomationProperties.Name="Odśwież czasy treści"
+            Click="OnRefreshTimesClick" Content="Odśwież czasy treści" />
+
         <TextBlock
-            Grid.Row="0"
+            Grid.Row="1"
             FontWeight="SemiBold"
             Text="{Binding LeadText}"
             TextWrapping="WrapWholeWords" />
 
         <ProgressRing
             x:Name="LoadingIndicator"
-            Grid.Row="1"
+            Grid.Row="2"
             IsActive="False"
             Visibility="Collapsed" />
 
         <StackPanel
             x:Name="ErrorPanel"
-            Grid.Row="2"
+            Grid.Row="3"
             Spacing="8"
             Visibility="Collapsed">
             <InfoBar
@@ -90,7 +96,7 @@
                 Content="Spróbuj ponownie" />
         </StackPanel>
 
-        <Grid Grid.Row="3" ColumnSpacing="16">
+        <Grid Grid.Row="4" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="280" />
                 <ColumnDefinition Width="*" />

@@ -11,6 +11,9 @@ public partial class FavoritesViewModel : ObservableObject
     private readonly ContentTimeEnrichment _metadata;
     public Task MetadataCompletion => _metadata.Completion;
 
+    public Task RefreshContentTimesAsync(bool manual = true, CancellationToken cancellationToken = default)
+        => _metadata.RefreshAsync(Items.Select(item => item.Time), manual, cancellationToken);
+
     private readonly IClipboardService _clipboardService;
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
@@ -237,10 +240,11 @@ public partial class FavoritesViewModel : ObservableObject
             ? allItems
             : allItems.Where(item => item.ResolvedKind == SelectedFilter.Kind).ToArray();
 
-        Items.Clear();
+        var ids = filteredItems.Select(item => item.Id).ToHashSet();
+        foreach (var removed in Items.Where(row => !ids.Contains(row.Id)).ToArray()) Items.Remove(removed);
         foreach (var item in filteredItems)
         {
-            Items.Add(new FavoriteItemViewModel(item));
+            if (Items.All(row => row.Id != item.Id)) Items.Add(new FavoriteItemViewModel(item));
         }
     }
 
