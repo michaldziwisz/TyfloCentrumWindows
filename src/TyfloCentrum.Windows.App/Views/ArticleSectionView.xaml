@@ -165,13 +165,17 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Visibility="Collapsed">
-                <StackPanel Spacing="12">
+                <Grid RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
                     <TextBlock
                         AutomationProperties.HeadingLevel="Level2"
                         FontWeight="SemiBold"
                         Text="TyfloŚwiat" />
-                    <ContentPresenter x:Name="MagazineContentHost" />
-                </StackPanel>
+                    <ContentPresenter x:Name="MagazineContentHost" Grid.Row="1" />
+                </Grid>
             </Border>
         </Grid>
     </Grid>

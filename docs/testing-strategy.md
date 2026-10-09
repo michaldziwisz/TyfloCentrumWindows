@@ -92,7 +92,17 @@ Powrót do okna odświeża metadane najwcześniej 6 minut od ostatniej próby (d
 
 Sonda natywna: jawne `-p:ContentTimeUiProbe=true` dołącza wyłącznie testowy plik `tests/TyfloCentrum.Windows.UITests/ContentTimeUiProbe.cs`. Wymaga istniejącego absolutnego `TYFLO_REFRESH_PROBE_ROOT` z `phase.txt`. Wszystkie klienty HTTP otrzymują atrapę, storage wskazuje katalog sondy, powiadomienia i zwykły logger są wyłączone. Normalny build nie zawiera tej klasy. Sonda zapisuje PID, tożsamości wierszy i GET; UIA należy mierzyć z zewnątrz na prawdziwych przyciskach. Nie jest to zaliczenie NVDA/Narratora.
 
-Kontrola natywna: odczytać UIA Name i RuntimeId tego samego wiersza przed/po przycisku lub F5; przy niezmienionym wyniku brak dodatkowych zdarzeń nazwy; fokus i zaznaczenie nie zmieniają się. Osobno zmierzyć wznowienie przed 6 minutami i po progu oraz ciągłe odtwarzanie.
+Kontrola natywna: odczytać UIA Name i RuntimeId tego samego wiersza przed/po przycisku lub F5; przy niezmienionym wyniku brak dodatkowych zdarzeń nazwy. F5 zachowuje fokus wiersza; Invoke przycisku może prawidłowo skupić przycisk. Osobno zmierzyć wznowienie przed 6 minutami i po progu oraz ciągłe odtwarzanie.
+
+Długie listy muszą mieć rzeczywisty, ograniczony viewport. Kontenery wyników wyszukiwania, ulubionych i osadzonego czasopisma używają wiersza Grid o wysokości `*`, nie pionowego StackPanel. `ContentTimeScrollLayoutTests` chroni tę przyczynę regresji, ale nie zastępuje pomiaru niezerowego `ScrollViewer.VerticalOffset` i UIA ScrollPattern w żywym oknie.
+
+Rozszerzona sonda udostępnia 80 wpisów na źródło (z paginacją) i 240 starych ulubionych. Odtwarzanie wymaga lokalnego `fixture.mp3` w katalogu sondy; żądanie pobrania otrzymuje ten plik przez atrapę HTTP, a reszta toru używa niezmienionego ProgressiveMediaCache i AudioPlayerView. `delay.txt` może określać opóźnienie odpowiedzi metadanych w milisekundach. Faza nadal pochodzi wyłącznie z `phase.txt`, nigdy z liczby żądań. Snapshot zawiera tożsamości modeli, wewnętrzne i nadrzędne scrolle oraz odczyt rzeczywistego MediaPlayer. Do porównania źródła WinRT służy natywna tożsamość, nie hash zarządzanego wrappera, który może zmienić się po GC.
+
+Kontrole dodatkowe:
+- Przewinąć każdą z ośmiu ścieżek, skupić widoczny wiersz i wykonać sekwencję missing → ready → nowsze ready → bez zmiany → 503 → wycofanie. Porównać listę, model, RuntimeId, fokus oraz offset; zachować dobre dane podczas opóźnionej odpowiedzi.
+- Zarejestrować rzeczywistą kolejkę mowy NVDA z kontrolą dodatnią przed/po oraz umyślną podwójną wypowiedzią kontrolną. Jedna zmiana ma dać jedną informację o czasie, brak zmiany żadnej dodatkowej informacji. Nazwa UIA nie jest zapisem mowy, a kolejka mowy nie jest nagraniem akustycznym. Nie zmieniać konfiguracji syntezatora dla zielonego wyniku.
+- Uruchomić zwykły odtwarzacz z listy i mierzyć stan, pozycję, źródło i zdarzenia podczas Invoke dostępnego przycisku odświeżenia. Dialog odtwarzacza ma własny fokus: nie utożsamiać F5 wewnątrz dialogu z F5 na wierszu listy. Kontrola pauzy ma wykazać, że pomiar wykrywa rzeczywiste przerwanie.
+- Pomiar powrotu wykonać po rzeczywistym upływie progu, bez przestawiania zegara i bez restartowania procesu.
 
 ## Dane testowe
 - fixture'y odpowiedzi HTTP przechowywane lokalnie w testach

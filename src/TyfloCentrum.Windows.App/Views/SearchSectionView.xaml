@@ -131,15 +131,18 @@
                 Content="Spróbuj ponownie" />
         </StackPanel>
 
-        <StackPanel
-            Grid.Row="5"
-            Spacing="8">
+        <Grid Grid.Row="5" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <TextBlock
                 x:Name="EmptyStateText"
                 Visibility="Collapsed"
                 Text="{Binding EmptyStateMessage}" />
             <ListView
                 x:Name="ResultsList"
+                Grid.Row="1"
                 AutomationProperties.AutomationId="search.list"
                 AutomationProperties.Name="Wyniki wyszukiwania"
                 ContextRequested="OnResultsListContextRequested"
@@ -149,6 +152,6 @@
                 ItemsSource="{Binding Results}"
                 KeyDown="OnResultsListKeyDown"
                 SelectionMode="Single" />
-        </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

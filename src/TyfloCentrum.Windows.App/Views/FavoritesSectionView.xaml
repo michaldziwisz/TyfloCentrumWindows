@@ -125,9 +125,12 @@
             IsActive="False"
             Visibility="Collapsed" />
 
-        <StackPanel
-            Grid.Row="5"
-            Spacing="8">
+        <Grid Grid.Row="5" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <StackPanel
                 x:Name="ErrorPanel"
                 Spacing="8"
@@ -146,11 +149,13 @@
 
             <TextBlock
                 x:Name="EmptyStateText"
+                Grid.Row="1"
                 Visibility="Collapsed"
                 Text="{Binding EmptyStateText}" />
 
             <ListView
                 x:Name="ItemsList"
+                Grid.Row="2"
                 AutomationProperties.AutomationId="favorites.list"
                 AutomationProperties.Name="Ulubione pozycje"
                 IsItemClickEnabled="True"
@@ -159,6 +164,6 @@
                 ItemsSource="{Binding Items}"
                 KeyDown="OnItemsListKeyDown"
                 SelectionMode="Single" />
-        </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>
