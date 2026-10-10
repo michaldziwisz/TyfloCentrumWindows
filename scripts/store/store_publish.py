@@ -61,10 +61,14 @@ def _req(url, method="GET", token=None, body=None, max_attempts=6, timeout=120):
         data = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
     elif method in ("POST", "PUT"):
-        # POST/PUT bez ciala (np. /commit) - devcenter zwraca 411 Length Required
-        # bez jawnego Content-Length: 0. Wysylamy puste cialo z dlugoscia 0.
+        # POST/PUT bez ciala (np. /commit, POST /submissions):
+        #  - devcenter zwraca 411 Length Required bez jawnego Content-Length: 0,
+        #  - Ingestion Api zwraca 400 InvalidParameterValue "Only JSON content is
+        #    accepted" (target mediaType) gdy brakuje Content-Type.
+        # Wysylamy puste cialo z dlugoscia 0 ORAZ typem JSON.
         data = b""
         headers["Content-Length"] = "0"
+        headers["Content-Type"] = "application/json"
     last_err = None
     for attempt in range(1, max_attempts + 1):
         try:
