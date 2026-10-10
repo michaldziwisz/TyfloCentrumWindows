@@ -19,10 +19,10 @@ public partial class TyfloSwiatMagazineTocItemViewModel : ObservableObject
         Link = item.Link;
         PublishedDate = WordPressTextFormatter.FormatDate(item.Date);
         Time = new(new(ContentSource.Article, true, PageId), item.ReadingMetadata, item.ModifiedGmt);
-        Time.PropertyChanged += (_, _) =>
+        Time.PropertyChanged += (_, args) =>
         {
-            OnPropertyChanged(nameof(DateAndTime));
-            OnPropertyChanged(nameof(AccessibleLabel));
+            if (args.PropertyName == nameof(ContentTimeItemViewModel.Visible)) OnPropertyChanged(nameof(DateAndTime));
+            if (args.PropertyName == nameof(ContentTimeItemViewModel.Accessible)) OnPropertyChanged(nameof(AccessibleLabel));
         };
         _contentTypeAnnouncementPlacement = contentTypeAnnouncementPlacement;
     }

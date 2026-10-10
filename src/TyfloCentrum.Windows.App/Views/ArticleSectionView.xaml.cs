@@ -147,6 +147,14 @@ public sealed partial class ArticleSectionView : UserControl
         _autoRefreshTimer = null;
     }
 
+    public Task RefreshVisibleContentTimesAsync(bool manual = true)
+        => _isMagazineSelected ? _magazineView.ViewModel.RefreshContentTimesAsync(manual) : ViewModel.RefreshContentTimesAsync(manual);
+
+    private async void OnRefreshTimesClick(object sender, RoutedEventArgs e)
+    {
+        await RefreshVisibleContentTimesAsync();
+    }
+
     private async void OnRetryClick(object sender, RoutedEventArgs e)
     {
         await ViewModel.RetryAsync();

@@ -15,10 +15,10 @@ public sealed class FavoriteItemViewModel : CommunityToolkit.Mvvm.ComponentModel
         Subtitle = item.Subtitle;
         PublishedDate = item.PublishedDate;
         Time = new(new(Source, ArticleOrigin == FavoriteArticleOrigin.Page, PostId), Source == ContentSource.Podcast ? item.TimeMetadata : item.ReadingMetadata, item.ModifiedGmt, fetchAudio: true, enabled: Kind is FavoriteKind.Article or FavoriteKind.Podcast);
-        Time.PropertyChanged += (_, _) =>
+        Time.PropertyChanged += (_, args) =>
         {
-            OnPropertyChanged(nameof(DateAndTime));
-            OnPropertyChanged(nameof(AccessibleLabel));
+            if (args.PropertyName == nameof(ContentTimeItemViewModel.Visible)) OnPropertyChanged(nameof(DateAndTime));
+            if (args.PropertyName == nameof(ContentTimeItemViewModel.Accessible)) OnPropertyChanged(nameof(AccessibleLabel));
         };
         Link = item.Link;
         ContextTitle = item.ContextTitle;

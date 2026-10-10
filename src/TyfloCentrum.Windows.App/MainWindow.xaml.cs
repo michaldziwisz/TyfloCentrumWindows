@@ -19,6 +19,13 @@ public sealed partial class MainWindow : Window
         Content = shellPage;
         _windowHandleProvider = windowHandleProvider;
         windowHandleProvider.Initialize(this);
+        Activated += OnActivated;
+    }
+
+    private async void OnActivated(object sender, WindowActivatedEventArgs args)
+    {
+        if (args.WindowActivationState != WindowActivationState.Deactivated)
+            await ShellPage.RefreshVisibleContentTimesAsync();
     }
 
     public void EnsureMaximized()

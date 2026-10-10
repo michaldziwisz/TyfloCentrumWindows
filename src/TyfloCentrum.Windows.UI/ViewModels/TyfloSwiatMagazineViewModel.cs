@@ -13,6 +13,9 @@ public partial class TyfloSwiatMagazineViewModel : ObservableObject
     private readonly ContentTimeEnrichment _metadata;
     public Task MetadataCompletion => _metadata.Completion;
 
+    public Task RefreshContentTimesAsync(bool manual = true, CancellationToken cancellationToken = default)
+        => _metadata.RefreshAsync(TocItems.Select(item => item.Time), manual, cancellationToken);
+
     private readonly IExternalLinkLauncher _externalLinkLauncher;
     private readonly IFavoritesService _favoritesService;
     private readonly ITyfloSwiatMagazineService _magazineService;

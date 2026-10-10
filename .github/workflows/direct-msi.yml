@@ -8,6 +8,11 @@ on:
         required: true
         default: main
         type: string
+      content_time_probe:
+        description: Zbuduj izolowaną sondę UIA (bez instalacji)
+        required: false
+        default: false
+        type: boolean
       configuration:
         description: Konfiguracja builda
         required: true
@@ -58,6 +63,40 @@ jobs:
           name: test-results
           path: TestResults/*.trx
           if-no-files-found: warn
+
+      - name: Build isolated content time UIA probe
+        if: inputs.content_time_probe
+        shell: pwsh
+        run: |
+          dotnet publish .\src\TyfloCentrum.Windows.App\TyfloCentrum.Windows.App.csproj -c Debug -r win-x64 -p:Platform=x64 -p:TyfloCentrumDistributionMode=Unpackaged -p:ContentTimeUiProbe=true -o artifacts/RefreshProbe --nologo
+
+      - name: Upload isolated UIA probe
+        if: inputs.content_time_probe
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: content-time-uia-probe
+          path: artifacts/RefreshProbe
+          if-no-files-found: error
+
+      - name: Build isolated baseline UIA probe
+        if: inputs.content_time_probe
+        shell: pwsh
+        run: |
+          git fetch origin a78acec14c0221e48f1c5d85c34bd0e604c08560 --depth=1
+          git archive a78acec14c0221e48f1c5d85c34bd0e604c08560 --format=zip --output=baseline-source.zip
+          Expand-Archive baseline-source.zip -DestinationPath artifacts/BaselineSource
+          Copy-Item src/TyfloCentrum.Windows.App/App.xaml.cs artifacts/BaselineSource/src/TyfloCentrum.Windows.App/App.xaml.cs
+          Copy-Item src/TyfloCentrum.Windows.App/TyfloCentrum.Windows.App.csproj artifacts/BaselineSource/src/TyfloCentrum.Windows.App/TyfloCentrum.Windows.App.csproj
+          Copy-Item tests/TyfloCentrum.Windows.UITests/ContentTimeUiProbe.cs artifacts/BaselineSource/tests/TyfloCentrum.Windows.UITests/ContentTimeUiProbe.cs
+          dotnet publish artifacts/BaselineSource/src/TyfloCentrum.Windows.App/TyfloCentrum.Windows.App.csproj -c Debug -r win-x64 -p:Platform=x64 -p:TyfloCentrumDistributionMode=Unpackaged -p:ContentTimeUiProbe=true -o artifacts/RefreshProbeBaseline --nologo
+
+      - name: Upload isolated baseline probe
+        if: inputs.content_time_probe
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: content-time-uia-baseline
+          path: artifacts/RefreshProbeBaseline
+          if-no-files-found: error
 
       - name: Build direct installer EXE
         shell: pwsh

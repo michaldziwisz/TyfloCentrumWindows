@@ -30,6 +30,13 @@
     <DefaultLanguage>pl-PL</DefaultLanguage>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(ContentTimeUiProbe)' == 'true'">
+    <DefineConstants>$(DefineConstants);CONTENT_TIME_UI_PROBE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ContentTimeUiProbe)' == 'true'">
+    <Compile Include="..\..\tests\TyfloCentrum.Windows.UITests\ContentTimeUiProbe.cs" Link="Services\ContentTimeUiProbe.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX" PrivateAssets="all" />

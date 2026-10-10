@@ -185,9 +185,29 @@ public sealed partial class ShellPage : Page
         args.Handled = true;
     }
 
+    public Task RefreshVisibleContentTimesAsync(bool manual = false)
+    {
+        return SectionContentHost.Content switch
+        {
+            NewsSectionView view => view.ViewModel.RefreshContentTimesAsync(manual),
+            PodcastSectionView view => view.ViewModel.RefreshContentTimesAsync(manual),
+            ArticleSectionView view => view.RefreshVisibleContentTimesAsync(manual),
+            SearchSectionView view => view.ViewModel.RefreshContentTimesAsync(manual),
+            FavoritesSectionView view => view.ViewModel.RefreshContentTimesAsync(manual),
+            _ => Task.CompletedTask
+        };
+    }
+
     private void ConfigureKeyboardAccelerators()
     {
         KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
+        var refreshTimes = new KeyboardAccelerator { Key = VirtualKey.F5 };
+        refreshTimes.Invoked += async (_, args) =>
+        {
+            args.Handled = true;
+            await RefreshVisibleContentTimesAsync(true);
+        };
+        KeyboardAccelerators.Add(refreshTimes);
 
         for (var shortcutNumber = 1; shortcutNumber <= 9; shortcutNumber++)
         {

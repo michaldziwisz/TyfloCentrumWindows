@@ -42,7 +42,9 @@ public partial class App : Application
             {
                 logging.ClearProviders();
                 logging.AddDebug();
+#if !CONTENT_TIME_UI_PROBE
                 logging.AddProvider(new RollingFileLoggerProvider());
+#endif
             })
             .ConfigureServices((context, services) =>
             {
@@ -95,6 +97,9 @@ public partial class App : Application
                 services.AddTransient<PodcastShowNotesDialogView>();
                 services.AddSingleton<ShellPage>();
                 services.AddSingleton<MainWindow>();
+#if CONTENT_TIME_UI_PROBE
+                ContentTimeUiProbe.Configure(services);
+#endif
             })
             .Build();
     }
@@ -105,6 +110,10 @@ public partial class App : Application
         _mainWindow.Closed -= OnMainWindowClosed;
         _mainWindow.Closed += OnMainWindowClosed;
         _mainWindow.Activate();
+#if CONTENT_TIME_UI_PROBE
+        ContentTimeUiProbe.Attach((MainWindow)_mainWindow);
+        return;
+#else
         InitializeUiPreferences();
         HandleInitialActivation();
         if (TryStartInternalStoreScreenshotMode())
@@ -118,6 +127,7 @@ public partial class App : Application
         }
 
         StartBackgroundServices();
+#endif
     }
 
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
