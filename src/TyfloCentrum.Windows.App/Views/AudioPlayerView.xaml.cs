@@ -56,6 +56,10 @@ public sealed partial class AudioPlayerView : UserControl
     private TextBox? _commentAuthorNameTextBox;
     private TextBox? _commentAuthorEmailTextBox;
     private TextBox? _commentContentTextBox;
+    private TextBlock? _commentComposerHeadingTextBlock;
+    private TextBlock? _commentReplyTargetTextBlock;
+    private Button? _commentCancelReplyButton;
+    private Button? _commentSubmitButton;
     private MediaPlayer? _mediaPlayer;
     private IProgressiveMediaCache? _activeMediaCache;
     private AppSettingsSnapshot _currentSettings = AppSettingsSnapshot.Defaults;
@@ -1859,29 +1863,29 @@ public sealed partial class AudioPlayerView : UserControl
                 Spacing = 10,
             };
 
-            host.Children.Add(new TextBlock
+            _commentComposerHeadingTextBlock = new TextBlock
             {
-                Text = _commentComposerViewModel.FormHeadingText,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            });
+            };
+            host.Children.Add(_commentComposerHeadingTextBlock);
             host.Children.Add(new TextBlock { Text = "Pola oznaczone * są obowiązkowe." });
 
-            if (_commentComposerViewModel.HasReplyTarget)
+            // Elementy trybu odpowiedzi istnieją zawsze i są tylko ukrywane, żeby
+            // zmiana stanu formularza nie wymagała przebudowy panelu (patrz
+            // OnCommentComposerPropertyChanged).
+            _commentReplyTargetTextBlock = new TextBlock
             {
-                host.Children.Add(new TextBlock
-                {
-                    Text = _commentComposerViewModel.ReplyTargetText,
-                    TextWrapping = TextWrapping.WrapWholeWords,
-                });
+                TextWrapping = TextWrapping.WrapWholeWords,
+            };
+            host.Children.Add(_commentReplyTargetTextBlock);
 
-                var cancelReplyButton = new Button
-                {
-                    Content = "Anuluj odpowiedź",
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                };
-                cancelReplyButton.Click += OnCancelCommentReplyClick;
-                host.Children.Add(cancelReplyButton);
-            }
+            _commentCancelReplyButton = new Button
+            {
+                Content = "Anuluj odpowiedź",
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            _commentCancelReplyButton.Click += OnCancelCommentReplyClick;
+            host.Children.Add(_commentCancelReplyButton);
 
             _commentAuthorNameTextBox = new TextBox
             {
@@ -1920,14 +1924,14 @@ public sealed partial class AudioPlayerView : UserControl
             _commentContentTextBox.TextChanged += OnCommentContentTextChanged;
             host.Children.Add(_commentContentTextBox);
 
-            var submitButton = new Button
+            _commentSubmitButton = new Button
             {
-                Content = _commentComposerViewModel.SubmitButtonText,
-                IsEnabled = _commentComposerViewModel.CanSubmit,
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
-            submitButton.Click += OnSubmitCommentClick;
-            host.Children.Add(submitButton);
+            _commentSubmitButton.Click += OnSubmitCommentClick;
+            host.Children.Add(_commentSubmitButton);
+
+            ApplyCommentComposerState();
 
             return new Border
             {
@@ -1948,9 +1952,64 @@ public sealed partial class AudioPlayerView : UserControl
 
     private void OnCommentComposerPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // Nie przebudowujemy tu ShowNotesPanel. Zmiany AuthorName, AuthorEmail i
+        // Content przychodzą z pól, w których użytkownik właśnie pisze; przebudowa
+        // usuwała pole z fokusem po każdym znaku (zgłoszenie #29). Formularz
+        // aktualizujemy w miejscu, tak jak PodcastShowNotesDialogView.
         if (_isCommentComposerVisible)
         {
-            UpdateShowNotesUi(null);
+            ApplyCommentComposerState();
+        }
+    }
+
+    private void ApplyCommentComposerState()
+    {
+        if (
+            _commentComposerHeadingTextBlock is null
+            || _commentReplyTargetTextBlock is null
+            || _commentCancelReplyButton is null
+            || _commentAuthorNameTextBox is null
+            || _commentAuthorEmailTextBox is null
+            || _commentContentTextBox is null
+            || _commentSubmitButton is null
+        )
+        {
+            return;
+        }
+
+        var wasSynchronizing = _isSynchronizingCommentComposer;
+        _isSynchronizingCommentComposer = true;
+        try
+        {
+            _commentComposerHeadingTextBlock.Text = _commentComposerViewModel.FormHeadingText;
+
+            var replyVisibility = _commentComposerViewModel.HasReplyTarget
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            _commentReplyTargetTextBlock.Text = _commentComposerViewModel.ReplyTargetText;
+            _commentReplyTargetTextBlock.Visibility = replyVisibility;
+            _commentCancelReplyButton.Visibility = replyVisibility;
+
+            SyncCommentTextBox(_commentAuthorNameTextBox, _commentComposerViewModel.AuthorName);
+            SyncCommentTextBox(_commentAuthorEmailTextBox, _commentComposerViewModel.AuthorEmail);
+            SyncCommentTextBox(_commentContentTextBox, _commentComposerViewModel.Content);
+
+            _commentSubmitButton.Content = _commentComposerViewModel.SubmitButtonText;
+            _commentSubmitButton.IsEnabled = _commentComposerViewModel.CanSubmit;
+        }
+        finally
+        {
+            _isSynchronizingCommentComposer = wasSynchronizing;
+        }
+    }
+
+    private static void SyncCommentTextBox(TextBox textBox, string value)
+    {
+        // Przypisanie tej samej wartości przesuwa kursor na początek pola,
+        // więc tekst ustawiamy tylko przy rzeczywistej różnicy.
+        if (!string.Equals(textBox.Text, value, StringComparison.Ordinal))
+        {
+            textBox.Text = value;
         }
     }
 
