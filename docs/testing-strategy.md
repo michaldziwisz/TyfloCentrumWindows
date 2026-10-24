@@ -450,6 +450,7 @@ Pozniej automatyzowac:
   - w dialogu `Komentarze podcastu` formularz jest domyślnie schowany i otwiera się dopiero po `Dodaj komentarz` albo `Odpowiedz`
   - formularz komentarza pozwala wysłać komentarz najwyższego poziomu bez wybierania odpowiedzi
   - przycisk `Odpowiedz` przy komentarzu przełącza formularz w tryb odpowiedzi na wybrany komentarz
+  - w formularzu komentarza w odtwarzaczu wpisanie znaku nie zabiera fokusu z pola; w polach `Imię *`, `Adres e-mail *` i `Treść komentarza *` można pisać bez przerw (regresja zgłoszenia #29)
 - `Narrator`:
   - odczytuje licznik komentarzy po załadowaniu odtwarzacza podcastu
   - odczytuje przycisk `Dodaj komentarz` zanim formularz zostanie odsłonięty
