@@ -60,7 +60,7 @@ Szczegoly:
   - czwarty segment wersji musi pozostac `0`
   - przyklad poprawnej wersji: `0.1.11.0`
 - dla kolejnych recznych update'ow warto przygotowac osobny plik z gotowym listingiem i `What's new`, np.:
-  - [submission-0.1.15.0-pl-PL.md](../store/submission-0.1.15.0-pl-PL.md)
+  - [submission-0.1.17.0-pl-PL.md](../store/submission-0.1.17.0-pl-PL.md)
 - teksty listingu (opis + `What's new`) sa TERAZ aktualizowane automatycznie w workflow:
   - zrodlo prawdy: `store/listing/<locale>.description.txt` i `store/listing/<locale>.whatsnew.txt`
   - workflow `Store Draft/Release` po wgraniu pakietu odpala `scripts/store/update_listing.py`,
